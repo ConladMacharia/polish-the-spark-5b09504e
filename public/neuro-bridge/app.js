@@ -424,8 +424,15 @@
       animationId = requestAnimationFrame(trackMotion);
       return;
     }
-    var detected = detectPoseMotion() || detectExerciseMotion(current, previousFrame, w, h);
-    byId("motionReadout").textContent = detected ? t("detected") : (poseReady ? "MediaPipe pose active" : t("waiting"));
+    var poseDetected = detectPoseMotion();
+    // For leg & balance: require MediaPipe pose to avoid false positives from arm movement.
+    // Pixel motion is only used as a fallback when pose hasn't initialised yet, and only for arm exercise.
+    var pixelDetected = false;
+    if (currentExercise === "arm" && !poseReady) {
+      pixelDetected = detectExerciseMotion(current, previousFrame, w, h);
+    }
+    var detected = poseDetected || pixelDetected;
+    byId("motionReadout").textContent = detected ? t("detected") : (poseReady ? "Pose tracking active — " + t("waiting") : "Loading pose model…");
     if (detected && Date.now() - lastSuccessAt > 1300) registerSuccess();
     previousFrame = current.slice(0);
     animationId = requestAnimationFrame(trackMotion);
