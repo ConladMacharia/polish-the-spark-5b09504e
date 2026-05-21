@@ -1,0 +1,581 @@
+(function () {
+  "use strict";
+
+  var targetScore = 8;
+  var currentLang = localStorage.getItem("neuroBridgeLanguage") || "en";
+  var currentExercise = "arm";
+  var stream = null;
+  var score = 0;
+  var sessionStart = 0;
+  var active = false;
+  var demoMode = false;
+  var previousFrame = null;
+  var lastPose = null;
+  var poseReady = false;
+  var poseModel = null;
+  var poseBusy = false;
+  var animationId = 0;
+  var demoTimer = 0;
+  var lastSuccessAt = 0;
+  var steadyStartedAt = 0;
+  var targetSide = "left";
+
+  var videoLibrary = {
+    arm: "",
+    leg: "https://video.wixstatic.com/video/8b93a1_efe5df88e0874702a476887b714ce922/1080p/mp4/file.mp4",
+    balance: "https://www.youtube.com/embed/o71yp4jZHH8",
+  };
+
+  var tx = {
+    en: {
+      chooseLanguage: "Choose a language to begin.",
+      homeTitle: "Therapy Home",
+      startTherapy: "Start Therapy",
+      startTherapySub: "Choose a therapy game",
+      library: "Library",
+      librarySub: "Reference videos and guides",
+      progress: "Progress",
+      progressSub: "View saved sessions",
+      reminders: "Reminders",
+      remindersSub: "Today’s plan",
+      therapyGames: "Therapy games",
+      chooseExercise: "Choose Exercise",
+      armRaise: "Arm Raise",
+      legKick: "Leg Kick",
+      balanceHold: "Balance Hold",
+      armGameSub: "Pop balloons by raising the hand.",
+      legGameSub: "Kick toward the glowing side star.",
+      balanceGameSub: "Stay steady to collect balance rings.",
+      cameraSetup: "Camera Setup",
+      caregiverGuide: "Caregiver guide",
+      safetyNote: "Stop if there is pain, dizziness, or unusual fatigue.",
+      cameraHint: "Camera starts when you press Begin.",
+      useDemo: "Use demo mode",
+      begin: "Begin",
+      voicePrompt: "Voice prompt",
+      recalibrate: "Recalibrate",
+      sessionComplete: "Session complete",
+      rewards: "rewards",
+      seconds: "seconds",
+      seeProgress: "See progress",
+      home: "Home",
+      contentLibrary: "Content library",
+      referenceVideos: "Reference Videos",
+      videoPlaceholder: "Your reference video will appear here.",
+      armLibraryCopy: "Guide for safe hand raising and shoulder-height reaching.",
+      legLibraryCopy: "PT instruction: stand on the weak leg, support with the weak arm on a rail, then attempt to kick the stars with the other leg. The caregiver supports from behind if needed.",
+      balanceLibraryCopy: "Gait and balance reference video for safe supported balance practice.",
+      localProgress: "Local progress",
+      recentSessions: "Recent Sessions",
+      today: "Today",
+      dailyPlan: "Daily therapy plan",
+      dailyPlanCopy: "Complete one arm, one leg, and one balance session with caregiver support.",
+      armSetup: "Keep the upper body visible. The child raises the hand into the balloon zone.",
+      legSetup: "Stand on the weak leg and support with the weak arm on a rail. Kick the stars with the other leg while the caregiver supports from behind if needed.",
+      balanceSetup: "Keep the full body visible. The child stays steady while supported safely.",
+      armTitle: "Pop the balloons",
+      legTitle: "Kick the stars",
+      balanceTitle: "Hold balance",
+      armPrompt: "Raise your hand",
+      legPrompt: "Kick the glowing star",
+      balancePrompt: "Stay steady",
+      success: "Good job",
+      complete: "Great work today.",
+      waiting: "Waiting for movement",
+      detected: "Movement detected",
+      bodyMoving: "Large body movement ignored",
+      reps: "rewards",
+    },
+    sw: {
+      chooseLanguage: "Chagua lugha kuanza.",
+      homeTitle: "Nyumbani ya Tiba",
+      startTherapy: "Anza Tiba",
+      startTherapySub: "Chagua mchezo wa tiba",
+      library: "Maktaba",
+      librarySub: "Video na miongozo ya rejea",
+      progress: "Maendeleo",
+      progressSub: "Tazama vipindi vilivyohifadhiwa",
+      reminders: "Vikumbusho",
+      remindersSub: "Mpango wa leo",
+      therapyGames: "Michezo ya tiba",
+      chooseExercise: "Chagua Zoezi",
+      armRaise: "Kuinua Mkono",
+      legKick: "Kupiga Teke",
+      balanceHold: "Kushika Mizani",
+      armGameSub: "Pasua baluni kwa kuinua mkono.",
+      legGameSub: "Piga teke upande nyota inapoangaza.",
+      balanceGameSub: "Kaa imara kukusanya pete za mizani.",
+      cameraSetup: "Maandalizi ya Kamera",
+      caregiverGuide: "Mwongozo wa mlezi",
+      safetyNote: "Simamisha kama kuna maumivu, kizunguzungu, au uchovu usio wa kawaida.",
+      cameraHint: "Kamera itaanza ukibonyeza Anza.",
+      useDemo: "Tumia demo",
+      begin: "Anza",
+      voicePrompt: "Sauti ya maelekezo",
+      recalibrate: "Panga upya",
+      sessionComplete: "Kipindi kimekamilika",
+      rewards: "zawadi",
+      seconds: "sekunde",
+      seeProgress: "Tazama maendeleo",
+      home: "Nyumbani",
+      contentLibrary: "Maktaba ya maudhui",
+      referenceVideos: "Video za Rejea",
+      videoPlaceholder: "Video yako ya rejea itaonekana hapa.",
+      armLibraryCopy: "Mwongozo wa kuinua mkono kwa usalama hadi usawa wa bega.",
+      legLibraryCopy: "Maelekezo ya PT: simama kwa mguu dhaifu, tumia mkono dhaifu kushika reli, kisha jaribu kupiga nyota kwa mguu mwingine. Mlezi asaidie kwa nyuma ikihitajika.",
+      balanceLibraryCopy: "Video ya rejea ya mwendo na mizani kwa mazoezi salama ya kushikiliwa.",
+      localProgress: "Maendeleo ya kifaa hiki",
+      recentSessions: "Vipindi vya Karibuni",
+      today: "Leo",
+      dailyPlan: "Mpango wa tiba wa kila siku",
+      dailyPlanCopy: "Kamilisha zoezi moja la mkono, mguu, na mizani kwa msaada wa mlezi.",
+      armSetup: "Sehemu ya juu ya mwili ionekane. Mtoto ainua mkono hadi eneo la baluni.",
+      legSetup: "Simama kwa mguu dhaifu na shika reli kwa mkono dhaifu. Piga nyota kwa mguu mwingine huku mlezi akisaidia kwa nyuma ikihitajika.",
+      balanceSetup: "Mwili mzima uonekane. Mtoto akae imara akiwa salama na kusaidiwa.",
+      armTitle: "Pasua baluni",
+      legTitle: "Piga nyota",
+      balanceTitle: "Shika mizani",
+      armPrompt: "Inua mkono",
+      legPrompt: "Piga teke kuelekea nyota",
+      balancePrompt: "Kaa imara",
+      success: "Hongera",
+      complete: "Kazi nzuri leo.",
+      waiting: "Inasubiri mwendo",
+      detected: "Mwendo umetambuliwa",
+      bodyMoving: "Mwendo mkubwa wa mwili umepuuzwa",
+      reps: "zawadi",
+    },
+    ki: {
+      chooseLanguage: "Thuura thiomi ya gutandika.",
+      homeTitle: "Mucie wa Tiba",
+      startTherapy: "Tandika Tiba",
+      startTherapySub: "Thuura mucere wa tiba",
+      library: "Maktaba",
+      librarySub: "Video na miongozo ya kurora",
+      progress: "Maitiriria",
+      progressSub: "Rora session iria ciahonoketio",
+      reminders: "Ciugo cia Kuhurukira",
+      remindersSub: "Mutaratara wa umuthi",
+      therapyGames: "Michezo ya tiba",
+      chooseExercise: "Thuura Exercise",
+      armRaise: "Kuambia Guoko",
+      legKick: "Kuhura na Kuguru",
+      balanceHold: "Kwigumiria Wega",
+      armGameSub: "Pasua maballoon na kuambia guoko.",
+      legGameSub: "Hura na kuguru wererekeire nyota iria yakira.",
+      balanceGameSub: "Igumiria wega ucoke ukongania ringi.",
+      cameraSetup: "Gutega Camera",
+      caregiverGuide: "Mwongozo wa murori",
+      safetyNote: "Rekerera angikorwo kuri na ruruma, kizunguzungu, kana kuchoka muno.",
+      cameraHint: "Camera igutandika ukihinya Tandika.",
+      useDemo: "Tumia demo",
+      begin: "Tandika",
+      voicePrompt: "Kiugo gia sauti",
+      recalibrate: "Tega ringi",
+      sessionComplete: "Session ni yathira",
+      rewards: "irathimo",
+      seconds: "sekondi",
+      seeProgress: "Rora maitiriria",
+      home: "Mucie",
+      contentLibrary: "Maktaba ya content",
+      referenceVideos: "Video cia Kurora",
+      videoPlaceholder: "Video yaku ya kurora niyo ikoneka haha.",
+      armLibraryCopy: "Mwongozo wa kuambia guoko na uhoro wa wigirirwo.",
+      legLibraryCopy: "Maathani ma PT: rugama na kuguru kuri hinya munini, ikiria guoko kuri hinya munini handrail, ucoke ugerie kuhura nyota na kuguru kungi. Murori ateithie kuuma thuutha angikorwo ni nginya.",
+      balanceLibraryCopy: "Video ya kurora gait na balance niundu wa kwigumiria wega na uteithio.",
+      localProgress: "Maitiriria ma device ino",
+      recentSessions: "Session cia Kurigana",
+      today: "Umuthi",
+      dailyPlan: "Mutaratara wa tiba wa o muthenya",
+      dailyPlanCopy: "Thirikari guoko, kuguru, na kwigumiria rimwe-rimwe na uteithio wa murori.",
+      armSetup: "Tigirira mwiri wa iguru uonekane. Mwana aambie guoko nginya handu ha balloon.",
+      legSetup: "Rugama na kuguru kuri hinya munini na uikarie guoko kuri hinya munini handrail. Hura nyota na kuguru kungi, murori ateithie kuuma thuutha angikorwo ni nginya.",
+      balanceSetup: "Tigirira mwiri wothe uonekane. Mwana eigumirie wega ari na uteithio.",
+      armTitle: "Pasua maballoon",
+      legTitle: "Hura nyota",
+      balanceTitle: "Igumiria wega",
+      armPrompt: "Ambia guoko",
+      legPrompt: "Hura nyota na kuguru",
+      balancePrompt: "Igumiria wega",
+      success: "Wega muno",
+      complete: "Wika wega umuthi.",
+      waiting: "Ndirarindira mwendo",
+      detected: "Mwendo umemenyekana",
+      bodyMoving: "Kugithia mwiri muno kumerekerwo",
+      reps: "irathimo",
+    },
+  };
+
+  var exerciseNames = { arm: "armRaise", leg: "legKick", balance: "balanceHold" };
+
+  document.addEventListener("DOMContentLoaded", init);
+  if (document.readyState !== "loading") init();
+
+  function init() {
+    applyTranslations();
+    renderVideoSlots();
+    document.querySelectorAll(".language-card").forEach(function (button) {
+      button.addEventListener("click", function () {
+        currentLang = button.dataset.lang;
+        localStorage.setItem("neuroBridgeLanguage", currentLang);
+        applyTranslations();
+        showScreen("homeScreen");
+      });
+    });
+    document.addEventListener("click", function (event) {
+      var go = event.target.closest("[data-go]");
+      if (go) showScreen(go.dataset.go);
+      var ex = event.target.closest("[data-exercise]");
+      if (ex) selectExercise(ex.dataset.exercise);
+    });
+    byId("beginSessionButton").addEventListener("click", function () {
+      demoMode = false;
+      beginSession();
+    });
+    byId("demoModeButton").addEventListener("click", function () {
+      demoMode = true;
+      beginSession();
+    });
+    byId("exitSessionButton").addEventListener("click", function () {
+      endSession(false);
+      showScreen("homeScreen");
+    });
+    byId("speakButton").addEventListener("click", function () {
+      speak(promptForExercise());
+    });
+    byId("recalibrateButton").addEventListener("click", resetTracking);
+    drawProgress();
+  }
+
+  function selectExercise(type) {
+    currentExercise = type;
+    byId("setupExerciseLabel").textContent = t(exerciseNames[type]);
+    byId("setupInstruction").textContent = t(type + "Setup");
+    showScreen("setupScreen");
+    startCamera();
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll(".screen").forEach(function (screen) {
+      screen.classList.toggle("active", screen.id === id);
+    });
+    if (id === "progressScreen") drawProgress();
+  }
+
+  function applyTranslations() {
+    document.documentElement.lang = currentLang;
+    document.querySelectorAll("[data-i18n]").forEach(function (node) {
+      node.textContent = t(node.dataset.i18n);
+    });
+  }
+
+  function renderVideoSlots() {
+    Object.keys(videoLibrary).forEach(function (key) {
+      var slot = byId(key + "VideoSlot");
+      if (!slot) return;
+      var src = videoLibrary[key];
+      if (!src) {
+        slot.textContent = t("videoPlaceholder");
+        return;
+      }
+      if (/youtube\.com\/embed|player\.vimeo/i.test(src)) {
+        slot.innerHTML = '<iframe title="' + key + ' reference video" src="' + src + '" loading="lazy" allowfullscreen></iframe>';
+      } else if (/\.mp4($|\?)/i.test(src)) {
+        slot.innerHTML = '<video controls playsinline src="' + src + '"></video>';
+      } else if (/youtube|youtu\.be|vimeo|choosept|https?:\/\//i.test(src)) {
+        slot.innerHTML = '<a class="video-link" href="' + src + '" target="_blank" rel="noreferrer">Open video</a>';
+      } else {
+        slot.innerHTML = '<video controls playsinline src="' + src + '"></video>';
+      }
+    });
+  }
+
+  function beginSession() {
+    startCamera().then(function () {
+      score = 0;
+      active = true;
+      sessionStart = Date.now();
+      byId("scoreCount").textContent = score;
+      byId("targetCount").textContent = targetScore;
+      byId("sessionTypeLabel").textContent = t(exerciseNames[currentExercise]);
+      byId("sessionTitle").textContent = t(currentExercise + "Title");
+      byId("promptBubble").textContent = promptForExercise();
+      byId("motionReadout").textContent = t("waiting");
+      resetTracking();
+      renderTarget();
+      showScreen("sessionScreen");
+      speak(promptForExercise());
+      if (demoMode || !stream) runDemoMode();
+      else animationId = requestAnimationFrame(trackMotion);
+    });
+  }
+
+  function startCamera() {
+    if (stream) return Promise.resolve(true);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      byId("cameraStatus").textContent = "Camera unavailable. Demo mode is ready.";
+      return Promise.resolve(false);
+    }
+    return navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }).then(function (s) {
+      stream = s;
+      byId("setupVideo").srcObject = stream;
+      byId("sessionVideo").srcObject = stream;
+      byId("cameraStatus").textContent = "Camera ready.";
+      initPoseModel();
+      return true;
+    }).catch(function () {
+      byId("cameraStatus").textContent = "Camera permission unavailable. Use demo mode.";
+      return false;
+    });
+  }
+
+  function initPoseModel() {
+    if (poseModel || !window.Pose) return;
+    poseModel = new Pose({
+      locateFile: function (file) {
+        return "https://cdn.jsdelivr.net/npm/@mediapipe/pose/" + file;
+      },
+    });
+    poseModel.setOptions({
+      modelComplexity: 1,
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      minDetectionConfidence: 0.55,
+      minTrackingConfidence: 0.55,
+    });
+    poseModel.onResults(function (results) {
+      if (results.poseLandmarks) {
+        lastPose = results.poseLandmarks;
+        poseReady = true;
+      }
+      poseBusy = false;
+    });
+  }
+
+  function resetTracking() {
+    previousFrame = null;
+    lastPose = null;
+    poseReady = false;
+    steadyStartedAt = 0;
+    lastSuccessAt = Date.now();
+  }
+
+  function renderTarget() {
+    var layer = byId("targetLayer");
+    layer.className = currentExercise + "-targets";
+    if (currentExercise === "arm") layer.innerHTML = '<div class="target-zone top-zone">Hand target</div><div class="balloon reward-object"></div>';
+    if (currentExercise === "leg") {
+      targetSide = Math.random() > 0.5 ? "right" : "left";
+      layer.innerHTML = '<div class="star-target ' + targetSide + '">☆</div>';
+    }
+    if (currentExercise === "balance") layer.innerHTML = '<div class="balance-ring reward-object">◇</div>';
+  }
+
+  function trackMotion() {
+    if (!active) return;
+    var video = byId("sessionVideo");
+    var canvas = byId("trackingCanvas");
+    if (!video || video.readyState < 2) {
+      animationId = requestAnimationFrame(trackMotion);
+      return;
+    }
+    var w = 180, h = 135;
+    canvas.width = w;
+    canvas.height = h;
+    var ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(video, 0, 0, w, h);
+    var current = ctx.getImageData(0, 0, w, h).data;
+    if (poseModel && !poseBusy) {
+      poseBusy = true;
+      poseModel.send({ image: video }).catch(function () {
+        poseBusy = false;
+      });
+    }
+    if (!previousFrame) {
+      previousFrame = current.slice(0);
+      animationId = requestAnimationFrame(trackMotion);
+      return;
+    }
+    var detected = detectPoseMotion() || detectExerciseMotion(current, previousFrame, w, h);
+    byId("motionReadout").textContent = detected ? t("detected") : (poseReady ? "MediaPipe pose active" : t("waiting"));
+    if (detected && Date.now() - lastSuccessAt > 1300) registerSuccess();
+    previousFrame = current.slice(0);
+    animationId = requestAnimationFrame(trackMotion);
+  }
+
+  function detectExerciseMotion(current, previous, w, h) {
+    if (currentExercise === "arm") return regionScore(current, previous, w, 0.08, 0.92, 0.06, 0.38) > 4.8 && regionScore(current, previous, w, 0.25, 0.75, 0.45, 0.92) < 3.2;
+    if (currentExercise === "leg") {
+      var sideScore = targetSide === "left"
+        ? regionScore(current, previous, w, 0.02, 0.35, 0.50, 0.96)
+        : regionScore(current, previous, w, 0.65, 0.98, 0.50, 0.96);
+      var torsoScore = regionScore(current, previous, w, 0.30, 0.70, 0.08, 0.48);
+      return sideScore > 4.2 && torsoScore < 3.5;
+    }
+    if (currentExercise === "balance") return regionScore(current, previous, w, 0.20, 0.80, 0.12, 0.92) < 1.2;
+    return false;
+  }
+
+  function detectPoseMotion() {
+    if (!poseReady || !lastPose) return false;
+    var lShoulder = landmark(11);
+    var rShoulder = landmark(12);
+    var lWrist = landmark(15);
+    var rWrist = landmark(16);
+    var lHip = landmark(23);
+    var rHip = landmark(24);
+    var lKnee = landmark(25);
+    var rKnee = landmark(26);
+    var lAnkle = landmark(27);
+    var rAnkle = landmark(28);
+
+    if (currentExercise === "arm") {
+      var leftArmRaised = visible(lShoulder, lWrist) && lWrist.y < lShoulder.y - 0.08;
+      var rightArmRaised = visible(rShoulder, rWrist) && rWrist.y < rShoulder.y - 0.08;
+      return leftArmRaised || rightArmRaised;
+    }
+
+    if (currentExercise === "leg") {
+      var kickingAnkle = rAnkle;
+      var kickingKnee = rKnee;
+      var supportHip = lHip;
+      var kickVisible = visible(kickingAnkle, kickingKnee);
+      var sideReached = targetSide === "left" ? kickingAnkle.x < 0.38 : kickingAnkle.x > 0.62;
+      var lifted = kickVisible && kickingAnkle.y < kickingKnee.y + 0.18;
+      var torsoStable = visible(lHip, rHip) ? Math.abs(lHip.y - rHip.y) < 0.18 : true;
+      var weakSideLoaded = supportHip && supportHip.visibility > 0.35;
+      return kickVisible && sideReached && lifted && torsoStable && weakSideLoaded;
+    }
+
+    if (currentExercise === "balance") {
+      var stable = visible(lShoulder, rShoulder) && visible(lHip, rHip) &&
+        Math.abs(lShoulder.y - rShoulder.y) < 0.10 &&
+        Math.abs(lHip.y - rHip.y) < 0.10 &&
+        Math.abs(((lShoulder.x + rShoulder.x) / 2) - ((lHip.x + rHip.x) / 2)) < 0.16;
+      if (!stable) {
+        steadyStartedAt = 0;
+        return false;
+      }
+      if (!steadyStartedAt) steadyStartedAt = Date.now();
+      return Date.now() - steadyStartedAt > 1200;
+    }
+
+    return false;
+  }
+
+  function landmark(index) {
+    return lastPose && lastPose[index];
+  }
+
+  function visible(a, b) {
+    return a && b && (a.visibility === undefined || a.visibility > 0.35) && (b.visibility === undefined || b.visibility > 0.35);
+  }
+
+  function regionScore(current, previous, w, x1, x2, y1, y2) {
+    var h = current.length / 4 / w;
+    var changed = 0, total = 0;
+    for (var y = Math.floor(h * y1); y < Math.floor(h * y2); y += 3) {
+      for (var x = Math.floor(w * x1); x < Math.floor(w * x2); x += 3) {
+        var i = (y * w + x) * 4;
+        var diff = Math.abs(current[i] - previous[i]) + Math.abs(current[i + 1] - previous[i + 1]) + Math.abs(current[i + 2] - previous[i + 2]);
+        if (diff > 62) changed++;
+        total++;
+      }
+    }
+    return (changed / Math.max(total, 1)) * 100;
+  }
+
+  function registerSuccess() {
+    lastSuccessAt = Date.now();
+    score++;
+    byId("scoreCount").textContent = score;
+    burstTarget();
+    speak(score >= targetScore ? t("complete") : t("success"));
+    if (score >= targetScore) {
+      setTimeout(function () { endSession(true); }, 700);
+    } else {
+      setTimeout(renderTarget, 450);
+    }
+  }
+
+  function burstTarget() {
+    var obj = document.querySelector("#targetLayer .reward-object, #targetLayer .star-target");
+    if (obj) obj.classList.add("burst");
+  }
+
+  function runDemoMode() {
+    clearInterval(demoTimer);
+    demoTimer = setInterval(function () {
+      if (!active) return clearInterval(demoTimer);
+      registerSuccess();
+    }, 1300);
+  }
+
+  function endSession(save) {
+    active = false;
+    clearInterval(demoTimer);
+    cancelAnimationFrame(animationId);
+    if (!save) return;
+    var duration = Math.max(1, Math.round((Date.now() - sessionStart) / 1000));
+    var sessions = getSessions();
+    sessions.push({ date: new Date().toISOString(), exercise: t(exerciseNames[currentExercise]), score: score, target: targetScore, duration: duration });
+    localStorage.setItem("neuroBridgeSessions", JSON.stringify(sessions.slice(-12)));
+    byId("resultSummary").textContent = t("complete");
+    byId("resultScore").textContent = score;
+    byId("resultTime").textContent = duration;
+    showScreen("resultScreen");
+  }
+
+  function drawProgress() {
+    var sessions = getSessions();
+    var list = byId("progressList");
+    list.innerHTML = sessions.slice().reverse().map(function (s) {
+      return '<div class="progress-item"><strong>' + new Date(s.date).toLocaleDateString() + ' - ' + s.exercise + '</strong><span>' + s.score + '/' + s.target + ' ' + t("reps") + '</span></div>';
+    }).join("");
+    var canvas = byId("progressChart");
+    var ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "#23b7a7";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    sessions.forEach(function (s, i) {
+      var x = 45 + (i * (canvas.width - 90)) / Math.max(sessions.length - 1, 1);
+      var y = canvas.height - 45 - (s.score / targetScore) * (canvas.height - 90);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+
+  function getSessions() {
+    try {
+      return JSON.parse(localStorage.getItem("neuroBridgeSessions")) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function promptForExercise() {
+    return t(currentExercise + "Prompt");
+  }
+
+  function speak(text) {
+    try {
+      if (!window.speechSynthesis) return;
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = currentLang === "sw" ? "sw-KE" : currentLang === "ki" ? "ki-KE" : "en-US";
+      u.rate = 0.9;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  function t(key) {
+    return (tx[currentLang] && tx[currentLang][key]) || tx.en[key] || key;
+  }
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
+})();
