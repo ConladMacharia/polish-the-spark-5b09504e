@@ -330,14 +330,32 @@
       stream = s;
       byId("setupVideo").srcObject = stream;
       byId("sessionVideo").srcObject = stream;
-      byId("cameraStatus").textContent = "Camera ready.";
+      byId("cameraStatus").textContent = "Camera ready. Pose detection warming up…";
       initPoseModel();
+      warmupPose();
       return true;
     }).catch(function () {
       byId("cameraStatus").textContent = "Camera permission unavailable. Use demo mode.";
       return false;
     });
   }
+
+  function warmupPose() {
+    var video = byId("setupVideo");
+    var tick = function () {
+      if (!stream) return;
+      if (poseModel && !poseBusy && video.readyState >= 2) {
+        poseBusy = true;
+        poseModel.send({ image: video }).catch(function () { poseBusy = false; });
+      }
+      if (poseReady) {
+        byId("cameraStatus").textContent = "Pose detection active. Ready to begin.";
+      }
+      setTimeout(tick, 120);
+    };
+    tick();
+  }
+
 
   function initPoseModel() {
     if (poseModel || !window.Pose) return;
