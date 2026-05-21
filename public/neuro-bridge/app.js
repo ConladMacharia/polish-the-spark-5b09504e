@@ -23,7 +23,8 @@
   var videoLibrary = {
     arm: "",
     leg: "https://video.wixstatic.com/video/8b93a1_efe5df88e0874702a476887b714ce922/1080p/mp4/file.mp4",
-    balance: "https://www.youtube.com/embed/o71yp4jZHH8",
+    balance: "",
+    gait: "https://www.youtube.com/embed/o71yp4jZHH8",
   };
 
   var tx = {
