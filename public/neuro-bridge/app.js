@@ -226,6 +226,7 @@
         currentLang = button.dataset.lang;
         localStorage.setItem("neuroBridgeLanguage", currentLang);
         applyTranslations();
+        renderVideoSlots();
         showScreen("homeScreen");
       });
     });
@@ -282,9 +283,11 @@
       if (!slot) return;
       var src = videoLibrary[key];
       if (!src) {
+        slot.setAttribute("data-i18n", "videoPlaceholder");
         slot.textContent = t("videoPlaceholder");
         return;
       }
+      slot.removeAttribute("data-i18n");
       if (/youtube\.com\/embed|player\.vimeo/i.test(src)) {
         slot.innerHTML = '<iframe title="' + key + ' reference video" src="' + src + '" loading="lazy" allowfullscreen></iframe>';
       } else if (/\.mp4($|\?)/i.test(src)) {
