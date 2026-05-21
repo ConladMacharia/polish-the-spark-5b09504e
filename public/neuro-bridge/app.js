@@ -226,6 +226,7 @@
         currentLang = button.dataset.lang;
         localStorage.setItem("neuroBridgeLanguage", currentLang);
         applyTranslations();
+        renderVideoSlots();
         showScreen("homeScreen");
       });
     });
