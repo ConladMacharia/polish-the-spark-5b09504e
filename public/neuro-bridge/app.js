@@ -553,13 +553,40 @@
     if (!save) return;
     var duration = Math.max(1, Math.round((Date.now() - sessionStart) / 1000));
     var sessions = getSessions();
-    sessions.push({ date: new Date().toISOString(), exercise: t(exerciseNames[currentExercise]), score: score, target: targetScore, duration: duration });
+    var completed = score >= targetScore;
+    var earnedBadges = computeBadges(score, targetScore, duration, completed);
+    sessions.push({ date: new Date().toISOString(), exercise: t(exerciseNames[currentExercise]), score: score, target: targetScore, duration: duration, completed: completed, badges: earnedBadges });
     localStorage.setItem("neuroBridgeSessions", JSON.stringify(sessions.slice(-12)));
-    byId("resultSummary").textContent = t("complete");
+    byId("resultSummary").textContent = completed ? t("complete") : "Session ended early. Every try counts!";
     byId("resultScore").textContent = score;
     byId("resultTime").textContent = duration;
+    renderRewards(earnedBadges, completed);
     showScreen("resultScreen");
+    if (completed) speak(t("success") + "! " + t("complete"));
   }
+
+  function computeBadges(score, target, duration, completed) {
+    var badges = [];
+    if (completed) badges.push({ icon: "🏆", label: "Goal reached" });
+    if (score >= Math.ceil(target / 2)) badges.push({ icon: "⭐", label: "Halfway hero" });
+    if (completed && duration <= 60) badges.push({ icon: "⚡", label: "Speedy" });
+    if (completed && duration >= 90) badges.push({ icon: "💪", label: "Stamina" });
+    var streak = (getSessions().filter(function (s) { return s.completed; }).length + (completed ? 1 : 0));
+    if (streak >= 3) badges.push({ icon: "🔥", label: "On a streak" });
+    if (!badges.length) badges.push({ icon: "🌱", label: "Great effort" });
+    return badges;
+  }
+
+  function renderRewards(badges, completed) {
+    var wrap = byId("rewardBadges");
+    if (!wrap) return;
+    wrap.innerHTML = badges.map(function (b) {
+      return '<div class="reward-badge"><span class="reward-icon">' + b.icon + '</span><small>' + b.label + '</small></div>';
+    }).join("");
+    var cel = document.querySelector(".celebration");
+    if (cel) cel.textContent = completed ? "🎉" : "💫";
+  }
+
 
   function drawProgress() {
     var sessions = getSessions();
