@@ -564,24 +564,95 @@
   function drawProgress() {
     var sessions = getSessions();
     var list = byId("progressList");
-    list.innerHTML = sessions.slice().reverse().map(function (s) {
-      return '<div class="progress-item"><strong>' + new Date(s.date).toLocaleDateString() + ' - ' + s.exercise + '</strong><span>' + s.score + '/' + s.target + ' ' + t("reps") + '</span></div>';
-    }).join("");
+    list.innerHTML = sessions.length
+      ? sessions.slice().reverse().map(function (s) {
+          var pct = Math.round((s.score / Math.max(s.target, 1)) * 100);
+          return '<div class="progress-item"><div><strong>' + new Date(s.date).toLocaleDateString() + '</strong><small> · ' + s.exercise + '</small></div><span class="pill">' + s.score + '/' + s.target + ' · ' + pct + '%</span></div>';
+        }).join("")
+      : '<div class="progress-item empty">No sessions yet — complete an exercise to see progress.</div>';
+
     var canvas = byId("progressChart");
     var ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "#23b7a7";
-    ctx.lineWidth = 5;
+    var W = canvas.width, H = canvas.height;
+    var padL = 56, padR = 24, padT = 28, padB = 46;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, W, H);
+
+    // Title
+    ctx.fillStyle = "#152238";
+    ctx.font = "700 16px Arial, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("Reward score per session", padL, 18);
+
+    // Y grid + labels (0..target)
+    ctx.strokeStyle = "#e2e8f0";
+    ctx.lineWidth = 1;
+    ctx.font = "600 11px Arial, sans-serif";
+    ctx.fillStyle = "#64748b";
+    ctx.textAlign = "right";
+    var ySteps = 4;
+    for (var g = 0; g <= ySteps; g++) {
+      var y = padT + (plotH * g) / ySteps;
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(W - padR, y);
+      ctx.stroke();
+      var val = Math.round(targetScore * (1 - g / ySteps));
+      ctx.fillText(String(val), padL - 8, y + 4);
+    }
+
+    // Axes
+    ctx.strokeStyle = "#94a3b8";
+    ctx.beginPath();
+    ctx.moveTo(padL, padT);
+    ctx.lineTo(padL, padT + plotH);
+    ctx.lineTo(W - padR, padT + plotH);
+    ctx.stroke();
+
+    if (!sessions.length) {
+      ctx.fillStyle = "#94a3b8";
+      ctx.textAlign = "center";
+      ctx.font = "700 14px Arial, sans-serif";
+      ctx.fillText("No data yet", padL + plotW / 2, padT + plotH / 2);
+      return;
+    }
+
+    // Bars
+    var n = sessions.length;
+    var slot = plotW / n;
+    var barW = Math.min(48, slot * 0.6);
+    sessions.forEach(function (s, i) {
+      var cx = padL + slot * i + slot / 2;
+      var h = (Math.min(s.score, targetScore) / targetScore) * plotH;
+      var by = padT + plotH - h;
+      ctx.fillStyle = s.score >= s.target ? "#23b7a7" : "#65a5ff";
+      ctx.fillRect(cx - barW / 2, by, barW, h);
+      // X label
+      ctx.fillStyle = "#64748b";
+      ctx.font = "600 11px Arial, sans-serif";
+      ctx.textAlign = "center";
+      var d = new Date(s.date);
+      ctx.fillText((d.getMonth() + 1) + "/" + d.getDate(), cx, padT + plotH + 16);
+      ctx.fillStyle = "#152238";
+      ctx.font = "700 11px Arial, sans-serif";
+      ctx.fillText(String(s.score), cx, by - 6);
+    });
+
+    // Trend line
+    ctx.strokeStyle = "#ff6b6b";
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     sessions.forEach(function (s, i) {
-      var x = 45 + (i * (canvas.width - 90)) / Math.max(sessions.length - 1, 1);
-      var y = canvas.height - 45 - (s.score / targetScore) * (canvas.height - 90);
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      var cx = padL + slot * i + slot / 2;
+      var y = padT + plotH - (Math.min(s.score, targetScore) / targetScore) * plotH;
+      if (i === 0) ctx.moveTo(cx, y); else ctx.lineTo(cx, y);
     });
     ctx.stroke();
   }
+
 
   function getSessions() {
     try {
