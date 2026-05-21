@@ -124,9 +124,18 @@ video { width: 100%; background: #14213d; border-radius: 8px; }
 .video-slot video, .video-slot iframe { width: 100%; min-height: 260px; border: 0; border-radius: 8px; }
 .video-link { color: #0f766e; font-weight: 900; }
 .progress-list { display: grid; gap: 10px; width: min(1040px, 100%); margin: 0 auto; }
-.progress-item { display: flex; justify-content: space-between; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: white; }
+.progress-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: white; }
+.progress-item small { color: var(--muted); margin-left: 6px; }
+.progress-item.empty { justify-content: center; color: var(--muted); font-weight: 700; }
+.progress-item .pill { padding: 6px 12px; border-radius: 999px; background: #eefcf7; color: #0f766e; font-weight: 800; font-size: .9rem; }
 .chart-wrap { width: min(1040px, 100%); margin: auto auto 18px; }
 #progressChart { width: 100%; height: auto; }
+.rewards-wrap { margin: 18px 0 8px; padding: 16px; border-radius: 12px; background: linear-gradient(135deg, #fff7ed, #eefcf7); }
+.rewards-title { display: block; margin-bottom: 10px; color: var(--ink); font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+.reward-badges { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.reward-badge { display: grid; place-items: center; gap: 4px; padding: 10px 14px; min-width: 84px; border-radius: 12px; background: white; box-shadow: 0 8px 20px rgba(21,34,56,.10); }
+.reward-badge .reward-icon { font-size: 1.8rem; }
+.reward-badge small { color: var(--muted); font-weight: 800; font-size: .75rem; }
 @keyframes bob { 50% { transform: translateY(-10px); } }
 @keyframes pulse { 50% { transform: scale(1.08); } }
 @keyframes burst { to { opacity: 0; transform: scale(1.8) rotate(20deg); } }
