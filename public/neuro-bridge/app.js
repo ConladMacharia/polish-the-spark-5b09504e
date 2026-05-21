@@ -330,14 +330,32 @@
       stream = s;
       byId("setupVideo").srcObject = stream;
       byId("sessionVideo").srcObject = stream;
-      byId("cameraStatus").textContent = "Camera ready.";
+      byId("cameraStatus").textContent = "Camera ready. Pose detection warming up…";
       initPoseModel();
+      warmupPose();
       return true;
     }).catch(function () {
       byId("cameraStatus").textContent = "Camera permission unavailable. Use demo mode.";
       return false;
     });
   }
+
+  function warmupPose() {
+    var video = byId("setupVideo");
+    var tick = function () {
+      if (!stream) return;
+      if (poseModel && !poseBusy && video.readyState >= 2) {
+        poseBusy = true;
+        poseModel.send({ image: video }).catch(function () { poseBusy = false; });
+      }
+      if (poseReady) {
+        byId("cameraStatus").textContent = "Pose detection active. Ready to begin.";
+      }
+      setTimeout(tick, 120);
+    };
+    tick();
+  }
+
 
   function initPoseModel() {
     if (poseModel || !window.Pose) return;
@@ -406,8 +424,15 @@
       animationId = requestAnimationFrame(trackMotion);
       return;
     }
-    var detected = detectPoseMotion() || detectExerciseMotion(current, previousFrame, w, h);
-    byId("motionReadout").textContent = detected ? t("detected") : (poseReady ? "MediaPipe pose active" : t("waiting"));
+    var poseDetected = detectPoseMotion();
+    // For leg & balance: require MediaPipe pose to avoid false positives from arm movement.
+    // Pixel motion is only used as a fallback when pose hasn't initialised yet, and only for arm exercise.
+    var pixelDetected = false;
+    if (currentExercise === "arm" && !poseReady) {
+      pixelDetected = detectExerciseMotion(current, previousFrame, w, h);
+    }
+    var detected = poseDetected || pixelDetected;
+    byId("motionReadout").textContent = detected ? t("detected") : (poseReady ? "Pose tracking active — " + t("waiting") : "Loading pose model…");
     if (detected && Date.now() - lastSuccessAt > 1300) registerSuccess();
     previousFrame = current.slice(0);
     animationId = requestAnimationFrame(trackMotion);
@@ -528,35 +553,133 @@
     if (!save) return;
     var duration = Math.max(1, Math.round((Date.now() - sessionStart) / 1000));
     var sessions = getSessions();
-    sessions.push({ date: new Date().toISOString(), exercise: t(exerciseNames[currentExercise]), score: score, target: targetScore, duration: duration });
+    var completed = score >= targetScore;
+    var earnedBadges = computeBadges(score, targetScore, duration, completed);
+    sessions.push({ date: new Date().toISOString(), exercise: t(exerciseNames[currentExercise]), score: score, target: targetScore, duration: duration, completed: completed, badges: earnedBadges });
     localStorage.setItem("neuroBridgeSessions", JSON.stringify(sessions.slice(-12)));
-    byId("resultSummary").textContent = t("complete");
+    byId("resultSummary").textContent = completed ? t("complete") : "Session ended early. Every try counts!";
     byId("resultScore").textContent = score;
     byId("resultTime").textContent = duration;
+    renderRewards(earnedBadges, completed);
     showScreen("resultScreen");
+    if (completed) speak(t("success") + "! " + t("complete"));
   }
+
+  function computeBadges(score, target, duration, completed) {
+    var badges = [];
+    if (completed) badges.push({ icon: "🏆", label: "Goal reached" });
+    if (score >= Math.ceil(target / 2)) badges.push({ icon: "⭐", label: "Halfway hero" });
+    if (completed && duration <= 60) badges.push({ icon: "⚡", label: "Speedy" });
+    if (completed && duration >= 90) badges.push({ icon: "💪", label: "Stamina" });
+    var streak = (getSessions().filter(function (s) { return s.completed; }).length + (completed ? 1 : 0));
+    if (streak >= 3) badges.push({ icon: "🔥", label: "On a streak" });
+    if (!badges.length) badges.push({ icon: "🌱", label: "Great effort" });
+    return badges;
+  }
+
+  function renderRewards(badges, completed) {
+    var wrap = byId("rewardBadges");
+    if (!wrap) return;
+    wrap.innerHTML = badges.map(function (b) {
+      return '<div class="reward-badge"><span class="reward-icon">' + b.icon + '</span><small>' + b.label + '</small></div>';
+    }).join("");
+    var cel = document.querySelector(".celebration");
+    if (cel) cel.textContent = completed ? "🎉" : "💫";
+  }
+
 
   function drawProgress() {
     var sessions = getSessions();
     var list = byId("progressList");
-    list.innerHTML = sessions.slice().reverse().map(function (s) {
-      return '<div class="progress-item"><strong>' + new Date(s.date).toLocaleDateString() + ' - ' + s.exercise + '</strong><span>' + s.score + '/' + s.target + ' ' + t("reps") + '</span></div>';
-    }).join("");
+    list.innerHTML = sessions.length
+      ? sessions.slice().reverse().map(function (s) {
+          var pct = Math.round((s.score / Math.max(s.target, 1)) * 100);
+          return '<div class="progress-item"><div><strong>' + new Date(s.date).toLocaleDateString() + '</strong><small> · ' + s.exercise + '</small></div><span class="pill">' + s.score + '/' + s.target + ' · ' + pct + '%</span></div>';
+        }).join("")
+      : '<div class="progress-item empty">No sessions yet — complete an exercise to see progress.</div>';
+
     var canvas = byId("progressChart");
     var ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "#23b7a7";
-    ctx.lineWidth = 5;
+    var W = canvas.width, H = canvas.height;
+    var padL = 56, padR = 24, padT = 28, padB = 46;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, W, H);
+
+    // Title
+    ctx.fillStyle = "#152238";
+    ctx.font = "700 16px Arial, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("Reward score per session", padL, 18);
+
+    // Y grid + labels (0..target)
+    ctx.strokeStyle = "#e2e8f0";
+    ctx.lineWidth = 1;
+    ctx.font = "600 11px Arial, sans-serif";
+    ctx.fillStyle = "#64748b";
+    ctx.textAlign = "right";
+    var ySteps = 4;
+    for (var g = 0; g <= ySteps; g++) {
+      var y = padT + (plotH * g) / ySteps;
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(W - padR, y);
+      ctx.stroke();
+      var val = Math.round(targetScore * (1 - g / ySteps));
+      ctx.fillText(String(val), padL - 8, y + 4);
+    }
+
+    // Axes
+    ctx.strokeStyle = "#94a3b8";
+    ctx.beginPath();
+    ctx.moveTo(padL, padT);
+    ctx.lineTo(padL, padT + plotH);
+    ctx.lineTo(W - padR, padT + plotH);
+    ctx.stroke();
+
+    if (!sessions.length) {
+      ctx.fillStyle = "#94a3b8";
+      ctx.textAlign = "center";
+      ctx.font = "700 14px Arial, sans-serif";
+      ctx.fillText("No data yet", padL + plotW / 2, padT + plotH / 2);
+      return;
+    }
+
+    // Bars
+    var n = sessions.length;
+    var slot = plotW / n;
+    var barW = Math.min(48, slot * 0.6);
+    sessions.forEach(function (s, i) {
+      var cx = padL + slot * i + slot / 2;
+      var h = (Math.min(s.score, targetScore) / targetScore) * plotH;
+      var by = padT + plotH - h;
+      ctx.fillStyle = s.score >= s.target ? "#23b7a7" : "#65a5ff";
+      ctx.fillRect(cx - barW / 2, by, barW, h);
+      // X label
+      ctx.fillStyle = "#64748b";
+      ctx.font = "600 11px Arial, sans-serif";
+      ctx.textAlign = "center";
+      var d = new Date(s.date);
+      ctx.fillText((d.getMonth() + 1) + "/" + d.getDate(), cx, padT + plotH + 16);
+      ctx.fillStyle = "#152238";
+      ctx.font = "700 11px Arial, sans-serif";
+      ctx.fillText(String(s.score), cx, by - 6);
+    });
+
+    // Trend line
+    ctx.strokeStyle = "#ff6b6b";
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     sessions.forEach(function (s, i) {
-      var x = 45 + (i * (canvas.width - 90)) / Math.max(sessions.length - 1, 1);
-      var y = canvas.height - 45 - (s.score / targetScore) * (canvas.height - 90);
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      var cx = padL + slot * i + slot / 2;
+      var y = padT + plotH - (Math.min(s.score, targetScore) / targetScore) * plotH;
+      if (i === 0) ctx.moveTo(cx, y); else ctx.lineTo(cx, y);
     });
     ctx.stroke();
   }
+
 
   function getSessions() {
     try {
