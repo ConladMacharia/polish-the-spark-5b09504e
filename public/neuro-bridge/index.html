@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neuro-Bridge MVP</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <section class="screen active center-screen" id="languageScreen">
+        <div class="brand-mark">NB</div>
+        <h1>Neuro-Bridge</h1>
+        <p data-i18n="chooseLanguage">Choose a language to begin.</p>
+        <div class="language-grid">
+          <button class="language-card" data-lang="en"><strong>English</strong><span>Raise your hand</span></button>
+          <button class="language-card" data-lang="sw"><strong>Kiswahili</strong><span>Inua mkono</span></button>
+          <button class="language-card" data-lang="ki"><strong>Gikuyu</strong><span>Ambia guoko</span></button>
+        </div>
+      </section>
+
+      <section class="screen" id="homeScreen">
+        <header class="topbar">
+          <div>
+            <span class="eyebrow">Neuro-Bridge</span>
+            <h2 data-i18n="homeTitle">Therapy Home</h2>
+          </div>
+          <button class="icon-button" data-go="languageScreen">Aa</button>
+        </header>
+        <main class="home-grid">
+          <button class="home-tile primary" data-go="exerciseScreen">
+            <span class="tile-icon">+</span>
+            <strong data-i18n="startTherapy">Start Therapy</strong>
+            <small data-i18n="startTherapySub">Choose a therapy game</small>
+          </button>
+          <button class="home-tile" data-go="libraryScreen">
+            <span class="tile-icon">?</span>
+            <strong data-i18n="library">Library</strong>
+            <small data-i18n="librarySub">Reference videos and guides</small>
+          </button>
+          <button class="home-tile" data-go="progressScreen">
+            <span class="tile-icon">%</span>
+            <strong data-i18n="progress">Progress</strong>
+            <small data-i18n="progressSub">View saved sessions</small>
+          </button>
+          <button class="home-tile" data-go="remindersScreen">
+            <span class="tile-icon">!</span>
+            <strong data-i18n="reminders">Reminders</strong>
+            <small data-i18n="remindersSub">Today’s plan</small>
+          </button>
+        </main>
+      </section>
+
+      <section class="screen" id="exerciseScreen">
+        <header class="topbar">
+          <button class="icon-button" data-go="homeScreen">&lt;</button>
+          <div>
+            <span class="eyebrow" data-i18n="therapyGames">Therapy games</span>
+            <h2 data-i18n="chooseExercise">Choose Exercise</h2>
+          </div>
+        </header>
+        <div class="exercise-grid">
+          <button class="exercise-card" data-exercise="arm">
+            <span class="exercise-emoji">○</span>
+            <strong data-i18n="armRaise">Arm Raise</strong>
+            <small data-i18n="armGameSub">Pop balloons by raising the hand.</small>
+          </button>
+          <button class="exercise-card" data-exercise="leg">
+            <span class="exercise-emoji">☆</span>
+            <strong data-i18n="legKick">Leg Kick</strong>
+            <small data-i18n="legGameSub">Kick toward the glowing side star.</small>
+          </button>
+          <button class="exercise-card" data-exercise="balance">
+            <span class="exercise-emoji">◇</span>
+            <strong data-i18n="balanceHold">Balance Hold</strong>
+            <small data-i18n="balanceGameSub">Stay steady to collect balance rings.</small>
+          </button>
+        </div>
+      </section>
+
+      <section class="screen" id="setupScreen">
+        <header class="topbar">
+          <button class="icon-button" data-go="exerciseScreen">&lt;</button>
+          <div>
+            <span class="eyebrow" id="setupExerciseLabel">Exercise</span>
+            <h2 data-i18n="cameraSetup">Camera Setup</h2>
+          </div>
+        </header>
+        <div class="setup-panel">
+          <video id="setupVideo" autoplay playsinline muted></video>
+          <div class="setup-tips">
+            <strong data-i18n="caregiverGuide">Caregiver guide</strong>
+            <p id="setupInstruction">Keep the child safely positioned and visible in the camera.</p>
+            <p class="safety-note" data-i18n="safetyNote">Stop if there is pain, dizziness, or unusual fatigue.</p>
+            <p class="camera-status" id="cameraStatus" data-i18n="cameraHint">Camera starts when you press Begin.</p>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="secondary-button" id="demoModeButton" data-i18n="useDemo">Use demo mode</button>
+          <button class="primary-button" id="beginSessionButton" data-i18n="begin">Begin</button>
+        </div>
+      </section>
+
+      <section class="screen game-screen" id="sessionScreen">
+        <header class="game-topbar">
+          <button class="icon-button light" id="exitSessionButton">&lt;</button>
+          <div>
+            <span class="eyebrow" id="sessionTypeLabel">Game</span>
+            <h2 id="sessionTitle">Pop the balloons</h2>
+          </div>
+          <div class="score-pill"><span id="scoreCount">0</span>/<span id="targetCount">8</span></div>
+        </header>
+        <div class="camera-stage" id="cameraStage">
+          <video id="sessionVideo" autoplay playsinline muted></video>
+          <canvas id="trackingCanvas"></canvas>
+          <div id="targetLayer"></div>
+          <div class="prompt-bubble" id="promptBubble">Raise your hand</div>
+          <div class="motion-readout" id="motionReadout">Waiting for movement</div>
+        </div>
+        <div class="session-controls">
+          <button class="secondary-button" id="speakButton" data-i18n="voicePrompt">Voice prompt</button>
+          <button class="secondary-button" id="recalibrateButton" data-i18n="recalibrate">Recalibrate</button>
+        </div>
+      </section>
+
+      <section class="screen center-screen" id="resultScreen">
+        <div class="result-card">
+          <div class="celebration">***</div>
+          <h2 data-i18n="sessionComplete">Session complete</h2>
+          <p id="resultSummary">Great work today.</p>
+          <div class="result-stats">
+            <span><strong id="resultScore">0</strong><small data-i18n="rewards">rewards</small></span>
+            <span><strong id="resultTime">0</strong><small data-i18n="seconds">seconds</small></span>
+          </div>
+          <div class="action-row">
+            <button class="secondary-button" data-go="progressScreen" data-i18n="seeProgress">See progress</button>
+            <button class="primary-button" data-go="homeScreen" data-i18n="home">Home</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="libraryScreen">
+        <header class="topbar">
+          <button class="icon-button" data-go="homeScreen">&lt;</button>
+          <div>
+            <span class="eyebrow" data-i18n="contentLibrary">Content library</span>
+            <h2 data-i18n="referenceVideos">Reference Videos</h2>
+          </div>
+        </header>
+        <div class="library-layout">
+          <article class="guide-card" data-video-card="arm">
+            <span class="guide-icon">1</span>
+            <h3 data-i18n="armRaise">Arm Raise</h3>
+            <div class="video-slot" id="armVideoSlot" data-i18n="videoPlaceholder">Your reference video will appear here.</div>
+            <p data-i18n="armLibraryCopy">Guide for safe hand raising and shoulder-height reaching.</p>
+          </article>
+          <article class="guide-card" data-video-card="leg">
+            <span class="guide-icon">2</span>
+            <h3 data-i18n="legKick">Leg Kick</h3>
+            <div class="video-slot" id="legVideoSlot" data-i18n="videoPlaceholder">Your reference video will appear here.</div>
+            <p data-i18n="legLibraryCopy">Guide for assisted side kicks or reaching with the foot.</p>
+          </article>
+          <article class="guide-card" data-video-card="balance">
+            <span class="guide-icon">3</span>
+            <h3 data-i18n="balanceHold">Balance Hold</h3>
+            <div class="video-slot" id="balanceVideoSlot" data-i18n="videoPlaceholder">Your reference video will appear here.</div>
+            <p data-i18n="balanceLibraryCopy">Guide for safe supported standing or seated balance practice.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="screen" id="progressScreen">
+        <header class="topbar">
+          <button class="icon-button" data-go="homeScreen">&lt;</button>
+          <div>
+            <span class="eyebrow" data-i18n="localProgress">Local progress</span>
+            <h2 data-i18n="recentSessions">Recent Sessions</h2>
+          </div>
+        </header>
+        <div class="chart-wrap"><canvas id="progressChart" width="720" height="320"></canvas></div>
+        <div class="progress-list" id="progressList"></div>
+      </section>
+
+      <section class="screen" id="remindersScreen">
+        <header class="topbar">
+          <button class="icon-button" data-go="homeScreen">&lt;</button>
+          <div>
+            <span class="eyebrow" data-i18n="today">Today</span>
+            <h2 data-i18n="reminders">Reminders</h2>
+          </div>
+        </header>
+        <div class="reminder-card"><strong data-i18n="dailyPlan">Daily therapy plan</strong><p data-i18n="dailyPlanCopy">Complete one arm, one leg, and one balance session with caregiver support.</p></div>
+      </section>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="app.js?v=5"></script>
+  </body>
+</html>
