@@ -12,12 +12,11 @@
         <div class="brand-mark">NB</div>
         <h1>Neuro-Bridge</h1>
         <p data-i18n="chooseLanguage">Choose a language to begin.</p>
-        <div class="language-grid">
-          <button class="language-card" data-lang="en"><strong>English</strong><span>Raise your hand</span></button>
-          <button class="language-card" data-lang="sw"><strong>Kiswahili</strong><span>Inua mkono</span></button>
-          <button class="language-card" data-lang="ki"><strong>Gikuyu</strong><span>Ambia guoko</span></button>
-        </div>
+        <input id="languageSearch" class="lang-search" type="search" placeholder="Search language…" data-i18n-placeholder="searchLanguage" />
+        <div class="language-grid" id="languageGrid"></div>
+        <p id="langFallbackNote" class="lang-fallback-note"></p>
       </section>
+
 
       <section class="screen" id="homeScreen">
         <header class="topbar">
