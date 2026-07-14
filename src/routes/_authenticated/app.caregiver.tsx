@@ -1,13 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { toast } from "sonner";
-import { LogOut, Users, KeyRound, PlayCircle, HeartPulse } from "lucide-react";
+import { LogOut, PlayCircle, HeartPulse, BookOpen, LineChart } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
   head: () => ({
@@ -20,14 +16,16 @@ function CaregiverHome() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const { data: patients, isLoading } = useQuery({
-    queryKey: ["my-patients"],
+  const { data: profile } = useQuery({
+    queryKey: ["me-profile"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("patients")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", userData.user.id)
+        .maybeSingle();
       return data;
     },
   });
@@ -38,6 +36,8 @@ function CaregiverHome() {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
+
+  const firstName = profile?.full_name?.split(" ")[0] ?? "caregiver";
 
   return (
     <div className="min-h-screen bg-background">
@@ -61,130 +61,59 @@ function CaregiverHome() {
       </header>
 
       <main className="mx-auto max-w-4xl px-6 py-8">
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
-        ) : !patients || patients.length === 0 ? (
-          <ClaimForm />
-        ) : (
-          <div className="space-y-6">
-            <div>
-              <h1 className="font-display text-3xl">Welcome back</h1>
-              <p className="text-sm text-muted-foreground">
-                Continue today's therapy plan.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {patients.map((p) => (
-                <div
-                  key={p.id}
-                  className="rounded-3xl border border-border bg-card p-5 shadow-sm"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-11 w-11 place-items-center rounded-2xl bg-accent text-accent-foreground">
-                      <Users className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-display text-xl">{p.child_name}</p>
-                      <p className="text-xs text-muted-foreground capitalize">
-                        {p.affected_side} side ·{" "}
-                        {p.gmfcs_level ? `GMFCS ${p.gmfcs_level}` : "level TBD"}
-                      </p>
-                    </div>
-                  </div>
-                  <a
-                    href="/neuro-bridge/index.html"
-                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-                  >
-                    <PlayCircle className="h-4 w-4" /> Start therapy
-                  </a>
-                </div>
-              ))}
-              <ClaimForm compact />
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
-}
-
-function ClaimForm({ compact = false }: { compact?: boolean }) {
-  const qc = useQueryClient();
-  const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const claim = code.trim().toUpperCase();
-      if (claim.length !== 8) {
-        toast.error("Enter the 8-character code from your therapist");
-        return;
-      }
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
-
-      // Find the patient by claim code (RLS allows reading unclaimed rows via the update path)
-      const { data: found, error: findErr } = await supabase
-        .from("patients")
-        .update({
-          claimed_by_caregiver_id: userData.user.id,
-          claimed_at: new Date().toISOString(),
-        })
-        .eq("claim_code", claim)
-        .is("claimed_by_caregiver_id", null)
-        .select()
-        .maybeSingle();
-
-      if (findErr) {
-        toast.error(findErr.message);
-        return;
-      }
-      if (!found) {
-        toast.error("Code not found or already used");
-        return;
-      }
-      toast.success(`Linked to ${found.child_name}`);
-      qc.invalidateQueries({ queryKey: ["my-patients"] });
-      setCode("");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div
-      className={`rounded-3xl border border-dashed border-border bg-card p-6 ${
-        compact ? "" : "mt-2"
-      }`}
-    >
-      <div className="grid h-11 w-11 place-items-center rounded-2xl bg-accent text-accent-foreground">
-        <KeyRound className="h-5 w-5" />
-      </div>
-      <h3 className="mt-4 font-display text-xl">
-        {compact ? "Link another child" : "Enter your child's claim code"}
-      </h3>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Your therapist gave you an 8-character code. Enter it here to link your
-        account to your child's plan.
-      </p>
-      <form onSubmit={submit} className="mt-4 flex flex-col gap-3 sm:flex-row">
-        <div className="flex-1 space-y-1.5">
-          <Label htmlFor="claim">Claim code</Label>
-          <Input
-            id="claim"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            maxLength={8}
-            placeholder="e.g. K7HN23PB"
-            className="font-mono tracking-widest"
-          />
+        <div className="mb-6">
+          <h1 className="font-display text-3xl">Karibu, {firstName} 👋</h1>
+          <p className="text-sm text-muted-foreground">
+            Choose a therapy game and begin today's session — no code needed.
+          </p>
         </div>
-        <Button type="submit" className="sm:self-end" disabled={loading}>
-          {loading ? "Linking…" : "Link account"}
-        </Button>
-      </form>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <a
+            href="/neuro-bridge/index.html"
+            className="group rounded-3xl border border-border bg-gradient-to-br from-primary to-primary/70 p-6 text-primary-foreground shadow-md transition-transform hover:-translate-y-0.5"
+          >
+            <PlayCircle className="h-8 w-8" />
+            <p className="mt-4 font-display text-2xl">Start therapy</p>
+            <p className="mt-1 text-sm opacity-90">
+              Guided PT & OT exercises in your language.
+            </p>
+          </a>
+
+          <a
+            href="/neuro-bridge/index.html#libraryScreen"
+            className="rounded-3xl border border-border bg-card p-6 shadow-sm transition-transform hover:-translate-y-0.5"
+          >
+            <BookOpen className="h-8 w-8 text-primary" />
+            <p className="mt-4 font-display text-2xl">Reference library</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Video guides for each exercise.
+            </p>
+          </a>
+
+          <a
+            href="/neuro-bridge/index.html#progressScreen"
+            className="rounded-3xl border border-border bg-card p-6 shadow-sm transition-transform hover:-translate-y-0.5"
+          >
+            <LineChart className="h-8 w-8 text-primary" />
+            <p className="mt-4 font-display text-2xl">Progress</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Track how sessions are going day by day.
+            </p>
+          </a>
+
+          <div className="rounded-3xl border border-dashed border-border bg-card p-6">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Tip
+            </p>
+            <p className="mt-2 font-display text-xl">Set up beside your child</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Prop the phone or tablet so the whole body is visible. Stop if
+              there's pain, dizziness or unusual fatigue.
+            </p>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
