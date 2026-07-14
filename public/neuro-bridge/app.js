@@ -1,8 +1,105 @@
 (function () {
   "use strict";
 
+  // ============================================================
+  // Kenyan languages (42+). en/sw/ki have full UI translations;
+  // others fall back to Swahili or English UI, with a friendly
+  // native-name label on the picker.
+  // ============================================================
+  var languages = [
+    { code: "en",     name: "English",              native: "English",         fallback: "en" },
+    { code: "sw",     name: "Swahili",              native: "Kiswahili",       fallback: "sw" },
+    { code: "ki",     name: "Gikuyu",               native: "Gĩkũyũ",          fallback: "ki" },
+    { code: "luy",    name: "Luhya",                native: "Oluluhya",        fallback: "sw" },
+    { code: "luo",    name: "Luo",                  native: "Dholuo",          fallback: "sw" },
+    { code: "kam",    name: "Kamba",                native: "Kĩkamba",         fallback: "sw" },
+    { code: "kln",    name: "Kalenjin",             native: "Kalenjin",        fallback: "sw" },
+    { code: "kis",    name: "Kisii",                native: "Ekegusii",        fallback: "sw" },
+    { code: "mer",    name: "Meru",                 native: "Kĩmĩrũ",          fallback: "sw" },
+    { code: "emb",    name: "Embu",                 native: "Kĩembu",          fallback: "sw" },
+    { code: "mij",    name: "Mijikenda",            native: "Kimijikenda",     fallback: "sw" },
+    { code: "dig",    name: "Digo",                 native: "Chidigo",         fallback: "sw" },
+    { code: "dug",    name: "Duruma",               native: "Chiduruma",       fallback: "sw" },
+    { code: "nyf",    name: "Giryama",              native: "Kigiryama",       fallback: "sw" },
+    { code: "swk",    name: "Bajuni",               native: "Kibajuni",        fallback: "sw" },
+    { code: "pkm",    name: "Pokomo",               native: "Kipokomo",        fallback: "sw" },
+    { code: "dav",    name: "Taita",                native: "Kidawida",        fallback: "sw" },
+    { code: "seg",    name: "Segeju",               native: "Kisegeju",        fallback: "sw" },
+    { code: "tur",    name: "Turkana",              native: "Ng’aturkana",     fallback: "sw" },
+    { code: "mas",    name: "Maasai",               native: "Maa",             fallback: "sw" },
+    { code: "saq",    name: "Samburu",              native: "Sampur",          fallback: "sw" },
+    { code: "pko",    name: "Pokot",                native: "Pökoot",          fallback: "sw" },
+    { code: "teo",    name: "Teso",                 native: "Ateso",           fallback: "sw" },
+    { code: "kuj",    name: "Kuria",                native: "Igikuria",        fallback: "sw" },
+    { code: "sqm",    name: "Suba",                 native: "Olusuba",         fallback: "sw" },
+    { code: "som",    name: "Somali",               native: "Soomaali",        fallback: "en" },
+    { code: "gax",    name: "Borana",               native: "Boraana",         fallback: "sw" },
+    { code: "rel",    name: "Rendille",             native: "Rendille",        fallback: "sw" },
+    { code: "gbz",    name: "Gabbra",               native: "Gabra",           fallback: "sw" },
+    { code: "orc",    name: "Orma",                 native: "Orma",            fallback: "sw" },
+    { code: "sgc",    name: "Kipsigis",             native: "Kipsigis",        fallback: "sw" },
+    { code: "niq",    name: "Nandi",                native: "Nandi",           fallback: "sw" },
+    { code: "enb",    name: "Marakwet",             native: "Markweeta",       fallback: "sw" },
+    { code: "tug",    name: "Tugen",                native: "Tugen",           fallback: "sw" },
+    { code: "spy",    name: "Sabaot",               native: "Sabaot",          fallback: "sw" },
+    { code: "ter",    name: "Terik",                native: "Terik",           fallback: "sw" },
+    { code: "oki",    name: "Ogiek",                native: "Ogiek",           fallback: "sw" },
+    { code: "sgw",    name: "Sengwer",              native: "Sengwer",         fallback: "sw" },
+    { code: "elm",    name: "El Molo",              native: "El Molo",         fallback: "sw" },
+    { code: "yaa",    name: "Yaaku",                native: "Yaakunte",        fallback: "sw" },
+    { code: "dah",    name: "Dahalo",               native: "Dahalo",          fallback: "sw" },
+    { code: "bon",    name: "Boni / Aweer",         native: "Aweer",           fallback: "sw" },
+    { code: "nub",    name: "Nubi",                 native: "Ki-Nubi",         fallback: "sw" },
+    { code: "swa-sign", name: "Kenyan Sign Language", native: "KSL",           fallback: "en" },
+  ];
+
+  var storedLang = localStorage.getItem("neuroBridgeLanguage") || "en";
+  var currentLang = languages.some(function (l) { return l.code === storedLang; }) ? storedLang : "en";
+
+  // ============================================================
+  // Exercise catalog — Physiotherapy (PT) and Occupational Therapy (OT).
+  // Each entry maps a gamified activity to one of three AI tracking
+  // engines: "arm" (upper limb), "leg" (lower limb), or "balance" (trunk).
+  // ============================================================
+  var catalog = [
+    // ---------- Physiotherapy ----------
+    { id: "arm",         cat: "pt", track: "arm",     icon: "🎈", promptKey: "armPrompt",     titleKey: "armTitle",     nameKey: "armRaise",       subKey: "armGameSub" },
+    { id: "reach",       cat: "pt", track: "arm",     icon: "🍎", promptKey: "reachPrompt",   titleKey: "reachTitle",   nameKey: "reachName",      subKey: "reachSub" },
+    { id: "shoulder",    cat: "pt", track: "arm",     icon: "🌀", promptKey: "shoulderPrompt",titleKey: "shoulderTitle",nameKey: "shoulderName",   subKey: "shoulderSub" },
+    { id: "leg",         cat: "pt", track: "leg",     icon: "⭐", promptKey: "legPrompt",     titleKey: "legTitle",     nameKey: "legKick",        subKey: "legGameSub" },
+    { id: "march",       cat: "pt", track: "leg",     icon: "🥁", promptKey: "marchPrompt",   titleKey: "marchTitle",   nameKey: "marchName",      subKey: "marchSub" },
+    { id: "squat",       cat: "pt", track: "leg",     icon: "🏋️", promptKey: "squatPrompt",   titleKey: "squatTitle",   nameKey: "squatName",      subKey: "squatSub" },
+    { id: "sitstand",    cat: "pt", track: "leg",     icon: "🪑", promptKey: "sitstandPrompt",titleKey: "sitstandTitle",nameKey: "sitstandName",   subKey: "sitstandSub" },
+    { id: "bridge",      cat: "pt", track: "leg",     icon: "🌉", promptKey: "bridgePrompt",  titleKey: "bridgeTitle",  nameKey: "bridgeName",     subKey: "bridgeSub" },
+    { id: "ankle",       cat: "pt", track: "leg",     icon: "🦶", promptKey: "anklePrompt",   titleKey: "ankleTitle",   nameKey: "ankleName",      subKey: "ankleSub" },
+    { id: "balance",     cat: "pt", track: "balance", icon: "💎", promptKey: "balancePrompt", titleKey: "balanceTitle", nameKey: "balanceHold",    subKey: "balanceGameSub" },
+    { id: "gait",        cat: "pt", track: "leg",     icon: "🚶", promptKey: "gaitPrompt",    titleKey: "gaitTitle",    nameKey: "gait",           subKey: "gaitSub" },
+    { id: "trunk",       cat: "pt", track: "arm",     icon: "🌪️", promptKey: "trunkPrompt",   titleKey: "trunkTitle",   nameKey: "trunkName",      subKey: "trunkSub" },
+    { id: "head",        cat: "pt", track: "balance", icon: "👀", promptKey: "headPrompt",    titleKey: "headTitle",    nameKey: "headName",       subKey: "headSub" },
+    { id: "stretch",     cat: "pt", track: "balance", icon: "🧘", promptKey: "stretchPrompt", titleKey: "stretchTitle", nameKey: "stretchName",    subKey: "stretchSub" },
+    { id: "crawl",       cat: "pt", track: "leg",     icon: "🐾", promptKey: "crawlPrompt",   titleKey: "crawlTitle",   nameKey: "crawlName",      subKey: "crawlSub" },
+
+    // ---------- Occupational Therapy ----------
+    { id: "pinch",       cat: "ot", track: "arm",     icon: "🤏", promptKey: "pinchPrompt",   titleKey: "pinchTitle",   nameKey: "pinchName",      subKey: "pinchSub" },
+    { id: "catch",       cat: "ot", track: "arm",     icon: "🧤", promptKey: "catchPrompt",   titleKey: "catchTitle",   nameKey: "catchName",      subKey: "catchSub" },
+    { id: "clap",        cat: "ot", track: "arm",     icon: "👏", promptKey: "clapPrompt",    titleKey: "clapTitle",    nameKey: "clapName",       subKey: "clapSub" },
+    { id: "grip",        cat: "ot", track: "arm",     icon: "✊", promptKey: "gripPrompt",    titleKey: "gripTitle",    nameKey: "gripName",       subKey: "gripSub" },
+    { id: "midline",     cat: "ot", track: "arm",     icon: "🔀", promptKey: "midlinePrompt", titleKey: "midlineTitle", nameKey: "midlineName",    subKey: "midlineSub" },
+    { id: "draw",        cat: "ot", track: "arm",     icon: "✏️", promptKey: "drawPrompt",    titleKey: "drawTitle",    nameKey: "drawName",       subKey: "drawSub" },
+    { id: "dress",       cat: "ot", track: "arm",     icon: "🧥", promptKey: "dressPrompt",   titleKey: "dressTitle",   nameKey: "dressName",      subKey: "dressSub" },
+    { id: "feed",        cat: "ot", track: "arm",     icon: "🥄", promptKey: "feedPrompt",    titleKey: "feedTitle",    nameKey: "feedName",       subKey: "feedSub" },
+    { id: "track",       cat: "ot", track: "balance", icon: "🎯", promptKey: "trackPrompt",   titleKey: "trackTitle",   nameKey: "trackName",      subKey: "trackSub" },
+    { id: "simon",       cat: "ot", track: "arm",     icon: "🧠", promptKey: "simonPrompt",   titleKey: "simonTitle",   nameKey: "simonName",       subKey: "simonSub" },
+    { id: "sensory",     cat: "ot", track: "arm",     icon: "🌈", promptKey: "sensoryPrompt", titleKey: "sensoryTitle", nameKey: "sensoryName",    subKey: "sensorySub" },
+    { id: "bilateral",   cat: "ot", track: "arm",     icon: "🤝", promptKey: "bilatPrompt",   titleKey: "bilatTitle",   nameKey: "bilatName",      subKey: "bilatSub" },
+  ];
+
+  function catalogEntry(id) {
+    for (var i = 0; i < catalog.length; i++) if (catalog[i].id === id) return catalog[i];
+    return catalog[0];
+  }
+
   var targetScore = 8;
-  var currentLang = localStorage.getItem("neuroBridgeLanguage") || "en";
   var currentExercise = "arm";
   var stream = null;
   var score = 0;
@@ -19,6 +116,7 @@
   var lastSuccessAt = 0;
   var steadyStartedAt = 0;
   var targetSide = "left";
+  var categoryFilter = "all"; // "all" | "pt" | "ot"
 
   var videoLibrary = {
     arm: "",
@@ -27,9 +125,15 @@
     gait: "https://www.youtube.com/embed/o71yp4jZHH8",
   };
 
+  // ============================================================
+  // Translations. en/sw/ki are complete; other Kenyan languages
+  // resolve via `fallback` in the language table above.
+  // ============================================================
   var tx = {
     en: {
       chooseLanguage: "Choose a language to begin.",
+      searchLanguage: "Search language…",
+      langFallbackNote: "UI in English while translations for {lang} are being prepared.",
       homeTitle: "Therapy Home",
       startTherapy: "Start Therapy",
       startTherapySub: "Choose a therapy game",
@@ -41,12 +145,9 @@
       remindersSub: "Today’s plan",
       therapyGames: "Therapy games",
       chooseExercise: "Choose Exercise",
-      armRaise: "Arm Raise",
-      legKick: "Leg Kick",
-      balanceHold: "Balance Hold",
-      armGameSub: "Pop balloons by raising the hand.",
-      legGameSub: "Kick toward the glowing side star.",
-      balanceGameSub: "Stay steady to collect balance rings.",
+      catAll: "All",
+      catPT: "Physiotherapy",
+      catOT: "Occupational",
       cameraSetup: "Camera Setup",
       caregiverGuide: "Caregiver guide",
       safetyNote: "Stop if there is pain, dizziness, or unusual fatigue.",
@@ -64,22 +165,14 @@
       referenceVideos: "Reference Videos",
       videoPlaceholder: "Your reference video will appear here.",
       armLibraryCopy: "Guide for safe hand raising and shoulder-height reaching.",
-      legLibraryCopy: "PT instruction: stand on the weak leg, support with the weak arm on a rail, then attempt to kick the stars with the other leg. The caregiver supports from behind if needed.",
-      balanceLibraryCopy: "Gait and balance reference video for safe supported balance practice.",
+      legLibraryCopy: "PT instruction: stand on the weaker leg, hold a rail, then kick with the other leg. Caregiver supports from behind if needed.",
+      balanceLibraryCopy: "Reference for safe supported balance practice.",
+      gaitLibraryCopy: "Reference for assisted walking and step training.",
       localProgress: "Local progress",
       recentSessions: "Recent Sessions",
       today: "Today",
       dailyPlan: "Daily therapy plan",
-      dailyPlanCopy: "Complete one arm, one leg, and one balance session with caregiver support.",
-      armSetup: "Keep the upper body visible. The child raises the hand into the balloon zone.",
-      legSetup: "Stand on the weak leg and support with the weak arm on a rail. Kick the stars with the other leg while the caregiver supports from behind if needed.",
-      balanceSetup: "Keep the full body visible. The child stays steady while supported safely.",
-      armTitle: "Pop the balloons",
-      legTitle: "Kick the stars",
-      balanceTitle: "Hold balance",
-      armPrompt: "Raise your hand",
-      legPrompt: "Kick the glowing star",
-      balancePrompt: "Stay steady",
+      dailyPlanCopy: "Complete one upper-limb, one lower-limb, and one balance session with caregiver support.",
       success: "Good job",
       complete: "Great work today.",
       waiting: "Waiting for movement",
@@ -87,10 +180,40 @@
       bodyMoving: "Large body movement ignored",
       reps: "rewards",
       gait: "Gait",
-      gaitLibraryCopy: "Reference for assisted walking and step training.",
+
+      // Exercise names & game copy
+      armRaise: "Arm Raise", armGameSub: "Pop balloons by raising the hand.", armTitle: "Pop the balloons", armPrompt: "Raise your hand", armSetup: "Keep the upper body visible. The child raises the hand into the balloon zone.",
+      reachName: "Reach & Grasp", reachSub: "Reach for the fruit on the tree.", reachTitle: "Reach the fruit", reachPrompt: "Reach up and grab", reachSetup: "Place a soft toy at shoulder height. The child reaches toward it.",
+      shoulderName: "Shoulder Circles", shoulderSub: "Draw big circles in the air.", shoulderTitle: "Draw sky circles", shoulderPrompt: "Roll your shoulders", shoulderSetup: "Sit or stand tall. Roll the shoulders forward, up, back, and down.",
+      legKick: "Leg Kick", legGameSub: "Kick toward the glowing side star.", legTitle: "Kick the stars", legPrompt: "Kick the glowing star", legSetup: "Stand on the weaker leg holding a rail. Kick the stars with the other leg.",
+      marchName: "Marching", marchSub: "March to the drum beat.", marchTitle: "March to the beat", marchPrompt: "Lift your knees high", marchSetup: "Hold a chair for support. Lift each knee to hip height in time with the beat.",
+      squatName: "Mini Squat", squatSub: "Squat to pick the apple.", squatTitle: "Pick the apple", squatPrompt: "Bend your knees", squatSetup: "Feet shoulder-width apart, hold a rail, bend the knees slightly then rise.",
+      sitstandName: "Sit-to-Stand", sitstandSub: "Stand up to reach the sun.", sitstandTitle: "Reach the sun", sitstandPrompt: "Stand up tall", sitstandSetup: "Sit on a firm chair, feet flat. Stand up slowly, then sit back down.",
+      bridgeName: "Bridge", bridgeSub: "Lift the bridge for the boat.", bridgeTitle: "Lift the bridge", bridgePrompt: "Lift your hips", bridgeSetup: "Lie on the back, knees bent. Slowly lift the hips to make a bridge.",
+      ankleName: "Ankle Pumps", ankleSub: "Push the pedal up and down.", ankleTitle: "Pump the pedal", anklePrompt: "Point and flex your foot", ankleSetup: "Sit with legs out. Push the toes forward then pull them back.",
+      balanceHold: "Balance Hold", balanceGameSub: "Stay steady to collect balance rings.", balanceTitle: "Hold balance", balancePrompt: "Stay steady", balanceSetup: "Full body visible. Child stays steady with caregiver nearby.",
+      gaitSub: "Step forward with the beat.", gaitTitle: "Step by step", gaitPrompt: "Take a step forward", gaitSetup: "Clear a safe path. Take slow steps forward with support.",
+      trunkName: "Trunk Twist", trunkSub: "Twist to catch the flying bird.", trunkTitle: "Catch the bird", trunkPrompt: "Twist your body", trunkSetup: "Sit tall. Twist the upper body left and right slowly.",
+      headName: "Head Control", headSub: "Follow the moving star with your eyes.", headTitle: "Follow the star", headPrompt: "Look at the star", headSetup: "Support the child in sitting. Move a bright object slowly for them to track.",
+      stretchName: "Gentle Stretch", stretchSub: "Hold the stretch like a tree.", stretchTitle: "Grow like a tree", stretchPrompt: "Hold the stretch", stretchSetup: "Slow assisted stretch of tight muscles. Hold each stretch 15–20 seconds.",
+      crawlName: "Crawling", crawlSub: "Crawl to the finish line.", crawlTitle: "Crawl race", crawlPrompt: "Crawl on hands and knees", crawlSetup: "Clear a padded space. Encourage crawling toward a favourite toy.",
+      pinchName: "Pinch & Pick", pinchSub: "Pinch small beads into the cup.", pinchTitle: "Fill the cup", pinchPrompt: "Pinch with fingers", pinchSetup: "Place beads/pom-poms on a tray. Child pinches with thumb and finger.",
+      catchName: "Catch the Ball", catchSub: "Catch the falling ball.", catchTitle: "Catch the ball", catchPrompt: "Catch it!", catchSetup: "Toss a soft ball gently at chest height. Child catches with both hands.",
+      clapName: "Clap Targets", clapSub: "Clap when the target glows.", clapTitle: "Clap the glow", clapPrompt: "Clap now", clapSetup: "Face the camera. Clap in front of the chest each time a target glows.",
+      gripName: "Squeeze the Sponge", gripSub: "Squeeze to fill the meter.", gripTitle: "Fill the meter", gripPrompt: "Squeeze tightly", gripSetup: "Use a soft sponge or stress ball. Squeeze, hold 3 seconds, release.",
+      midlineName: "Cross the Midline", midlineSub: "Reach across the body.", midlineTitle: "Cross over", midlinePrompt: "Reach across your body", midlineSetup: "Place targets on the opposite side of the body. Child reaches across midline.",
+      drawName: "Draw the Shape", drawSub: "Trace the shape in the air.", drawTitle: "Sky drawing", drawPrompt: "Trace the shape", drawSetup: "Use a crayon on paper, or trace shapes in the air with a finger.",
+      dressName: "Buttons & Zips", dressSub: "Practice buttons and zips.", dressTitle: "Get dressed", dressPrompt: "Button and zip", dressSetup: "Use a practice board with large buttons and zips.",
+      feedName: "Spoon Balance", feedSub: "Carry the bead on the spoon.", feedTitle: "Steady spoon", feedPrompt: "Keep the spoon steady", feedSetup: "Place a small bead on a spoon. Child carries it without dropping.",
+      trackName: "Eye Tracking", trackSub: "Follow the dot with your eyes.", trackTitle: "Follow the dot", trackPrompt: "Watch the dot", trackSetup: "Keep the head still. Follow a slow-moving object with the eyes only.",
+      simonName: "Simon Says", simonSub: "Copy the move when Simon says.", simonTitle: "Simon says", simonPrompt: "Do what Simon says", simonSetup: "Caregiver calls out moves. Child copies only when Simon says.",
+      sensoryName: "Texture Hunt", sensorySub: "Touch soft, hard, and bumpy.", sensoryTitle: "Feel the textures", sensoryPrompt: "Touch the texture", sensorySetup: "Prepare 3 textures (soft, rough, bumpy). Child touches each one.",
+      bilatName: "Two-Hand Clap", bilatSub: "Use both hands together.", bilatTitle: "Both hands together", bilatPrompt: "Both hands together", bilatSetup: "Encourage using both hands together — clap, hold, or roll a ball.",
     },
     sw: {
       chooseLanguage: "Chagua lugha kuanza.",
+      searchLanguage: "Tafuta lugha…",
+      langFallbackNote: "Kiolesura kiko Kiswahili wakati tafsiri ya {lang} inaandaliwa.",
       homeTitle: "Nyumbani ya Tiba",
       startTherapy: "Anza Tiba",
       startTherapySub: "Chagua mchezo wa tiba",
@@ -102,163 +225,193 @@
       remindersSub: "Mpango wa leo",
       therapyGames: "Michezo ya tiba",
       chooseExercise: "Chagua Zoezi",
-      armRaise: "Kuinua Mkono",
-      legKick: "Kupiga Teke",
-      balanceHold: "Kushika Mizani",
-      armGameSub: "Pasua baluni kwa kuinua mkono.",
-      legGameSub: "Piga teke upande nyota inapoangaza.",
-      balanceGameSub: "Kaa imara kukusanya pete za mizani.",
+      catAll: "Yote", catPT: "Tiba viungo", catOT: "Ujuzi wa kila siku",
       cameraSetup: "Maandalizi ya Kamera",
       caregiverGuide: "Mwongozo wa mlezi",
       safetyNote: "Simamisha kama kuna maumivu, kizunguzungu, au uchovu usio wa kawaida.",
       cameraHint: "Kamera itaanza ukibonyeza Anza.",
-      useDemo: "Tumia demo",
-      begin: "Anza",
-      voicePrompt: "Sauti ya maelekezo",
-      recalibrate: "Panga upya",
-      sessionComplete: "Kipindi kimekamilika",
-      rewards: "zawadi",
-      seconds: "sekunde",
-      seeProgress: "Tazama maendeleo",
-      home: "Nyumbani",
-      contentLibrary: "Maktaba ya maudhui",
-      referenceVideos: "Video za Rejea",
-      videoPlaceholder: "Video yako ya rejea itaonekana hapa.",
+      useDemo: "Tumia demo", begin: "Anza", voicePrompt: "Sauti ya maelekezo", recalibrate: "Panga upya",
+      sessionComplete: "Kipindi kimekamilika", rewards: "zawadi", seconds: "sekunde", seeProgress: "Tazama maendeleo", home: "Nyumbani",
+      contentLibrary: "Maktaba ya maudhui", referenceVideos: "Video za Rejea", videoPlaceholder: "Video yako ya rejea itaonekana hapa.",
       armLibraryCopy: "Mwongozo wa kuinua mkono kwa usalama hadi usawa wa bega.",
-      legLibraryCopy: "Maelekezo ya PT: simama kwa mguu dhaifu, tumia mkono dhaifu kushika reli, kisha jaribu kupiga nyota kwa mguu mwingine. Mlezi asaidie kwa nyuma ikihitajika.",
-      balanceLibraryCopy: "Video ya rejea ya mwendo na mizani kwa mazoezi salama ya kushikiliwa.",
-      localProgress: "Maendeleo ya kifaa hiki",
-      recentSessions: "Vipindi vya Karibuni",
-      today: "Leo",
+      legLibraryCopy: "Simama kwa mguu dhaifu na shika reli, kisha piga teke kwa mguu mwingine. Mlezi asaidie kwa nyuma ikihitajika.",
+      balanceLibraryCopy: "Video ya mazoezi salama ya kushikilia mizani.",
+      gaitLibraryCopy: "Rejea ya mafunzo ya kutembea kwa msaada.",
+      localProgress: "Maendeleo ya kifaa hiki", recentSessions: "Vipindi vya Karibuni", today: "Leo",
       dailyPlan: "Mpango wa tiba wa kila siku",
-      dailyPlanCopy: "Kamilisha zoezi moja la mkono, mguu, na mizani kwa msaada wa mlezi.",
-      armSetup: "Sehemu ya juu ya mwili ionekane. Mtoto ainua mkono hadi eneo la baluni.",
-      legSetup: "Simama kwa mguu dhaifu na shika reli kwa mkono dhaifu. Piga nyota kwa mguu mwingine huku mlezi akisaidia kwa nyuma ikihitajika.",
-      balanceSetup: "Mwili mzima uonekane. Mtoto akae imara akiwa salama na kusaidiwa.",
-      armTitle: "Pasua baluni",
-      legTitle: "Piga nyota",
-      balanceTitle: "Shika mizani",
-      armPrompt: "Inua mkono",
-      legPrompt: "Piga teke kuelekea nyota",
-      balancePrompt: "Kaa imara",
-      success: "Hongera",
-      complete: "Kazi nzuri leo.",
-      waiting: "Inasubiri mwendo",
-      detected: "Mwendo umetambuliwa",
-      bodyMoving: "Mwendo mkubwa wa mwili umepuuzwa",
-      reps: "zawadi",
+      dailyPlanCopy: "Kamilisha zoezi moja la mkono, moja la mguu, na moja la mizani kwa msaada wa mlezi.",
+      success: "Hongera", complete: "Kazi nzuri leo.", waiting: "Inasubiri mwendo", detected: "Mwendo umetambuliwa", bodyMoving: "Mwendo mkubwa umepuuzwa", reps: "zawadi",
       gait: "Mwendo wa Miguu",
-      gaitLibraryCopy: "Rejea ya mafunzo ya kutembea kwa msaada na hatua salama.",
+
+      armRaise: "Kuinua Mkono", armGameSub: "Pasua baluni kwa kuinua mkono.", armTitle: "Pasua baluni", armPrompt: "Inua mkono", armSetup: "Sehemu ya juu ya mwili ionekane. Mtoto ainua mkono hadi eneo la baluni.",
+      reachName: "Fikia na Kushika", reachSub: "Fikia matunda juu ya mti.", reachTitle: "Fikia tunda", reachPrompt: "Fikia juu ushike", reachSetup: "Weka toy laini kwenye usawa wa bega. Mtoto afikie kwa mkono.",
+      shoulderName: "Mizunguko ya Bega", shoulderSub: "Chora duara angani.", shoulderTitle: "Chora duara", shoulderPrompt: "Zungusha mabega", shoulderSetup: "Kaa au simama vizuri. Zungusha mabega mbele, juu, nyuma, chini.",
+      legKick: "Kupiga Teke", legGameSub: "Piga teke upande nyota inapoangaza.", legTitle: "Piga nyota", legPrompt: "Piga teke kuelekea nyota", legSetup: "Simama kwa mguu dhaifu ukishika reli. Piga nyota kwa mguu mwingine.",
+      marchName: "Kutembea Kimoja", marchSub: "Tembea kwa mdundo.", marchTitle: "Tembea kwa mdundo", marchPrompt: "Inua magoti juu", marchSetup: "Shika kiti kwa msaada. Inua kila goti hadi kiuno kwa mdundo.",
+      squatName: "Mini Squat", squatSub: "Inama uchukue tunda.", squatTitle: "Chukua tunda", squatPrompt: "Kunja magoti", squatSetup: "Miguu upana wa mabega, shika reli, kunja magoti kidogo kisha simama.",
+      sitstandName: "Kaa-Simama", sitstandSub: "Simama kufikia jua.", sitstandTitle: "Fikia jua", sitstandPrompt: "Simama vizuri", sitstandSetup: "Kaa kwenye kiti kigumu, miguu chini. Simama polepole kisha kaa tena.",
+      bridgeName: "Daraja", bridgeSub: "Inua daraja kwa mashua.", bridgeTitle: "Inua daraja", bridgePrompt: "Inua kiuno", bridgeSetup: "Lala mgongoni, magoti yamekunjwa. Inua kiuno taratibu.",
+      ankleName: "Kusukuma Vifundo", ankleSub: "Sukuma pedali juu chini.", ankleTitle: "Sukuma pedali", anklePrompt: "Nyoosha na kunja mguu", ankleSetup: "Kaa miguu nyoofu. Sukuma vidole mbele kisha rudisha nyuma.",
+      balanceHold: "Kushika Mizani", balanceGameSub: "Kaa imara kukusanya pete za mizani.", balanceTitle: "Shika mizani", balancePrompt: "Kaa imara", balanceSetup: "Mwili mzima uonekane. Mtoto akae imara akiwa salama.",
+      gaitSub: "Piga hatua mbele kwa mdundo.", gaitTitle: "Hatua kwa hatua", gaitPrompt: "Piga hatua mbele", gaitSetup: "Weka njia salama. Piga hatua polepole ukiwa na msaada.",
+      trunkName: "Mzungusho wa Kifua", trunkSub: "Zungusha kukamata ndege.", trunkTitle: "Kamata ndege", trunkPrompt: "Zungusha mwili", trunkSetup: "Kaa wima. Zungusha mwili wa juu kushoto na kulia polepole.",
+      headName: "Udhibiti wa Kichwa", headSub: "Fuata nyota kwa macho.", headTitle: "Fuata nyota", headPrompt: "Tazama nyota", headSetup: "Mtoto akikaa akisaidiwa, sogeza kitu angavu polepole afuate kwa macho.",
+      stretchName: "Kunyoosha Taratibu", stretchSub: "Shika mkao kama mti.", stretchTitle: "Kua kama mti", stretchPrompt: "Shika mkao", stretchSetup: "Kunyoosha polepole misuli iliyokaza. Shika kila kunyoosha sekunde 15–20.",
+      crawlName: "Kutambaa", crawlSub: "Tambaa hadi mstari wa mwisho.", crawlTitle: "Mbio za kutambaa", crawlPrompt: "Tambaa kwa mikono na magoti", crawlSetup: "Weka sehemu laini. Himiza kutambaa kuelekea toy.",
+      pinchName: "Bana na Chukua", pinchSub: "Bana shanga kuweka kikombeni.", pinchTitle: "Jaza kikombe", pinchPrompt: "Bana kwa vidole", pinchSetup: "Weka shanga kwenye trei. Mtoto abane kwa dole gumba na kidole.",
+      catchName: "Kamata Mpira", catchSub: "Kamata mpira ukianguka.", catchTitle: "Kamata mpira", catchPrompt: "Kamata!", catchSetup: "Tupa mpira laini polepole kifuani. Mtoto akamate kwa mikono miwili.",
+      clapName: "Piga Makofi Malengo", clapSub: "Piga makofi lengo linapoangaza.", clapTitle: "Piga makofi", clapPrompt: "Piga makofi sasa", clapSetup: "Elekea kamera. Piga makofi mbele ya kifua kila lengo linapoangaza.",
+      gripName: "Kubana Sifongo", gripSub: "Bana kujaza kipimo.", gripTitle: "Jaza kipimo", gripPrompt: "Bana kwa nguvu", gripSetup: "Tumia sifongo laini. Bana, shika sekunde 3, achia.",
+      midlineName: "Vuka Katikati", midlineSub: "Fikia upande wa pili.", midlineTitle: "Vuka", midlinePrompt: "Fikia upande wa pili", midlineSetup: "Weka malengo upande wa pili. Mtoto afikie akivuka katikati.",
+      drawName: "Chora Umbo", drawSub: "Fuatilia umbo angani.", drawTitle: "Chora angani", drawPrompt: "Fuatilia umbo", drawSetup: "Tumia krayoni au chora angani kwa kidole.",
+      dressName: "Vifungo na Zipu", dressSub: "Zoezea vifungo na zipu.", dressTitle: "Vaa nguo", dressPrompt: "Funga na fungua", dressSetup: "Tumia ubao wa mazoezi wenye vifungo vikubwa na zipu.",
+      feedName: "Kijiko Imara", feedSub: "Beba shanga kwa kijiko.", feedTitle: "Kijiko imara", feedPrompt: "Kijiko kikae imara", feedSetup: "Weka shanga ndogo kwenye kijiko. Mtoto akibebe bila kuangusha.",
+      trackName: "Kufuatilia kwa Macho", trackSub: "Fuata dodo kwa macho.", trackTitle: "Fuata dodo", trackPrompt: "Angalia dodo", trackSetup: "Kichwa kiwe kimya. Fuata kitu kinachosogea polepole kwa macho tu.",
+      simonName: "Simon Anasema", simonSub: "Rudia Simon anaposema.", simonTitle: "Simon anasema", simonPrompt: "Fanya Simon anachosema", simonSetup: "Mlezi asema vitendo. Mtoto arudie tu Simon anaposema.",
+      sensoryName: "Uchunguzi wa Miundo", sensorySub: "Gusa laini, gumu, na yenye matuta.", sensoryTitle: "Hisi miundo", sensoryPrompt: "Gusa mundo", sensorySetup: "Andaa miundo 3 (laini, gumu, matuta). Mtoto aguse kila moja.",
+      bilatName: "Makofi ya Mikono Miwili", bilatSub: "Tumia mikono miwili pamoja.", bilatTitle: "Mikono miwili pamoja", bilatPrompt: "Mikono miwili pamoja", bilatSetup: "Himiza kutumia mikono miwili pamoja — kupiga makofi, kushika au kuviringisha mpira.",
     },
     ki: {
       chooseLanguage: "Thuura rũthiomi rwa kwambĩrĩria.",
+      searchLanguage: "Caria rũthiomi…",
+      langFallbackNote: "Kĩoneki gĩkĩrĩ na Gĩkũyũ o rĩrĩa tũrahaarĩria tarati ya {lang}.",
       homeTitle: "Mũciĩ wa Ũhonia",
-      startTherapy: "Ambĩrĩria Ũhonia",
-      startTherapySub: "Thuura thaka ya ũhonia",
-      library: "Ngathĩti",
-      librarySub: "Vidio na mĩtaratara ya kũrora",
-      progress: "Ũthiĩ na Mbere",
-      progressSub: "Rora ihinda iria ciahonoketio",
-      reminders: "Ciugo cia Kũririkania",
-      remindersSub: "Mũbango wa ũmũthĩ",
-      therapyGames: "Thaka cia ũhonia",
-      chooseExercise: "Thuura Mũthethania",
-      armRaise: "Kũambararia Guoko",
-      legKick: "Kũringa na Kũgũrũ",
-      balanceHold: "Kũrũgama Wega",
-      armGameSub: "Tũraga mĩbũmbũ na kũambararia guoko.",
-      legGameSub: "Ringa na kũgũrũ kũrĩa njata ĩraara.",
-      balanceGameSub: "Ikara ũrũgamĩte wega ũcokanĩrĩrie mĩcĩrĩnga.",
-      cameraSetup: "Kũhaarĩria Kamera",
-      caregiverGuide: "Mũtaaro wa mũmũmenyereri",
+      startTherapy: "Ambĩrĩria Ũhonia", startTherapySub: "Thuura thaka ya ũhonia",
+      library: "Ngathĩti", librarySub: "Vidio na mĩtaratara ya kũrora",
+      progress: "Ũthiĩ na Mbere", progressSub: "Rora ihinda iria ciahonoketio",
+      reminders: "Ciugo cia Kũririkania", remindersSub: "Mũbango wa ũmũthĩ",
+      therapyGames: "Thaka cia ũhonia", chooseExercise: "Thuura Mũthethania",
+      catAll: "Ciothe", catPT: "Ũhonia wa mwĩrĩ", catOT: "Wĩra wa o mũthenya",
+      cameraSetup: "Kũhaarĩria Kamera", caregiverGuide: "Mũtaaro wa mũmũmenyereri",
       safetyNote: "Tigithĩria angĩkorwo nĩ kũrĩ ruo, kĩrigicano, kana mũnoga mũnene.",
       cameraHint: "Kamera ĩkwambĩrĩria wahĩnyĩra Ambĩrĩria.",
-      useDemo: "Hũthĩra mũthemba wa kuonania",
-      begin: "Ambĩrĩria",
-      voicePrompt: "Mũgambo wa mũtaaro",
-      recalibrate: "Haarĩria Rĩngĩ",
-      sessionComplete: "Ihinda nĩ rĩathira",
-      rewards: "irathimo",
-      seconds: "thekondi",
-      seeProgress: "Rora ũthiĩ na mbere",
-      home: "Mũciĩ",
-      contentLibrary: "Ngathĩti ya maũndũ",
-      referenceVideos: "Vidio cia Kũrora",
-      videoPlaceholder: "Vidio yaku ya kũrora nĩyo ĩkuonekana haha.",
-      armLibraryCopy: "Mũtaaro wa kũambararia guoko na ũhoro wa kũigana kĩande.",
-      legLibraryCopy: "Mataaro ma mũthondeki: rũgama na kũgũrũ kũrĩa kũrĩ na hinya mũnini, ũnyiitĩrĩre na guoko kũrĩa kũrĩ na hinya mũnini, ũcoke ũgerie kũringa njata na kũgũrũ kũngĩ. Mũmũmenyereri amũteithagie na thuutha kũngĩbatarania.",
-      balanceLibraryCopy: "Mũtaaro wa kũrũgama wega ũrĩ na ũteithio mwega.",
-      gait: "Mwĩtĩkanio wa Magũrũ",
-      gaitLibraryCopy: "Vidio ya kũrora ya kwĩruta gũthiĩ na hatua na ũteithio.",
-      localProgress: "Ũthiĩ na mbere wa ũyũ mũtambo",
-      recentSessions: "Ihinda iria cia Mahinda mathaa",
-      today: "Ũmũthĩ",
+      useDemo: "Hũthĩra mũthemba wa kuonania", begin: "Ambĩrĩria", voicePrompt: "Mũgambo wa mũtaaro", recalibrate: "Haarĩria Rĩngĩ",
+      sessionComplete: "Ihinda nĩ rĩathira", rewards: "irathimo", seconds: "thekondi", seeProgress: "Rora ũthiĩ na mbere", home: "Mũciĩ",
+      contentLibrary: "Ngathĩti ya maũndũ", referenceVideos: "Vidio cia Kũrora", videoPlaceholder: "Vidio yaku ya kũrora nĩyo ĩkuonekana haha.",
+      armLibraryCopy: "Mũtaaro wa kũambararia guoko nginya ũhoro wa kĩande.",
+      legLibraryCopy: "Rũgama na kũgũrũ kũrĩa kũhũthĩ, ũnyiitĩrĩre mũrarara, ũcoke ũringe njata na kũgũrũ kũngĩ.",
+      balanceLibraryCopy: "Mũtaaro wa kũrũgama wega ũrĩ na ũteithio.",
+      gaitLibraryCopy: "Vidio ya kũrora ya kwĩruta gũthiĩ na hatua.",
+      localProgress: "Ũthiĩ na mbere wa ũyũ mũtambo", recentSessions: "Ihinda cia Mathaa", today: "Ũmũthĩ",
       dailyPlan: "Mũbango wa ũhonia wa o mũthenya",
-      dailyPlanCopy: "Thondeka ũthethania ũmwe wa guoko, ũmwe wa kũgũrũ, na ũmwe wa kũrũgama wega na ũteithio wa mũmũmenyereri.",
-      armSetup: "Tigĩrĩra mwĩrĩ wa igũrũ wonekane. Mwana aambararie guoko nginya handũ ha mĩbũmbũ.",
-      legSetup: "Rũgama na kũgũrũ kũrĩa kũrĩ na hinya mũnini, ũnyiite mũrarara na guoko kũrĩa kũrĩ na hinya mũnini. Ringa njata na kũgũrũ kũngĩ, mũmũmenyereri akũteithagie na thuutha kũngĩbatarania.",
-      balanceSetup: "Tigĩrĩra mwĩrĩ wothe wonekane. Mwana akare arũgamĩte wega arĩ na ũteithio mũrũmu.",
-      armTitle: "Tũra mĩbũmbũ",
-      legTitle: "Ringa njata",
-      balanceTitle: "Rũgama wega",
-      armPrompt: "Ambararia guoko",
-      legPrompt: "Ringa njata na kũgũrũ",
-      balancePrompt: "Ikara ũrũgamĩte",
-      success: "Wĩka wega",
-      complete: "Wĩka wega mũno ũmũthĩ.",
-      waiting: "Njetereire mwĩtĩkanio",
-      detected: "Mwĩtĩkanio nĩ wonwo",
-      bodyMoving: "Kũinaina mũnene kwa mwĩrĩ gũtigĩtwo",
-      reps: "irathimo",
+      dailyPlanCopy: "Thondeka ũthethania ũmwe wa guoko, ũmwe wa kũgũrũ, na ũmwe wa kũrũgama wega.",
+      success: "Wĩka wega", complete: "Wĩka wega mũno ũmũthĩ.", waiting: "Njetereire mwĩtĩkanio", detected: "Mwĩtĩkanio nĩ wonwo", bodyMoving: "Kũinaina kũnene gũtigĩtwo", reps: "irathimo",
+      gait: "Mwĩtĩkanio wa Magũrũ",
+
+      armRaise: "Kũambararia Guoko", armGameSub: "Tũraga mĩbũmbũ na kũambararia guoko.", armTitle: "Tũra mĩbũmbũ", armPrompt: "Ambararia guoko", armSetup: "Tigĩrĩra mwĩrĩ wa igũrũ wonekane. Mwana aambararie guoko nginya handũ ha mĩbũmbũ.",
+      reachName: "Kũhũrũrũka na Kũnyiita", reachSub: "Hũrũrũka ũnyiite matunda mũtĩ-inĩ.", reachTitle: "Nyiita itunda", reachPrompt: "Nyita igũrũ", reachSetup: "Iga toy ya kĩande. Mwana aigue akũnyita.",
+      shoulderName: "Mĩthiũrũrĩko ya Kĩande", shoulderSub: "Andĩka mĩthiũrũrĩko igũrũ.", shoulderTitle: "Andĩka igũrũ", shoulderPrompt: "Thiũrũrũkia makĩande", shoulderSetup: "Ikara kana rũgama wega. Thiũrũrũkia makĩande mbere, igũrũ, thutha, thĩ.",
+      legKick: "Kũringa na Kũgũrũ", legGameSub: "Ringa na kũgũrũ kũrĩa njata ĩraara.", legTitle: "Ringa njata", legPrompt: "Ringa njata na kũgũrũ", legSetup: "Rũgama na kũgũrũ kũhũthĩ, ũnyiite mũrarara, ũringe njata na kũgũrũ kũngĩ.",
+      marchName: "Kũrĩrĩmbũka", marchSub: "Rĩrĩmbũka na mũgambo.", marchTitle: "Rĩrĩmbũka", marchPrompt: "Ambararia maru igũrũ", marchSetup: "Nyiitĩrĩra gĩti. Ambararia iru rĩmwe rĩmwe nginya kĩanda.",
+      squatName: "Kũinamĩria Kwanini", squatSub: "Inamĩrĩria unyiite itunda.", squatTitle: "Nyita itunda", squatPrompt: "Kunja maru", squatSetup: "Magũrũ ũrĩa ma kĩande, ũnyiite mũrarara, kunja maru kanini ũcoke ũrũgame.",
+      sitstandName: "Ikara-Rũgama", sitstandSub: "Rũgama ũnyiite riũa.", sitstandTitle: "Nyiita riũa", sitstandPrompt: "Rũgama wega", sitstandSetup: "Ikara gĩtĩ-inĩ, magũrũ thĩ. Rũgama kahora ũcoke ũikare.",
+      bridgeName: "Rĩrarara", bridgeSub: "Ambararia rĩrarara.", bridgeTitle: "Ambararia rĩrarara", bridgePrompt: "Ambararia njohe", bridgeSetup: "Kama mũgongo, maru mekunge. Ambararia njohe kahora.",
+      ankleName: "Kũinaria Nyũgũto", ankleSub: "Kinyĩrĩria pedali igũrũ thĩ.", ankleTitle: "Kinyĩria pedali", anklePrompt: "Tambũrũkia na kũnja kũgũrũ", ankleSetup: "Ikara magũrũ matambũrũkĩte. Kinyĩrĩria ciara mbere ũcoke ũirihie.",
+      balanceHold: "Kũrũgama Wega", balanceGameSub: "Ikara ũrũgamĩte wega ũcokanĩrĩrie mĩcĩrĩnga.", balanceTitle: "Rũgama wega", balancePrompt: "Ikara ũrũgamĩte", balanceSetup: "Mwĩrĩ wothe wonekane. Mwana akare arũgamĩte wega arĩ na ũteithio.",
+      gaitSub: "Hatha mbere na mũgambo.", gaitTitle: "Hatha kũmũ hatha", gaitPrompt: "Hatha mbere", gaitSetup: "Iga njĩra njega. Hatha kahora na ũteithio.",
+      trunkName: "Kũthiũrũka Nda", trunkSub: "Thiũrũka ũnyiite nyoni.", trunkTitle: "Nyiita nyoni", trunkPrompt: "Thiũrũka mwĩrĩ", trunkSetup: "Ikara wega. Thiũrũkia mwĩrĩ wa igũrũ mwena wa ũmotho na wa ũrĩo kahora.",
+      headName: "Kũnyiitĩrĩra Mũtwe", headSub: "Rũmĩrĩra njata na maitho.", headTitle: "Rũmĩrĩra njata", headPrompt: "Cũthĩrĩria njata", headSetup: "Mwana aikarĩte akĩteithagio, hunja kĩndũ kĩrahenia kahora arũmĩrĩrie na maitho.",
+      stretchName: "Kũtambũrũkia", stretchSub: "Ikara ũtambũrũkĩte ta mũtĩ.", stretchTitle: "Kũra ta mũtĩ", stretchPrompt: "Nyiita mũtambũrũko", stretchSetup: "Tambũrũkia kahora nyama ciohereire. Nyiita o mũtambũrũko thekondi 15–20.",
+      crawlName: "Kũhũtha", crawlSub: "Hũtha nginya mũtaro-inĩ.", crawlTitle: "Ihenya cia kũhũtha", crawlPrompt: "Hũtha na moko na maru", crawlSetup: "Iga handũ ha kũhũtha ha ũhoro. Ĩrĩra mwana ahũthe nginya toy yake.",
+      pinchName: "Nyiitĩrĩria Njeni", pinchSub: "Nyita njeni ũigĩrĩrĩre gĩkombe-inĩ.", pinchTitle: "Ĩyũria gĩkombe", pinchPrompt: "Nyiitĩrĩria na ciara", pinchSetup: "Iga njeni thĩinĩ wa trei. Mwana anyiite na kĩara na gĩkĩrũ.",
+      catchName: "Nyiita Mũpĩra", catchSub: "Nyita mũpĩra ũkĩgũa.", catchTitle: "Nyiita mũpĩra", catchPrompt: "Nyiita!", catchSetup: "Ikĩrĩria mũpĩra mũhũthũ kahora nginya kĩfua-inĩ. Mwana anyiite na moko meerĩ.",
+      clapName: "Hũra Ihũũra", clapSub: "Hũra hĩndĩ ĩrĩa handũ hakĩhenia.", clapTitle: "Hũra hakĩhenia", clapPrompt: "Hũra rĩu", clapSetup: "Rora kamera. Hũra ihũũra mbere ya kĩfua o hĩndĩ handũ hakahenia.",
+      gripName: "Kũhũtha Sponji", gripSub: "Hũtha kũĩyũria mwĩgereri.", gripTitle: "Ĩyũria mwĩgereri", gripPrompt: "Hũtha na hinya", gripSetup: "Hũthĩra sponji ĩhũthũ. Hũtha, tũma thekondi 3, ũrekie.",
+      midlineName: "Ringa Gatagatĩ", midlineSub: "Kinyĩrĩria mwena ũngĩ.", midlineTitle: "Ringa gatagatĩ", midlinePrompt: "Kinyĩria mwena ũngĩ", midlineSetup: "Iga malengo mwena ũngĩ wa mwĩrĩ. Mwana akinyĩrĩrie akiringaga gatagatĩ.",
+      drawName: "Andĩka Mũthemba", drawSub: "Rũmĩrĩra mũthemba igũrũ.", drawTitle: "Kũandĩka igũrũ", drawPrompt: "Rũmĩrĩra mũthemba", drawSetup: "Hũthĩra kraioni thĩ ya karatathi kana andĩka rĩera-inĩ na kĩara.",
+      dressName: "Mabatani na Zipu", dressSub: "Ĩrutĩra mabatani na zipu.", dressTitle: "Ĩhumbĩra", dressPrompt: "Oha na wohore", dressSetup: "Hũthĩra bao ya kwĩruta ĩrĩ na mabatani manene na zipu.",
+      feedName: "Gĩko Kĩrũmu", feedSub: "Kua njeni na gĩko.", feedTitle: "Gĩko kĩrũmu", feedPrompt: "Nyiita gĩko kĩrũmu", feedSetup: "Iga njeni nini gĩko-inĩ. Mwana akue atarĩ kũgũithia.",
+      trackName: "Gũthũngũrũria na Maitho", trackSub: "Rũmĩrĩra dodo na maitho.", trackTitle: "Rũmĩrĩra dodo", trackPrompt: "Rora dodo", trackSetup: "Mũtwe ũtige gũthiĩ. Rũmĩrĩria kĩndũ kĩrahũnja kahora na maitho tu.",
+      simonName: "Simon Aroga", simonSub: "Rũmĩrĩra Simon oga.", simonTitle: "Simon aroga", simonPrompt: "Ĩka Simon aroga", simonSetup: "Mũmũmenyereri oge ciĩko. Mwana arũmĩrĩrie tu Simon aroga.",
+      sensoryName: "Gũthethania Mĩthemba", sensorySub: "Hutia kĩhũthũ, kĩũmu na gĩkĩrĩ na matuta.", sensoryTitle: "Hutia mĩthemba", sensoryPrompt: "Hutia mũthemba", sensorySetup: "Haarĩria mĩthemba 3 (mĩhũthũ, mĩũmu, ĩrĩ na matuta). Mwana ahutie o ũmwe.",
+      bilatName: "Ihũũra cia Moko Meerĩ", bilatSub: "Hũthĩra moko meerĩ hamwe.", bilatTitle: "Moko meerĩ hamwe", bilatPrompt: "Moko meerĩ hamwe", bilatSetup: "Ĩrĩra mwana ahũthĩre moko meerĩ hamwe — kũhũra ihũũra, kũnyiita kana kũviringithia mũpĩra.",
     },
   };
-
-  var exerciseNames = { arm: "armRaise", leg: "legKick", balance: "balanceHold" };
 
   document.addEventListener("DOMContentLoaded", init);
   if (document.readyState !== "loading") init();
 
   function init() {
+    renderLanguageGrid();
+    renderExerciseGrid();
     applyTranslations();
     renderVideoSlots();
-    document.querySelectorAll(".language-card").forEach(function (button) {
-      button.addEventListener("click", function () {
-        currentLang = button.dataset.lang;
-        localStorage.setItem("neuroBridgeLanguage", currentLang);
-        applyTranslations();
-        renderVideoSlots();
-        showScreen("homeScreen");
-      });
-    });
     document.addEventListener("click", function (event) {
       var go = event.target.closest("[data-go]");
       if (go) showScreen(go.dataset.go);
       var ex = event.target.closest("[data-exercise]");
       if (ex) selectExercise(ex.dataset.exercise);
+      var lang = event.target.closest("[data-lang]");
+      if (lang) {
+        currentLang = lang.dataset.lang;
+        localStorage.setItem("neuroBridgeLanguage", currentLang);
+        applyTranslations();
+        renderVideoSlots();
+        renderExerciseGrid();
+        showScreen("homeScreen");
+      }
+      var cat = event.target.closest("[data-cat]");
+      if (cat) {
+        categoryFilter = cat.dataset.cat;
+        document.querySelectorAll("[data-cat]").forEach(function (c) {
+          c.classList.toggle("active", c.dataset.cat === categoryFilter);
+        });
+        renderExerciseGrid();
+      }
     });
-    byId("beginSessionButton").addEventListener("click", function () {
-      demoMode = false;
-      beginSession();
-    });
-    byId("demoModeButton").addEventListener("click", function () {
-      demoMode = true;
-      beginSession();
-    });
-    byId("exitSessionButton").addEventListener("click", function () {
-      endSession(false);
-      showScreen("homeScreen");
-    });
-    byId("speakButton").addEventListener("click", function () {
-      speak(promptForExercise());
-    });
+    var searchInput = byId("languageSearch");
+    if (searchInput) {
+      searchInput.addEventListener("input", function () {
+        renderLanguageGrid(searchInput.value);
+      });
+    }
+    byId("beginSessionButton").addEventListener("click", function () { demoMode = false; beginSession(); });
+    byId("demoModeButton").addEventListener("click", function () { demoMode = true; beginSession(); });
+    byId("exitSessionButton").addEventListener("click", function () { endSession(false); showScreen("homeScreen"); });
+    byId("speakButton").addEventListener("click", function () { speak(promptForExercise()); });
     byId("recalibrateButton").addEventListener("click", resetTracking);
     drawProgress();
   }
 
+  function renderLanguageGrid(filter) {
+    var grid = byId("languageGrid");
+    if (!grid) return;
+    var f = (filter || "").trim().toLowerCase();
+    var list = languages.filter(function (l) {
+      if (!f) return true;
+      return (l.name + " " + l.native + " " + l.code).toLowerCase().indexOf(f) !== -1;
+    });
+    grid.innerHTML = list.map(function (l) {
+      var isPrimary = l.code === "en" || l.code === "sw" || l.code === "ki";
+      return '<button class="language-card ' + (isPrimary ? "primary-lang" : "") + '" data-lang="' + l.code + '">' +
+        '<strong>' + l.native + '</strong>' +
+        '<span>' + l.name + '</span>' +
+        (isPrimary ? '<em class="lang-badge">Full translation</em>' : '') +
+      '</button>';
+    }).join("");
+  }
+
+  function renderExerciseGrid() {
+    var grid = byId("exerciseGrid");
+    if (!grid) return;
+    var list = catalog.filter(function (e) {
+      return categoryFilter === "all" || e.cat === categoryFilter;
+    });
+    grid.innerHTML = list.map(function (e) {
+      return '<button class="exercise-card" data-exercise="' + e.id + '">' +
+        '<span class="exercise-emoji">' + e.icon + '</span>' +
+        '<strong>' + t(e.nameKey) + '</strong>' +
+        '<small>' + t(e.subKey) + '</small>' +
+        '<em class="ex-tag">' + (e.cat === "pt" ? t("catPT") : t("catOT")) + '</em>' +
+      '</button>';
+    }).join("");
+  }
+
   function selectExercise(type) {
     currentExercise = type;
-    byId("setupExerciseLabel").textContent = t(exerciseNames[type]);
-    byId("setupInstruction").textContent = t(type + "Setup");
+    var entry = catalogEntry(type);
+    byId("setupExerciseLabel").textContent = t(entry.nameKey);
+    byId("setupInstruction").textContent = t(entry.id + "Setup") || t(entry.track + "Setup") || "";
     showScreen("setupScreen");
     startCamera();
   }
@@ -271,10 +424,20 @@
   }
 
   function applyTranslations() {
+    var lang = getLanguage(currentLang);
     document.documentElement.lang = currentLang;
     document.querySelectorAll("[data-i18n]").forEach(function (node) {
       node.textContent = t(node.dataset.i18n);
     });
+    var note = byId("langFallbackNote");
+    if (note) {
+      if (lang.fallback !== lang.code) {
+        note.textContent = t("langFallbackNote").replace("{lang}", lang.native + " (" + lang.name + ")");
+        note.classList.add("show");
+      } else {
+        note.classList.remove("show");
+      }
+    }
   }
 
   function renderVideoSlots() {
@@ -292,7 +455,7 @@
         slot.innerHTML = '<iframe title="' + key + ' reference video" src="' + src + '" loading="lazy" allowfullscreen></iframe>';
       } else if (/\.mp4($|\?)/i.test(src)) {
         slot.innerHTML = '<video controls playsinline src="' + src + '"></video>';
-      } else if (/youtube|youtu\.be|vimeo|choosept|https?:\/\//i.test(src)) {
+      } else if (/youtube|youtu\.be|vimeo|https?:\/\//i.test(src)) {
         slot.innerHTML = '<a class="video-link" href="' + src + '" target="_blank" rel="noreferrer">Open video</a>';
       } else {
         slot.innerHTML = '<video controls playsinline src="' + src + '"></video>';
@@ -302,13 +465,14 @@
 
   function beginSession() {
     startCamera().then(function () {
+      var entry = catalogEntry(currentExercise);
       score = 0;
       active = true;
       sessionStart = Date.now();
       byId("scoreCount").textContent = score;
       byId("targetCount").textContent = targetScore;
-      byId("sessionTypeLabel").textContent = t(exerciseNames[currentExercise]);
-      byId("sessionTitle").textContent = t(currentExercise + "Title");
+      byId("sessionTypeLabel").textContent = t(entry.nameKey);
+      byId("sessionTitle").textContent = t(entry.titleKey);
       byId("promptBubble").textContent = promptForExercise();
       byId("motionReadout").textContent = t("waiting");
       resetTracking();
@@ -348,21 +512,16 @@
         poseBusy = true;
         poseModel.send({ image: video }).catch(function () { poseBusy = false; });
       }
-      if (poseReady) {
-        byId("cameraStatus").textContent = "Pose detection active. Ready to begin.";
-      }
+      if (poseReady) byId("cameraStatus").textContent = "Pose detection active. Ready to begin.";
       setTimeout(tick, 120);
     };
     tick();
   }
 
-
   function initPoseModel() {
     if (poseModel || !window.Pose) return;
     poseModel = new Pose({
-      locateFile: function (file) {
-        return "https://cdn.jsdelivr.net/npm/@mediapipe/pose/" + file;
-      },
+      locateFile: function (file) { return "https://cdn.jsdelivr.net/npm/@mediapipe/pose/" + file; },
     });
     poseModel.setOptions({
       modelComplexity: 1,
@@ -372,10 +531,7 @@
       minTrackingConfidence: 0.55,
     });
     poseModel.onResults(function (results) {
-      if (results.poseLandmarks) {
-        lastPose = results.poseLandmarks;
-        poseReady = true;
-      }
+      if (results.poseLandmarks) { lastPose = results.poseLandmarks; poseReady = true; }
       poseBusy = false;
     });
   }
@@ -390,47 +546,36 @@
 
   function renderTarget() {
     var layer = byId("targetLayer");
-    layer.className = currentExercise + "-targets";
-    if (currentExercise === "arm") layer.innerHTML = '<div class="target-zone top-zone">Hand target</div><div class="balloon reward-object"></div>';
-    if (currentExercise === "leg") {
+    var entry = catalogEntry(currentExercise);
+    layer.className = entry.track + "-targets";
+    if (entry.track === "arm") layer.innerHTML = '<div class="target-zone top-zone">' + entry.icon + ' ' + t(entry.titleKey) + '</div><div class="balloon reward-object">' + entry.icon + '</div>';
+    else if (entry.track === "leg") {
       targetSide = Math.random() > 0.5 ? "right" : "left";
-      layer.innerHTML = '<div class="star-target ' + targetSide + '">☆</div>';
+      layer.innerHTML = '<div class="star-target ' + targetSide + '">' + entry.icon + '</div>';
+    } else {
+      layer.innerHTML = '<div class="balance-ring reward-object">' + entry.icon + '</div>';
     }
-    if (currentExercise === "balance") layer.innerHTML = '<div class="balance-ring reward-object">◇</div>';
   }
 
   function trackMotion() {
     if (!active) return;
+    var entry = catalogEntry(currentExercise);
     var video = byId("sessionVideo");
     var canvas = byId("trackingCanvas");
-    if (!video || video.readyState < 2) {
-      animationId = requestAnimationFrame(trackMotion);
-      return;
-    }
+    if (!video || video.readyState < 2) { animationId = requestAnimationFrame(trackMotion); return; }
     var w = 180, h = 135;
-    canvas.width = w;
-    canvas.height = h;
+    canvas.width = w; canvas.height = h;
     var ctx = canvas.getContext("2d", { willReadFrequently: true });
     ctx.drawImage(video, 0, 0, w, h);
     var current = ctx.getImageData(0, 0, w, h).data;
     if (poseModel && !poseBusy) {
       poseBusy = true;
-      poseModel.send({ image: video }).catch(function () {
-        poseBusy = false;
-      });
+      poseModel.send({ image: video }).catch(function () { poseBusy = false; });
     }
-    if (!previousFrame) {
-      previousFrame = current.slice(0);
-      animationId = requestAnimationFrame(trackMotion);
-      return;
-    }
-    var poseDetected = detectPoseMotion();
-    // For leg & balance: require MediaPipe pose to avoid false positives from arm movement.
-    // Pixel motion is only used as a fallback when pose hasn't initialised yet, and only for arm exercise.
+    if (!previousFrame) { previousFrame = current.slice(0); animationId = requestAnimationFrame(trackMotion); return; }
+    var poseDetected = detectPoseMotion(entry.track);
     var pixelDetected = false;
-    if (currentExercise === "arm" && !poseReady) {
-      pixelDetected = detectExerciseMotion(current, previousFrame, w, h);
-    }
+    if (entry.track === "arm" && !poseReady) pixelDetected = detectExerciseMotion(current, previousFrame, w, h, entry.track);
     var detected = poseDetected || pixelDetected;
     byId("motionReadout").textContent = detected ? t("detected") : (poseReady ? "Pose tracking active — " + t("waiting") : "Loading pose model…");
     if (detected && Date.now() - lastSuccessAt > 1300) registerSuccess();
@@ -438,73 +583,55 @@
     animationId = requestAnimationFrame(trackMotion);
   }
 
-  function detectExerciseMotion(current, previous, w, h) {
-    if (currentExercise === "arm") return regionScore(current, previous, w, 0.08, 0.92, 0.06, 0.38) > 4.8 && regionScore(current, previous, w, 0.25, 0.75, 0.45, 0.92) < 3.2;
-    if (currentExercise === "leg") {
+  function detectExerciseMotion(current, previous, w, h, track) {
+    if (track === "arm") return regionScore(current, previous, w, 0.08, 0.92, 0.06, 0.38) > 4.8 && regionScore(current, previous, w, 0.25, 0.75, 0.45, 0.92) < 3.2;
+    if (track === "leg") {
       var sideScore = targetSide === "left"
         ? regionScore(current, previous, w, 0.02, 0.35, 0.50, 0.96)
         : regionScore(current, previous, w, 0.65, 0.98, 0.50, 0.96);
       var torsoScore = regionScore(current, previous, w, 0.30, 0.70, 0.08, 0.48);
       return sideScore > 4.2 && torsoScore < 3.5;
     }
-    if (currentExercise === "balance") return regionScore(current, previous, w, 0.20, 0.80, 0.12, 0.92) < 1.2;
+    if (track === "balance") return regionScore(current, previous, w, 0.20, 0.80, 0.12, 0.92) < 1.2;
     return false;
   }
 
-  function detectPoseMotion() {
+  function detectPoseMotion(track) {
     if (!poseReady || !lastPose) return false;
-    var lShoulder = landmark(11);
-    var rShoulder = landmark(12);
-    var lWrist = landmark(15);
-    var rWrist = landmark(16);
-    var lHip = landmark(23);
-    var rHip = landmark(24);
-    var lKnee = landmark(25);
-    var rKnee = landmark(26);
-    var lAnkle = landmark(27);
-    var rAnkle = landmark(28);
+    var lShoulder = landmark(11), rShoulder = landmark(12);
+    var lWrist = landmark(15), rWrist = landmark(16);
+    var lHip = landmark(23), rHip = landmark(24);
+    var lKnee = landmark(25), rKnee = landmark(26);
+    var lAnkle = landmark(27), rAnkle = landmark(28);
 
-    if (currentExercise === "arm") {
-      var leftArmRaised = visible(lShoulder, lWrist) && lWrist.y < lShoulder.y - 0.08;
-      var rightArmRaised = visible(rShoulder, rWrist) && rWrist.y < rShoulder.y - 0.08;
-      return leftArmRaised || rightArmRaised;
+    if (track === "arm") {
+      var leftUp = visible(lShoulder, lWrist) && lWrist.y < lShoulder.y - 0.08;
+      var rightUp = visible(rShoulder, rWrist) && rWrist.y < rShoulder.y - 0.08;
+      return leftUp || rightUp;
     }
-
-    if (currentExercise === "leg") {
-      var kickingAnkle = rAnkle;
-      var kickingKnee = rKnee;
-      var supportHip = lHip;
-      var kickVisible = visible(kickingAnkle, kickingKnee);
-      var sideReached = targetSide === "left" ? kickingAnkle.x < 0.38 : kickingAnkle.x > 0.62;
-      var lifted = kickVisible && kickingAnkle.y < kickingKnee.y + 0.18;
+    if (track === "leg") {
+      var kAnkle = rAnkle, kKnee = rKnee, supportHip = lHip;
+      var kickVisible = visible(kAnkle, kKnee);
+      var sideReached = targetSide === "left" ? kAnkle.x < 0.38 : kAnkle.x > 0.62;
+      var lifted = kickVisible && kAnkle.y < kKnee.y + 0.18;
       var torsoStable = visible(lHip, rHip) ? Math.abs(lHip.y - rHip.y) < 0.18 : true;
-      var weakSideLoaded = supportHip && supportHip.visibility > 0.35;
-      return kickVisible && sideReached && lifted && torsoStable && weakSideLoaded;
+      var loaded = supportHip && supportHip.visibility > 0.35;
+      return kickVisible && sideReached && lifted && torsoStable && loaded;
     }
-
-    if (currentExercise === "balance") {
+    if (track === "balance") {
       var stable = visible(lShoulder, rShoulder) && visible(lHip, rHip) &&
         Math.abs(lShoulder.y - rShoulder.y) < 0.10 &&
         Math.abs(lHip.y - rHip.y) < 0.10 &&
         Math.abs(((lShoulder.x + rShoulder.x) / 2) - ((lHip.x + rHip.x) / 2)) < 0.16;
-      if (!stable) {
-        steadyStartedAt = 0;
-        return false;
-      }
+      if (!stable) { steadyStartedAt = 0; return false; }
       if (!steadyStartedAt) steadyStartedAt = Date.now();
       return Date.now() - steadyStartedAt > 1200;
     }
-
     return false;
   }
 
-  function landmark(index) {
-    return lastPose && lastPose[index];
-  }
-
-  function visible(a, b) {
-    return a && b && (a.visibility === undefined || a.visibility > 0.35) && (b.visibility === undefined || b.visibility > 0.35);
-  }
+  function landmark(i) { return lastPose && lastPose[i]; }
+  function visible(a, b) { return a && b && (a.visibility === undefined || a.visibility > 0.35) && (b.visibility === undefined || b.visibility > 0.35); }
 
   function regionScore(current, previous, w, x1, x2, y1, y2) {
     var h = current.length / 4 / w;
@@ -526,11 +653,8 @@
     byId("scoreCount").textContent = score;
     burstTarget();
     speak(score >= targetScore ? t("complete") : t("success"));
-    if (score >= targetScore) {
-      setTimeout(function () { endSession(true); }, 700);
-    } else {
-      setTimeout(renderTarget, 450);
-    }
+    if (score >= targetScore) setTimeout(function () { endSession(true); }, 700);
+    else setTimeout(renderTarget, 450);
   }
 
   function burstTarget() {
@@ -555,7 +679,8 @@
     var sessions = getSessions();
     var completed = score >= targetScore;
     var earnedBadges = computeBadges(score, targetScore, duration, completed);
-    sessions.push({ date: new Date().toISOString(), exercise: t(exerciseNames[currentExercise]), score: score, target: targetScore, duration: duration, completed: completed, badges: earnedBadges });
+    var entry = catalogEntry(currentExercise);
+    sessions.push({ date: new Date().toISOString(), exercise: t(entry.nameKey), score: score, target: targetScore, duration: duration, completed: completed, badges: earnedBadges });
     localStorage.setItem("neuroBridgeSessions", JSON.stringify(sessions.slice(-12)));
     byId("resultSummary").textContent = completed ? t("complete") : "Session ended early. Every try counts!";
     byId("resultScore").textContent = score;
@@ -587,7 +712,6 @@
     if (cel) cel.textContent = completed ? "🎉" : "💫";
   }
 
-
   function drawProgress() {
     var sessions = getSessions();
     var list = byId("progressList");
@@ -603,94 +727,58 @@
     var W = canvas.width, H = canvas.height;
     var padL = 56, padR = 24, padT = 28, padB = 46;
     var plotW = W - padL - padR, plotH = H - padT - padB;
-
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, W, H);
-
-    // Title
-    ctx.fillStyle = "#152238";
-    ctx.font = "700 16px Arial, sans-serif";
-    ctx.textAlign = "left";
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#152238"; ctx.font = "700 16px Arial, sans-serif"; ctx.textAlign = "left";
     ctx.fillText("Reward score per session", padL, 18);
-
-    // Y grid + labels (0..target)
-    ctx.strokeStyle = "#e2e8f0";
-    ctx.lineWidth = 1;
-    ctx.font = "600 11px Arial, sans-serif";
-    ctx.fillStyle = "#64748b";
-    ctx.textAlign = "right";
+    ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 1;
+    ctx.font = "600 11px Arial, sans-serif"; ctx.fillStyle = "#64748b"; ctx.textAlign = "right";
     var ySteps = 4;
     for (var g = 0; g <= ySteps; g++) {
       var y = padT + (plotH * g) / ySteps;
-      ctx.beginPath();
-      ctx.moveTo(padL, y);
-      ctx.lineTo(W - padR, y);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
       var val = Math.round(targetScore * (1 - g / ySteps));
       ctx.fillText(String(val), padL - 8, y + 4);
     }
-
-    // Axes
     ctx.strokeStyle = "#94a3b8";
-    ctx.beginPath();
-    ctx.moveTo(padL, padT);
-    ctx.lineTo(padL, padT + plotH);
-    ctx.lineTo(W - padR, padT + plotH);
-    ctx.stroke();
-
+    ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + plotH); ctx.lineTo(W - padR, padT + plotH); ctx.stroke();
     if (!sessions.length) {
-      ctx.fillStyle = "#94a3b8";
-      ctx.textAlign = "center";
-      ctx.font = "700 14px Arial, sans-serif";
-      ctx.fillText("No data yet", padL + plotW / 2, padT + plotH / 2);
-      return;
+      ctx.fillStyle = "#94a3b8"; ctx.textAlign = "center"; ctx.font = "700 14px Arial, sans-serif";
+      ctx.fillText("No data yet", padL + plotW / 2, padT + plotH / 2); return;
     }
-
-    // Bars
-    var n = sessions.length;
-    var slot = plotW / n;
-    var barW = Math.min(48, slot * 0.6);
+    var n = sessions.length; var slot = plotW / n; var barW = Math.min(48, slot * 0.6);
     sessions.forEach(function (s, i) {
       var cx = padL + slot * i + slot / 2;
-      var h = (Math.min(s.score, targetScore) / targetScore) * plotH;
-      var by = padT + plotH - h;
+      var barH = (Math.min(s.score, targetScore) / targetScore) * plotH;
+      var by = padT + plotH - barH;
       ctx.fillStyle = s.score >= s.target ? "#23b7a7" : "#65a5ff";
-      ctx.fillRect(cx - barW / 2, by, barW, h);
-      // X label
-      ctx.fillStyle = "#64748b";
-      ctx.font = "600 11px Arial, sans-serif";
-      ctx.textAlign = "center";
+      ctx.fillRect(cx - barW / 2, by, barW, barH);
+      ctx.fillStyle = "#64748b"; ctx.font = "600 11px Arial, sans-serif"; ctx.textAlign = "center";
       var d = new Date(s.date);
       ctx.fillText((d.getMonth() + 1) + "/" + d.getDate(), cx, padT + plotH + 16);
-      ctx.fillStyle = "#152238";
-      ctx.font = "700 11px Arial, sans-serif";
-      ctx.fillText(String(s.score), cx, by - 6);
+      ctx.fillStyle = "#152238"; ctx.font = "700 11px Arial, sans-serif"; ctx.fillText(String(s.score), cx, by - 6);
     });
-
-    // Trend line
-    ctx.strokeStyle = "#ff6b6b";
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
+    ctx.strokeStyle = "#ff6b6b"; ctx.lineWidth = 2.5; ctx.beginPath();
     sessions.forEach(function (s, i) {
       var cx = padL + slot * i + slot / 2;
-      var y = padT + plotH - (Math.min(s.score, targetScore) / targetScore) * plotH;
-      if (i === 0) ctx.moveTo(cx, y); else ctx.lineTo(cx, y);
+      var yy = padT + plotH - (Math.min(s.score, targetScore) / targetScore) * plotH;
+      if (i === 0) ctx.moveTo(cx, yy); else ctx.lineTo(cx, yy);
     });
     ctx.stroke();
   }
 
-
   function getSessions() {
-    try {
-      return JSON.parse(localStorage.getItem("neuroBridgeSessions")) || [];
-    } catch (e) {
-      return [];
-    }
+    try { return JSON.parse(localStorage.getItem("neuroBridgeSessions")) || []; } catch (e) { return []; }
   }
 
   function promptForExercise() {
-    return t(currentExercise + "Prompt");
+    var entry = catalogEntry(currentExercise);
+    return t(entry.promptKey);
+  }
+
+  function getLanguage(code) {
+    for (var i = 0; i < languages.length; i++) if (languages[i].code === code) return languages[i];
+    return languages[0];
   }
 
   function speak(text) {
@@ -698,17 +786,23 @@
       if (!window.speechSynthesis) return;
       speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
-      u.lang = currentLang === "sw" ? "sw-KE" : currentLang === "ki" ? "sw-KE" : "en-US";
+      var lang = getLanguage(currentLang);
+      // Native BCP-47 tag if available; otherwise use fallback locale for phonetic delivery.
+      var speechLang = lang.fallback === "en" ? "en-US" : "sw-KE";
+      u.lang = speechLang;
       u.rate = 0.9;
       speechSynthesis.speak(u);
     } catch (e) {}
   }
 
   function t(key) {
-    return (tx[currentLang] && tx[currentLang][key]) || tx.en[key] || key;
+    var lang = getLanguage(currentLang);
+    var primary = tx[lang.code];
+    if (primary && primary[key]) return primary[key];
+    var fb = tx[lang.fallback];
+    if (fb && fb[key]) return fb[key];
+    return tx.en[key] || key;
   }
 
-  function byId(id) {
-    return document.getElementById(id);
-  }
+  function byId(id) { return document.getElementById(id); }
 })();

@@ -12,12 +12,11 @@
         <div class="brand-mark">NB</div>
         <h1>Neuro-Bridge</h1>
         <p data-i18n="chooseLanguage">Choose a language to begin.</p>
-        <div class="language-grid">
-          <button class="language-card" data-lang="en"><strong>English</strong><span>Raise your hand</span></button>
-          <button class="language-card" data-lang="sw"><strong>Kiswahili</strong><span>Inua mkono</span></button>
-          <button class="language-card" data-lang="ki"><strong>Gikuyu</strong><span>Ambia guoko</span></button>
-        </div>
+        <input id="languageSearch" class="lang-search" type="search" placeholder="Search language…" data-i18n-placeholder="searchLanguage" />
+        <div class="language-grid" id="languageGrid"></div>
+        <p id="langFallbackNote" class="lang-fallback-note"></p>
       </section>
+
 
       <section class="screen" id="homeScreen">
         <header class="topbar">
@@ -59,23 +58,13 @@
             <h2 data-i18n="chooseExercise">Choose Exercise</h2>
           </div>
         </header>
-        <div class="exercise-grid">
-          <button class="exercise-card" data-exercise="arm">
-            <span class="exercise-emoji">○</span>
-            <strong data-i18n="armRaise">Arm Raise</strong>
-            <small data-i18n="armGameSub">Pop balloons by raising the hand.</small>
-          </button>
-          <button class="exercise-card" data-exercise="leg">
-            <span class="exercise-emoji">☆</span>
-            <strong data-i18n="legKick">Leg Kick</strong>
-            <small data-i18n="legGameSub">Kick toward the glowing side star.</small>
-          </button>
-          <button class="exercise-card" data-exercise="balance">
-            <span class="exercise-emoji">◇</span>
-            <strong data-i18n="balanceHold">Balance Hold</strong>
-            <small data-i18n="balanceGameSub">Stay steady to collect balance rings.</small>
-          </button>
+        <div class="category-tabs">
+          <button data-cat="all" class="active"><span data-i18n="catAll">All</span></button>
+          <button data-cat="pt"><span data-i18n="catPT">Physiotherapy</span></button>
+          <button data-cat="ot"><span data-i18n="catOT">Occupational</span></button>
         </div>
+        <div class="exercise-grid" id="exerciseGrid"></div>
+
       </section>
 
       <section class="screen" id="setupScreen">
@@ -204,6 +193,6 @@
       </section>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
-    <script src="app.js?v=8"></script>
+    <script src="app.js?v=9"></script>
   </body>
 </html>
