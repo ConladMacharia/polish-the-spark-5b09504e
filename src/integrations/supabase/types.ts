@@ -342,6 +342,7 @@ export type Database = {
           difficulty_level: number
           duration_seconds: number
           exercise: Database["public"]["Enums"]["exercise_type"]
+          exercise_slug: string | null
           id: string
           language_used: Database["public"]["Enums"]["preferred_language"]
           patient_id: string
@@ -359,6 +360,7 @@ export type Database = {
           difficulty_level?: number
           duration_seconds?: number
           exercise: Database["public"]["Enums"]["exercise_type"]
+          exercise_slug?: string | null
           id?: string
           language_used?: Database["public"]["Enums"]["preferred_language"]
           patient_id: string
@@ -376,6 +378,7 @@ export type Database = {
           difficulty_level?: number
           duration_seconds?: number
           exercise?: Database["public"]["Enums"]["exercise_type"]
+          exercise_slug?: string | null
           id?: string
           language_used?: Database["public"]["Enums"]["preferred_language"]
           patient_id?: string
@@ -481,6 +484,7 @@ export type Database = {
         | "balance_hold"
         | "gait"
         | "postural_control"
+        | "occupational"
       gmfcs_level: "I" | "II" | "III" | "IV" | "V"
       mood_tag: "happy" | "tired" | "pain" | "frustrated" | "proud"
       preferred_language: "en" | "sw" | "ki"
@@ -628,6 +632,7 @@ export const Constants = {
         "balance_hold",
         "gait",
         "postural_control",
+        "occupational",
       ],
       gmfcs_level: ["I", "II", "III", "IV", "V"],
       mood_tag: ["happy", "tired", "pain", "frustrated", "proud"],
