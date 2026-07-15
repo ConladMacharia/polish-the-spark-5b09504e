@@ -736,6 +736,7 @@
     var startedAt = new Date(sessionStart || Date.now() - duration * 1000).toISOString();
     saveSessionRemote({
       patient_id: authCtx && authCtx.patientId,
+      caregiver_id: authCtx && authCtx.caregiverId,
       exercise: exerciseEnum(currentExercise),
       exercise_slug: currentExercise,
       reps_target: targetScore,
