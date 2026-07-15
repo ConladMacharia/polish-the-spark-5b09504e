@@ -328,6 +328,53 @@
     },
   };
 
+  // Auth handoff from React shell via URL hash: #patient=..&token=..&url=..&apikey=..&nav=..
+  var authCtx = (function () {
+    try {
+      var h = window.location.hash.replace(/^#/, "");
+      if (!h) return null;
+      var p = new URLSearchParams(h);
+      var ctx = {
+        patientId: p.get("patient"),
+        token: p.get("token"),
+        url: p.get("url"),
+        apikey: p.get("apikey"),
+        nav: p.get("nav"),
+      };
+      if (ctx.token) sessionStorage.setItem("nbAuth", JSON.stringify(ctx));
+      // Scrub hash so tokens don't linger in URL bar
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+      return ctx;
+    } catch (_) { return null; }
+  })() || (function () {
+    try { return JSON.parse(sessionStorage.getItem("nbAuth") || "null"); } catch (_) { return null; }
+  })();
+
+  function exerciseEnum(id) {
+    if (id === "gait") return "gait";
+    if (["balance", "head", "stretch"].indexOf(id) !== -1) return "balance_hold";
+    if (["leg", "march", "squat", "sitstand", "bridge", "ankle", "crawl"].indexOf(id) !== -1) return "leg_kick";
+    if (["arm", "reach", "shoulder", "trunk"].indexOf(id) !== -1) return "arm_raise";
+    return "occupational";
+  }
+
+  function saveSessionRemote(payload) {
+    if (!authCtx || !authCtx.token || !authCtx.url || !authCtx.patientId) return;
+    try {
+      fetch(authCtx.url + "/rest/v1/sessions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": authCtx.apikey,
+          "Authorization": "Bearer " + authCtx.token,
+          "Prefer": "return=minimal",
+        },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(function () {});
+    } catch (_) {}
+  }
+
   document.addEventListener("DOMContentLoaded", init);
   if (document.readyState !== "loading") init();
 
@@ -336,6 +383,9 @@
     renderExerciseGrid();
     applyTranslations();
     renderVideoSlots();
+    if (authCtx && authCtx.nav) {
+      setTimeout(function () { showScreen(authCtx.nav); }, 0);
+    }
     document.addEventListener("click", function (event) {
       var go = event.target.closest("[data-go]");
       if (go) showScreen(go.dataset.go);
