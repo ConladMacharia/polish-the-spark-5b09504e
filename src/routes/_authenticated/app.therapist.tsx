@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -146,7 +146,11 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
 
 function PatientCard({ patient }: { patient: any }) {
   return (
-    <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
+    <Link
+      to="/app/therapist/patient/$patientId"
+      params={{ patientId: patient.id }}
+      className="block rounded-3xl border border-border bg-card p-5 shadow-sm transition-transform hover:-translate-y-0.5 hover:shadow-md"
+    >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -177,7 +181,8 @@ function PatientCard({ patient }: { patient: any }) {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 navigator.clipboard.writeText(patient.claim_code);
                 toast.success("Code copied");
               }}
@@ -187,7 +192,7 @@ function PatientCard({ patient }: { patient: any }) {
           </div>
         )}
       </div>
-    </div>
+    </Link>
   );
 }
 
