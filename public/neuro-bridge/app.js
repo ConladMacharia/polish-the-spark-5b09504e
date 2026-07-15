@@ -732,6 +732,20 @@
     var entry = catalogEntry(currentExercise);
     sessions.push({ date: new Date().toISOString(), exercise: t(entry.nameKey), score: score, target: targetScore, duration: duration, completed: completed, badges: earnedBadges });
     localStorage.setItem("neuroBridgeSessions", JSON.stringify(sessions.slice(-12)));
+    var startedAt = new Date(sessionStart || Date.now() - duration * 1000).toISOString();
+    saveSessionRemote({
+      patient_id: authCtx && authCtx.patientId,
+      exercise: exerciseEnum(currentExercise),
+      exercise_slug: currentExercise,
+      reps_target: targetScore,
+      reps_completed: score,
+      completion_pct: Math.min(100, Math.round((score / Math.max(1, targetScore)) * 100)),
+      avg_correctness: Math.min(100, Math.round((score / Math.max(1, targetScore)) * 100)),
+      duration_seconds: duration,
+      started_at: startedAt,
+      ended_at: new Date().toISOString(),
+      language: currentLang,
+    });
     byId("resultSummary").textContent = completed ? t("complete") : "Session ended early. Every try counts!";
     byId("resultScore").textContent = score;
     byId("resultTime").textContent = duration;
