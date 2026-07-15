@@ -336,6 +336,7 @@
       var p = new URLSearchParams(h);
       var ctx = {
         patientId: p.get("patient"),
+        caregiverId: p.get("caregiver"),
         token: p.get("token"),
         url: p.get("url"),
         apikey: p.get("apikey"),
