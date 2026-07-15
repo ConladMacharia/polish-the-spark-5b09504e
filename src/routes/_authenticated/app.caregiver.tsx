@@ -86,10 +86,12 @@ function CaregiverHome() {
     setLaunching(hash);
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token ?? "";
+    const userId = data.session?.user.id ?? "";
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
     const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
     const params = new URLSearchParams({
       patient: patient.id,
+      caregiver: userId,
       token,
       url: supabaseUrl,
       apikey,
