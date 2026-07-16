@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppTherapistRouteImport } from './routes/_authenticated/app.therapist'
+import { Route as AuthenticatedAppExercisesRouteImport } from './routes/_authenticated/app.exercises'
 import { Route as AuthenticatedAppCaregiverRouteImport } from './routes/_authenticated/app.caregiver'
 import { Route as AuthenticatedAppTherapistPatientPatientIdRouteImport } from './routes/_authenticated/app.therapist.patient.$patientId'
 
@@ -48,6 +49,12 @@ const AuthenticatedAppTherapistRoute =
     path: '/therapist',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppExercisesRoute =
+  AuthenticatedAppExercisesRouteImport.update({
+    id: '/exercises',
+    path: '/exercises',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppCaregiverRoute =
   AuthenticatedAppCaregiverRouteImport.update({
     id: '/caregiver',
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/app/caregiver': typeof AuthenticatedAppCaregiverRoute
+  '/app/exercises': typeof AuthenticatedAppExercisesRoute
   '/app/therapist': typeof AuthenticatedAppTherapistRouteWithChildren
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/therapist/patient/$patientId': typeof AuthenticatedAppTherapistPatientPatientIdRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/caregiver': typeof AuthenticatedAppCaregiverRoute
+  '/app/exercises': typeof AuthenticatedAppExercisesRoute
   '/app/therapist': typeof AuthenticatedAppTherapistRouteWithChildren
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/therapist/patient/$patientId': typeof AuthenticatedAppTherapistPatientPatientIdRoute
@@ -85,6 +94,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/app/caregiver': typeof AuthenticatedAppCaregiverRoute
+  '/_authenticated/app/exercises': typeof AuthenticatedAppExercisesRoute
   '/_authenticated/app/therapist': typeof AuthenticatedAppTherapistRouteWithChildren
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/therapist/patient/$patientId': typeof AuthenticatedAppTherapistPatientPatientIdRoute
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app'
     | '/app/caregiver'
+    | '/app/exercises'
     | '/app/therapist'
     | '/app/'
     | '/app/therapist/patient/$patientId'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/caregiver'
+    | '/app/exercises'
     | '/app/therapist'
     | '/app'
     | '/app/therapist/patient/$patientId'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/app'
     | '/_authenticated/app/caregiver'
+    | '/_authenticated/app/exercises'
     | '/_authenticated/app/therapist'
     | '/_authenticated/app/'
     | '/_authenticated/app/therapist/patient/$patientId'
@@ -169,6 +182,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppTherapistRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/exercises': {
+      id: '/_authenticated/app/exercises'
+      path: '/exercises'
+      fullPath: '/app/exercises'
+      preLoaderRoute: typeof AuthenticatedAppExercisesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/caregiver': {
       id: '/_authenticated/app/caregiver'
       path: '/caregiver'
@@ -203,12 +223,14 @@ const AuthenticatedAppTherapistRouteWithChildren =
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppCaregiverRoute: typeof AuthenticatedAppCaregiverRoute
+  AuthenticatedAppExercisesRoute: typeof AuthenticatedAppExercisesRoute
   AuthenticatedAppTherapistRoute: typeof AuthenticatedAppTherapistRouteWithChildren
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppCaregiverRoute: AuthenticatedAppCaregiverRoute,
+  AuthenticatedAppExercisesRoute: AuthenticatedAppExercisesRoute,
   AuthenticatedAppTherapistRoute: AuthenticatedAppTherapistRouteWithChildren,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
