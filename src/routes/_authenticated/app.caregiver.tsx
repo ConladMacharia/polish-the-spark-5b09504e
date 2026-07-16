@@ -172,6 +172,18 @@ function CaregiverHome() {
             </p>
           </button>
 
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/app/exercises" })}
+            className="rounded-3xl border border-border bg-card p-6 text-left shadow-sm transition-transform hover:-translate-y-0.5"
+          >
+            <Sparkles className="h-8 w-8 text-primary" />
+            <p className="mt-4 font-display text-2xl">Exercise library</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Browse all physiotherapy & occupational exercises for CP.
+            </p>
+          </button>
+
           <div className="rounded-3xl border border-dashed border-border bg-card p-6">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
               Tip
