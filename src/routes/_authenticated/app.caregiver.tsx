@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, PlayCircle, HeartPulse, BookOpen, LineChart, Loader2 } from "lucide-react";
+import { LogOut, PlayCircle, HeartPulse, BookOpen, LineChart, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
