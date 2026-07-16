@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, PlayCircle, HeartPulse, BookOpen, LineChart, Loader2 } from "lucide-react";
+import { LogOut, PlayCircle, HeartPulse, BookOpen, LineChart, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -169,6 +169,18 @@ function CaregiverHome() {
             <p className="mt-4 font-display text-2xl">Progress</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Track how sessions are going day by day.
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/app/exercises" })}
+            className="rounded-3xl border border-border bg-card p-6 text-left shadow-sm transition-transform hover:-translate-y-0.5"
+          >
+            <Sparkles className="h-8 w-8 text-primary" />
+            <p className="mt-4 font-display text-2xl">Exercise library</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Browse all physiotherapy & occupational exercises for CP.
             </p>
           </button>
 

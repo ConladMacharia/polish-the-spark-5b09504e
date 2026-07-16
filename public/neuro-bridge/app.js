@@ -352,6 +352,7 @@
         url: p.get("url"),
         apikey: p.get("apikey"),
         nav: p.get("nav"),
+        exercise: p.get("exercise"),
       };
       if (ctx.token) sessionStorage.setItem("nbAuth", JSON.stringify(ctx));
       // Scrub hash so tokens don't linger in URL bar
@@ -395,7 +396,9 @@
     renderExerciseGrid();
     applyTranslations();
     renderVideoSlots();
-    if (authCtx && authCtx.nav) {
+    if (authCtx && authCtx.exercise && catalog.some(function (e) { return e.id === authCtx.exercise; })) {
+      setTimeout(function () { selectExercise(authCtx.exercise); }, 0);
+    } else if (authCtx && authCtx.nav) {
       setTimeout(function () { showScreen(authCtx.nav); }, 0);
     }
     document.addEventListener("click", function (event) {
