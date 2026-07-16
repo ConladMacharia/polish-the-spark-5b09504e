@@ -352,6 +352,7 @@
         url: p.get("url"),
         apikey: p.get("apikey"),
         nav: p.get("nav"),
+        exercise: p.get("exercise"),
       };
       if (ctx.token) sessionStorage.setItem("nbAuth", JSON.stringify(ctx));
       // Scrub hash so tokens don't linger in URL bar
