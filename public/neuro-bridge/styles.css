@@ -213,3 +213,8 @@ video { width: 100%; background: #14213d; border-radius: 8px; }
   background: rgba(101,165,255,.16); color: var(--sky);
 }
 .exercise-card .exercise-emoji { font-size: 1.9rem; }
+
+/* Adaptive engine feedback halos */
+.halo-good { box-shadow: 0 0 0 6px rgba(74,164,124,.35), 0 0 24px 6px rgba(74,164,124,.5); border-color: rgba(74,164,124,.6) !important; }
+.halo-mid  { box-shadow: 0 0 0 6px rgba(245,196,90,.30), 0 0 22px 4px rgba(245,196,90,.45); border-color: rgba(245,196,90,.6) !important; }
+.halo-low  { box-shadow: 0 0 0 6px rgba(232,109,109,.28), 0 0 22px 4px rgba(232,109,109,.4);  border-color: rgba(232,109,109,.55) !important; }
