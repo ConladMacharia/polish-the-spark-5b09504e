@@ -117,6 +117,17 @@
   var steadyStartedAt = 0;
   var targetSide = "left";
   var categoryFilter = "all"; // "all" | "pt" | "ot"
+  // ---- Adaptive therapy engine state ----
+  var repQualities = [];       // per-rep correctness 0-100
+  var lastQuality = 0;         // most recent rep quality (for halo)
+  var difficulty = 1;          // 1..5, adjusted dynamically
+  var angleThreshold = {       // required angle in degrees to count a rep
+    arm: 140,                  // shoulder flexion (higher = arm more raised)
+    leg: 35,                   // hip flexion (higher = leg lifted more)
+    balance: 1400,             // ms of stability required
+    gait: 25,                  // knee flexion swing
+  };
+  var attempts = 0;            // frames evaluated since last rep (for DDA)
 
   var videoLibrary = {
     arm: "",
