@@ -396,7 +396,9 @@
     renderExerciseGrid();
     applyTranslations();
     renderVideoSlots();
-    if (authCtx && authCtx.nav) {
+    if (authCtx && authCtx.exercise && catalog.some(function (e) { return e.id === authCtx.exercise; })) {
+      setTimeout(function () { selectExercise(authCtx.exercise); }, 0);
+    } else if (authCtx && authCtx.nav) {
       setTimeout(function () { showScreen(authCtx.nav); }, 0);
     }
     document.addEventListener("click", function (event) {
