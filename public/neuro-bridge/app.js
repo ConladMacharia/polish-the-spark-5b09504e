@@ -117,6 +117,17 @@
   var steadyStartedAt = 0;
   var targetSide = "left";
   var categoryFilter = "all"; // "all" | "pt" | "ot"
+  // ---- Adaptive therapy engine state ----
+  var repQualities = [];       // per-rep correctness 0-100
+  var lastQuality = 0;         // most recent rep quality (for halo)
+  var difficulty = 1;          // 1..5, adjusted dynamically
+  var angleThreshold = {       // required angle in degrees to count a rep
+    arm: 140,                  // shoulder flexion (higher = arm more raised)
+    leg: 35,                   // hip flexion (higher = leg lifted more)
+    balance: 1400,             // ms of stability required
+    gait: 25,                  // knee flexion swing
+  };
+  var attempts = 0;            // frames evaluated since last rep (for DDA)
 
   var videoLibrary = {
     arm: "",
@@ -593,18 +604,23 @@
     poseReady = false;
     steadyStartedAt = 0;
     lastSuccessAt = Date.now();
+    repQualities = [];
+    lastQuality = 0;
+    difficulty = 1;
+    attempts = 0;
   }
 
   function renderTarget() {
     var layer = byId("targetLayer");
     var entry = catalogEntry(currentExercise);
     layer.className = entry.track + "-targets";
-    if (entry.track === "arm") layer.innerHTML = '<div class="target-zone top-zone">' + entry.icon + ' ' + t(entry.titleKey) + '</div><div class="balloon reward-object">' + entry.icon + '</div>';
+    var halo = lastQuality >= 80 ? "halo-good" : lastQuality >= 50 ? "halo-mid" : lastQuality > 0 ? "halo-low" : "";
+    if (entry.track === "arm") layer.innerHTML = '<div class="target-zone top-zone">' + entry.icon + ' ' + t(entry.titleKey) + '</div><div class="balloon reward-object ' + halo + '">' + entry.icon + '</div>';
     else if (entry.track === "leg") {
       targetSide = Math.random() > 0.5 ? "right" : "left";
-      layer.innerHTML = '<div class="star-target ' + targetSide + '">' + entry.icon + '</div>';
+      layer.innerHTML = '<div class="star-target ' + targetSide + ' ' + halo + '">' + entry.icon + '</div>';
     } else {
-      layer.innerHTML = '<div class="balance-ring reward-object">' + entry.icon + '</div>';
+      layer.innerHTML = '<div class="balance-ring reward-object ' + halo + '">' + entry.icon + '</div>';
     }
   }
 
@@ -624,61 +640,105 @@
       poseModel.send({ image: video }).catch(function () { poseBusy = false; });
     }
     if (!previousFrame) { previousFrame = current.slice(0); animationId = requestAnimationFrame(trackMotion); return; }
-    var poseDetected = detectPoseMotion(entry.track);
+
+    var evaln = evaluateRep(entry.track);
     var pixelDetected = false;
     if (entry.track === "arm" && !poseReady) pixelDetected = detectExerciseMotion(current, previousFrame, w, h, entry.track);
-    var detected = poseDetected || pixelDetected;
-    byId("motionReadout").textContent = detected ? t("detected") : (poseReady ? "Pose tracking active — " + t("waiting") : "Loading pose model…");
-    if (detected && Date.now() - lastSuccessAt > 1300) registerSuccess();
+
+    var readout = poseReady
+      ? (evaln.cue || (evaln.passed ? t("detected") : t("waiting")))
+      : "Loading pose model…";
+    var qPct = Math.round(evaln.quality);
+    byId("motionReadout").textContent = readout + (poseReady ? "  ·  " + qPct + "%" : "");
+
+    if ((evaln.passed || pixelDetected) && Date.now() - lastSuccessAt > 1300) {
+      registerSuccess(evaln.passed ? evaln.quality : 60);
+    }
     previousFrame = current.slice(0);
+    attempts++;
     animationId = requestAnimationFrame(trackMotion);
   }
 
   function detectExerciseMotion(current, previous, w, h, track) {
     if (track === "arm") return regionScore(current, previous, w, 0.08, 0.92, 0.06, 0.38) > 4.8 && regionScore(current, previous, w, 0.25, 0.75, 0.45, 0.92) < 3.2;
-    if (track === "leg") {
-      var sideScore = targetSide === "left"
-        ? regionScore(current, previous, w, 0.02, 0.35, 0.50, 0.96)
-        : regionScore(current, previous, w, 0.65, 0.98, 0.50, 0.96);
-      var torsoScore = regionScore(current, previous, w, 0.30, 0.70, 0.08, 0.48);
-      return sideScore > 4.2 && torsoScore < 3.5;
-    }
-    if (track === "balance") return regionScore(current, previous, w, 0.20, 0.80, 0.12, 0.92) < 1.2;
     return false;
   }
 
-  function detectPoseMotion(track) {
-    if (!poseReady || !lastPose) return false;
+  // ---- Joint-angle helpers ----
+  function angleAt(a, b, c) {
+    if (!a || !b || !c) return 0;
+    var abx = a.x - b.x, aby = a.y - b.y;
+    var cbx = c.x - b.x, cby = c.y - b.y;
+    var dot = abx * cbx + aby * cby;
+    var mag = Math.sqrt(abx * abx + aby * aby) * Math.sqrt(cbx * cbx + cby * cby);
+    if (mag === 0) return 0;
+    var cos = Math.max(-1, Math.min(1, dot / mag));
+    return Math.acos(cos) * 180 / Math.PI;
+  }
+
+  // Returns { passed, quality (0-100), cue }
+  function evaluateRep(track) {
+    if (!poseReady || !lastPose) return { passed: false, quality: 0, cue: "" };
     var lShoulder = landmark(11), rShoulder = landmark(12);
+    var lElbow = landmark(13), rElbow = landmark(14);
     var lWrist = landmark(15), rWrist = landmark(16);
     var lHip = landmark(23), rHip = landmark(24);
     var lKnee = landmark(25), rKnee = landmark(26);
     var lAnkle = landmark(27), rAnkle = landmark(28);
 
     if (track === "arm") {
-      var leftUp = visible(lShoulder, lWrist) && lWrist.y < lShoulder.y - 0.08;
-      var rightUp = visible(rShoulder, rWrist) && rWrist.y < rShoulder.y - 0.08;
-      return leftUp || rightUp;
+      // Shoulder flexion = angle at shoulder between hip and wrist. Higher is better.
+      var leftAng = visible(lShoulder, lWrist) && lHip ? angleAt(lHip, lShoulder, lWrist) : 0;
+      var rightAng = visible(rShoulder, rWrist) && rHip ? angleAt(rHip, rShoulder, rWrist) : 0;
+      var best = Math.max(leftAng, rightAng);
+      var thr = angleThreshold.arm;
+      var quality = Math.max(0, Math.min(100, ((best - 60) / (170 - 60)) * 100));
+      var cue = "";
+      if (best < thr - 30) cue = t("waiting") + " — raise arm higher";
+      else if (best < thr) cue = "Almost there — reach up";
+      // Elbow straightness bonus
+      var elbowAng = leftAng > rightAng
+        ? angleAt(lShoulder, lElbow, lWrist)
+        : angleAt(rShoulder, rElbow, rWrist);
+      if (elbowAng && elbowAng < 140) { quality *= 0.85; cue = cue || "Keep elbow straighter"; }
+      return { passed: best >= thr, quality: quality, cue: cue };
     }
-    if (track === "leg") {
-      var kAnkle = rAnkle, kKnee = rKnee, supportHip = lHip;
-      var kickVisible = visible(kAnkle, kKnee);
-      var sideReached = targetSide === "left" ? kAnkle.x < 0.38 : kAnkle.x > 0.62;
-      var lifted = kickVisible && kAnkle.y < kKnee.y + 0.18;
-      var torsoStable = visible(lHip, rHip) ? Math.abs(lHip.y - rHip.y) < 0.18 : true;
-      var loaded = supportHip && supportHip.visibility > 0.35;
-      return kickVisible && sideReached && lifted && torsoStable && loaded;
+
+    if (track === "leg" || track === "gait") {
+      // Hip flexion at kicking leg; support hip stable.
+      var kickAnkle = targetSide === "left" ? lAnkle : rAnkle;
+      var kickKnee = targetSide === "left" ? lKnee : rKnee;
+      var kickHip = targetSide === "left" ? lHip : rHip;
+      var oppShoulder = targetSide === "left" ? lShoulder : rShoulder;
+      if (!visible(kickAnkle, kickKnee) || !kickHip) return { passed: false, quality: 0, cue: "Step into camera view" };
+      var hipAng = angleAt(oppShoulder, kickHip, kickKnee); // torso-to-thigh
+      var kneeAng = angleAt(kickHip, kickKnee, kickAnkle);
+      var thrL = track === "gait" ? angleThreshold.gait : angleThreshold.leg;
+      // Convert: standing hip angle ~170°, lifted leg lowers it. Use flexion = 180 - hipAng.
+      var flex = 180 - hipAng;
+      var quality2 = Math.max(0, Math.min(100, (flex / 60) * 100));
+      var torsoStable = visible(lHip, rHip) ? Math.abs(lHip.y - rHip.y) < 0.10 : true;
+      var cue2 = "";
+      if (!torsoStable) { quality2 *= 0.7; cue2 = "Keep hips level"; }
+      if (kneeAng < 140 && track !== "gait") { quality2 *= 0.9; cue2 = cue2 || "Extend the knee"; }
+      if (flex < thrL - 15) cue2 = cue2 || "Lift the leg higher";
+      return { passed: flex >= thrL && torsoStable, quality: quality2, cue: cue2 };
     }
+
     if (track === "balance") {
-      var stable = visible(lShoulder, rShoulder) && visible(lHip, rHip) &&
-        Math.abs(lShoulder.y - rShoulder.y) < 0.10 &&
-        Math.abs(lHip.y - rHip.y) < 0.10 &&
-        Math.abs(((lShoulder.x + rShoulder.x) / 2) - ((lHip.x + rHip.x) / 2)) < 0.16;
-      if (!stable) { steadyStartedAt = 0; return false; }
+      var level = visible(lShoulder, rShoulder) && visible(lHip, rHip);
+      if (!level) return { passed: false, quality: 0, cue: "Face the camera" };
+      var shoulderTilt = Math.abs(lShoulder.y - rShoulder.y);
+      var hipTilt = Math.abs(lHip.y - rHip.y);
+      var midDrift = Math.abs(((lShoulder.x + rShoulder.x) / 2) - ((lHip.x + rHip.x) / 2));
+      var stable = shoulderTilt < 0.10 && hipTilt < 0.10 && midDrift < 0.16;
+      if (!stable) { steadyStartedAt = 0; return { passed: false, quality: Math.max(0, 100 - (shoulderTilt + hipTilt + midDrift) * 300), cue: "Center your weight" }; }
       if (!steadyStartedAt) steadyStartedAt = Date.now();
-      return Date.now() - steadyStartedAt > 1200;
+      var held = Date.now() - steadyStartedAt;
+      var qB = Math.max(0, Math.min(100, (held / angleThreshold.balance) * 100));
+      return { passed: held > angleThreshold.balance, quality: qB, cue: held < angleThreshold.balance ? "Hold steady…" : "" };
     }
-    return false;
+    return { passed: false, quality: 0, cue: "" };
   }
 
   function landmark(i) { return lastPose && lastPose[i]; }
@@ -698,14 +758,39 @@
     return (changed / Math.max(total, 1)) * 100;
   }
 
-  function registerSuccess() {
+  function registerSuccess(quality) {
     lastSuccessAt = Date.now();
+    steadyStartedAt = 0;
+    var q = Math.max(0, Math.min(100, Math.round(quality || 60)));
+    repQualities.push(q);
+    lastQuality = q;
     score++;
     byId("scoreCount").textContent = score;
     burstTarget();
+    adjustDifficulty();
     speak(score >= targetScore ? t("complete") : t("success"));
     if (score >= targetScore) setTimeout(function () { endSession(true); }, 700);
     else setTimeout(renderTarget, 450);
+  }
+
+  // Dynamic Difficulty Adjustment: every 3 reps, tune threshold to keep
+  // caregiver in a productive challenge zone (avg 60-80% quality).
+  function adjustDifficulty() {
+    if (repQualities.length < 3 || repQualities.length % 3 !== 0) return;
+    var recent = repQualities.slice(-3);
+    var avg = (recent[0] + recent[1] + recent[2]) / 3;
+    var track = catalogEntry(currentExercise).track;
+    var step = track === "balance" ? 150 : 4;
+    var key = track === "gait" ? "gait" : track;
+    if (avg >= 85 && difficulty < 5) {
+      angleThreshold[key] += step;
+      difficulty++;
+      byId("motionReadout").textContent = "Great form — leveling up (L" + difficulty + ")";
+    } else if (avg < 45 && difficulty > 1) {
+      angleThreshold[key] = Math.max(step, angleThreshold[key] - step);
+      difficulty--;
+      byId("motionReadout").textContent = "Easing up a bit (L" + difficulty + ")";
+    }
   }
 
   function burstTarget() {
@@ -717,7 +802,7 @@
     clearInterval(demoTimer);
     demoTimer = setInterval(function () {
       if (!active) return clearInterval(demoTimer);
-      registerSuccess();
+      registerSuccess(70 + Math.random() * 25);
     }, 1300);
   }
 
@@ -742,7 +827,8 @@
       reps_target: targetScore,
       reps_completed: score,
       completion_pct: Math.min(100, Math.round((score / Math.max(1, targetScore)) * 100)),
-      avg_correctness: Math.min(100, Math.round((score / Math.max(1, targetScore)) * 100)),
+      avg_correctness: repQualities.length ? Math.round(repQualities.reduce(function (a, b) { return a + b; }, 0) / repQualities.length) : Math.min(100, Math.round((score / Math.max(1, targetScore)) * 100)),
+      difficulty_level: difficulty,
       duration_seconds: duration,
       started_at: startedAt,
       ended_at: new Date().toISOString(),
