@@ -204,7 +204,8 @@ video { width: 100%; background: #14213d; border-radius: 8px; }
 .category-tabs button.active {
   background: linear-gradient(135deg, var(--aqua), var(--sky)); color: white;
 }
-.exercise-card { position: relative; display: flex; flex-direction: column; gap: 4px; }
+.exercise-card { position: relative; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: transform .12s ease; }
+.exercise-card:active { transform: scale(0.98); }
 .exercise-card .ex-tag {
   position: absolute; top: 10px; right: 12px;
   font-size: .65rem; font-weight: 800; font-style: normal;

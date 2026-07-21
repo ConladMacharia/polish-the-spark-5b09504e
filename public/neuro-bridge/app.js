@@ -79,6 +79,22 @@
     { id: "stretch",     cat: "pt", track: "balance", icon: "🧘", promptKey: "stretchPrompt", titleKey: "stretchTitle", nameKey: "stretchName",    subKey: "stretchSub" },
     { id: "crawl",       cat: "pt", track: "leg",     icon: "🐾", promptKey: "crawlPrompt",   titleKey: "crawlTitle",   nameKey: "crawlName",      subKey: "crawlSub" },
 
+    // Expanded PT — now playable therapy games
+    { id: "prone",       cat: "pt", track: "balance", icon: "🛌", promptKey: "pronePrompt",   titleKey: "proneTitle",   nameKey: "proneName",      subKey: "proneSub" },
+    { id: "sidelying",   cat: "pt", track: "arm",     icon: "↔️", promptKey: "sidelyingPrompt",titleKey:"sidelyingTitle",nameKey:"sidelyingName",  subKey: "sidelyingSub" },
+    { id: "rolling",     cat: "pt", track: "balance", icon: "🔄", promptKey: "rollingPrompt", titleKey: "rollingTitle", nameKey: "rollingName",    subKey: "rollingSub" },
+    { id: "kneeling",    cat: "pt", track: "balance", icon: "🧎", promptKey: "kneelingPrompt",titleKey: "kneelingTitle",nameKey: "kneelingName",   subKey: "kneelingSub" },
+    { id: "half-kneel",  cat: "pt", track: "balance", icon: "🦵", promptKey: "halfKneelPrompt",titleKey:"halfKneelTitle",nameKey:"halfKneelName",  subKey: "halfKneelSub" },
+    { id: "wall-stand",  cat: "pt", track: "balance", icon: "🧱", promptKey: "wallStandPrompt",titleKey:"wallStandTitle",nameKey:"wallStandName",subKey: "wallStandSub" },
+    { id: "heel-raise",  cat: "pt", track: "leg",     icon: "👠", promptKey: "heelRaisePrompt",titleKey:"heelRaiseTitle",nameKey:"heelRaiseName",subKey: "heelRaiseSub" },
+    { id: "step-up",     cat: "pt", track: "leg",     icon: "🪜", promptKey: "stepUpPrompt",  titleKey: "stepUpTitle",  nameKey: "stepUpName",     subKey: "stepUpSub" },
+    { id: "obstacle",    cat: "pt", track: "leg",     icon: "🚧", promptKey: "obstaclePrompt",titleKey: "obstacleTitle",nameKey: "obstacleName",   subKey: "obstacleSub" },
+    { id: "ball-throw",  cat: "pt", track: "balance", icon: "🏐", promptKey: "ballThrowPrompt",titleKey:"ballThrowTitle",nameKey:"ballThrowName",subKey: "ballThrowSub" },
+    { id: "pnf",         cat: "pt", track: "arm",     icon: "➡️", promptKey: "pnfPrompt",     titleKey: "pnfTitle",     nameKey: "pnfName",        subKey: "pnfSub" },
+    { id: "aquatic",     cat: "pt", track: "leg",     icon: "🏊", promptKey: "aquaticPrompt", titleKey: "aquaticTitle", nameKey: "aquaticName",    subKey: "aquaticSub" },
+    { id: "horse",       cat: "pt", track: "balance", icon: "🐴", promptKey: "horsePrompt",   titleKey: "horseTitle",   nameKey: "horseName",      subKey: "horseSub" },
+    { id: "breathing",   cat: "pt", track: "balance", icon: "🌬️", promptKey: "breathingPrompt",titleKey:"breathingTitle",nameKey:"breathingName",subKey: "breathingSub" },
+
     // ---------- Occupational Therapy ----------
     { id: "pinch",       cat: "ot", track: "arm",     icon: "🤏", promptKey: "pinchPrompt",   titleKey: "pinchTitle",   nameKey: "pinchName",      subKey: "pinchSub" },
     { id: "catch",       cat: "ot", track: "arm",     icon: "🧤", promptKey: "catchPrompt",   titleKey: "catchTitle",   nameKey: "catchName",      subKey: "catchSub" },
@@ -92,6 +108,17 @@
     { id: "simon",       cat: "ot", track: "arm",     icon: "🧠", promptKey: "simonPrompt",   titleKey: "simonTitle",   nameKey: "simonName",       subKey: "simonSub" },
     { id: "sensory",     cat: "ot", track: "arm",     icon: "🌈", promptKey: "sensoryPrompt", titleKey: "sensoryTitle", nameKey: "sensoryName",    subKey: "sensorySub" },
     { id: "bilateral",   cat: "ot", track: "arm",     icon: "🤝", promptKey: "bilatPrompt",   titleKey: "bilatTitle",   nameKey: "bilatName",      subKey: "bilatSub" },
+
+    // Expanded OT — now playable therapy games
+    { id: "beads",       cat: "ot", track: "arm",     icon: "📿", promptKey: "beadsPrompt",   titleKey: "beadsTitle",   nameKey: "beadsName",      subKey: "beadsSub" },
+    { id: "buttons",     cat: "ot", track: "arm",     icon: "🔘", promptKey: "buttonsPrompt", titleKey: "buttonsTitle", nameKey: "buttonsName",  subKey: "buttonsSub" },
+    { id: "cut",         cat: "ot", track: "arm",     icon: "✂️", promptKey: "cutPrompt",     titleKey: "cutTitle",     nameKey: "cutName",        subKey: "cutSub" },
+    { id: "puzzle",      cat: "ot", track: "arm",     icon: "🧩", promptKey: "puzzlePrompt",  titleKey: "puzzleTitle",  nameKey: "puzzleName",     subKey: "puzzleSub" },
+    { id: "playdough",   cat: "ot", track: "arm",     icon: "🟠", promptKey: "playdoughPrompt",titleKey:"playdoughTitle",nameKey:"playdoughName",subKey: "playdoughSub" },
+    { id: "oral",        cat: "ot", track: "arm",     icon: "👄", promptKey: "oralPrompt",    titleKey: "oralTitle",    nameKey: "oralName",       subKey: "oralSub" },
+    { id: "brush",       cat: "ot", track: "arm",     icon: "🪥", promptKey: "brushPrompt",   titleKey: "brushTitle",   nameKey: "brushName",      subKey: "brushSub" },
+    { id: "handwriting", cat: "ot", track: "arm",     icon: "📝", promptKey: "handwritingPrompt",titleKey:"handwritingTitle",nameKey:"handwritingName",subKey:"handwritingSub" },
+    { id: "toilet",      cat: "ot", track: "arm",     icon: "🚻", promptKey: "toiletPrompt",  titleKey: "toiletTitle",  nameKey: "toiletName",     subKey: "toiletSub" },
   ];
 
   function catalogEntry(id) {
@@ -365,9 +392,10 @@
 
   function exerciseEnum(id) {
     if (id === "gait") return "gait";
-    if (["balance", "head", "stretch"].indexOf(id) !== -1) return "balance_hold";
-    if (["leg", "march", "squat", "sitstand", "bridge", "ankle", "crawl"].indexOf(id) !== -1) return "leg_kick";
-    if (["arm", "reach", "shoulder", "trunk"].indexOf(id) !== -1) return "arm_raise";
+    if (["balance", "head", "stretch", "ball-throw"].indexOf(id) !== -1) return "balance_hold";
+    if (["prone", "rolling", "kneeling", "half-kneel", "wall-stand", "horse", "breathing"].indexOf(id) !== -1) return "postural_control";
+    if (["leg", "march", "squat", "sitstand", "bridge", "ankle", "crawl", "heel-raise", "step-up", "obstacle", "aquatic"].indexOf(id) !== -1) return "leg_kick";
+    if (["arm", "reach", "shoulder", "trunk", "sidelying", "pnf"].indexOf(id) !== -1) return "arm_raise";
     return "occupational";
   }
 
@@ -476,7 +504,7 @@
     currentExercise = type;
     var entry = catalogEntry(type);
     byId("setupExerciseLabel").textContent = t(entry.nameKey);
-    byId("setupInstruction").textContent = t(entry.id + "Setup") || t(entry.track + "Setup") || "";
+    byId("setupInstruction").textContent = t(entry.id + "Setup") || t(entry.track + "Setup") || t("guidedSetup") || "";
     showScreen("setupScreen");
     startCamera();
   }
