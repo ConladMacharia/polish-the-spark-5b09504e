@@ -262,6 +262,11 @@
       aquaticName: "Aquatic Movement", aquaticSub: "Walk or kick in shallow water.", aquaticTitle: "Water walk", aquaticPrompt: "Move in water", aquaticSetup: "In shallow water with support, walk or kick slowly.",
       horseName: "Hippotherapy Prep", horseSub: "Sit astride a bolster and balance.", horseTitle: "Horse ride", horsePrompt: "Hold steady", horseSetup: "Sit astride a large bolster or peanut ball. Hold the position while gently rocking.",
       breathingName: "Belly Breathing", breathingSub: "Slow deep breaths with hand on tummy.", breathingTitle: "Belly breaths", breathingPrompt: "Breathe slowly", breathingSetup: "Lie or sit comfortably. Place a hand on the tummy and breathe slowly.",
+      "step-upSetup": "Use a low step with a rail. Step up with one foot, then the other.",
+      "half-kneelSetup": "Put one knee down and the other foot flat in front. Hold with support.",
+      "wall-standSetup": "Stand with back and heels touching a wall. Hold with support.",
+      "heel-raiseSetup": "Hold a rail. Rise onto tiptoes, hold, then lower slowly.",
+      "ball-throwSetup": "Sit on a therapy ball with support. Throw and catch a soft ball.",
       guidedSetup: "Keep the child visible in the camera and follow the caregiver guide.",
 
       // Expanded OT
