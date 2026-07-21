@@ -104,8 +104,8 @@ function ExercisesPage() {
         <div className="mb-6">
           <h1 className="font-display text-3xl">Exercise library</h1>
           <p className="text-sm text-muted-foreground">
-            Physiotherapy and occupational therapy exercises used with children with cerebral palsy. Guided ones
-            open the AI-tracked player; the rest are structured routines to practice at home.
+            Physiotherapy and occupational therapy exercises used with children with cerebral palsy. Every exercise
+            opens the AI-tracked player — tap any card to start a therapy game.
           </p>
         </div>
 
@@ -148,19 +148,14 @@ function ExercisesPage() {
                 {list.map((e) => (
                   <article
                     key={e.slug}
-                    className="flex flex-col rounded-2xl border border-border bg-card p-4 shadow-sm"
+                    onClick={() => launch(e.slug)}
+                    className="flex flex-col rounded-2xl border border-border bg-card p-4 shadow-sm cursor-pointer transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-3xl leading-none">{e.icon}</div>
-                      {e.gamified ? (
-                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                          AI tracked
-                        </span>
-                      ) : (
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                          Guided
-                        </span>
-                      )}
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                        AI tracked
+                      </span>
                     </div>
                     <h3 className="mt-3 font-display text-lg leading-tight">{e.name}</h3>
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">{e.focus}</p>
@@ -170,25 +165,19 @@ function ExercisesPage() {
                       {e.benefits}
                     </p>
                     <div className="mt-4">
-                      {e.gamified ? (
-                        <Button
-                          size="sm"
-                          className="w-full"
-                          disabled={!patient || launching === e.slug}
-                          onClick={() => launch(e.slug)}
-                        >
-                          {launching === e.slug ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <PlayCircle className="mr-2 h-4 w-4" />
-                          )}
-                          Start
-                        </Button>
-                      ) : (
-                        <Button size="sm" variant="secondary" className="w-full" disabled>
-                          Home routine
-                        </Button>
-                      )}
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        disabled={!patient || launching === e.slug}
+                        onClick={(evt) => { evt.stopPropagation(); launch(e.slug); }}
+                      >
+                        {launching === e.slug ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <PlayCircle className="mr-2 h-4 w-4" />
+                        )}
+                        Start
+                      </Button>
                     </div>
                   </article>
                 ))}

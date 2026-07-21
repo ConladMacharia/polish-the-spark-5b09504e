@@ -79,6 +79,22 @@
     { id: "stretch",     cat: "pt", track: "balance", icon: "🧘", promptKey: "stretchPrompt", titleKey: "stretchTitle", nameKey: "stretchName",    subKey: "stretchSub" },
     { id: "crawl",       cat: "pt", track: "leg",     icon: "🐾", promptKey: "crawlPrompt",   titleKey: "crawlTitle",   nameKey: "crawlName",      subKey: "crawlSub" },
 
+    // Expanded PT — now playable therapy games
+    { id: "prone",       cat: "pt", track: "balance", icon: "🛌", promptKey: "pronePrompt",   titleKey: "proneTitle",   nameKey: "proneName",      subKey: "proneSub" },
+    { id: "sidelying",   cat: "pt", track: "arm",     icon: "↔️", promptKey: "sidelyingPrompt",titleKey:"sidelyingTitle",nameKey:"sidelyingName",  subKey: "sidelyingSub" },
+    { id: "rolling",     cat: "pt", track: "balance", icon: "🔄", promptKey: "rollingPrompt", titleKey: "rollingTitle", nameKey: "rollingName",    subKey: "rollingSub" },
+    { id: "kneeling",    cat: "pt", track: "balance", icon: "🧎", promptKey: "kneelingPrompt",titleKey: "kneelingTitle",nameKey: "kneelingName",   subKey: "kneelingSub" },
+    { id: "half-kneel",  cat: "pt", track: "balance", icon: "🦵", promptKey: "halfKneelPrompt",titleKey:"halfKneelTitle",nameKey:"halfKneelName",  subKey: "halfKneelSub" },
+    { id: "wall-stand",  cat: "pt", track: "balance", icon: "🧱", promptKey: "wallStandPrompt",titleKey:"wallStandTitle",nameKey:"wallStandName",subKey: "wallStandSub" },
+    { id: "heel-raise",  cat: "pt", track: "leg",     icon: "👠", promptKey: "heelRaisePrompt",titleKey:"heelRaiseTitle",nameKey:"heelRaiseName",subKey: "heelRaiseSub" },
+    { id: "step-up",     cat: "pt", track: "leg",     icon: "🪜", promptKey: "stepUpPrompt",  titleKey: "stepUpTitle",  nameKey: "stepUpName",     subKey: "stepUpSub" },
+    { id: "obstacle",    cat: "pt", track: "leg",     icon: "🚧", promptKey: "obstaclePrompt",titleKey: "obstacleTitle",nameKey: "obstacleName",   subKey: "obstacleSub" },
+    { id: "ball-throw",  cat: "pt", track: "balance", icon: "🏐", promptKey: "ballThrowPrompt",titleKey:"ballThrowTitle",nameKey:"ballThrowName",subKey: "ballThrowSub" },
+    { id: "pnf",         cat: "pt", track: "arm",     icon: "➡️", promptKey: "pnfPrompt",     titleKey: "pnfTitle",     nameKey: "pnfName",        subKey: "pnfSub" },
+    { id: "aquatic",     cat: "pt", track: "leg",     icon: "🏊", promptKey: "aquaticPrompt", titleKey: "aquaticTitle", nameKey: "aquaticName",    subKey: "aquaticSub" },
+    { id: "horse",       cat: "pt", track: "balance", icon: "🐴", promptKey: "horsePrompt",   titleKey: "horseTitle",   nameKey: "horseName",      subKey: "horseSub" },
+    { id: "breathing",   cat: "pt", track: "balance", icon: "🌬️", promptKey: "breathingPrompt",titleKey:"breathingTitle",nameKey:"breathingName",subKey: "breathingSub" },
+
     // ---------- Occupational Therapy ----------
     { id: "pinch",       cat: "ot", track: "arm",     icon: "🤏", promptKey: "pinchPrompt",   titleKey: "pinchTitle",   nameKey: "pinchName",      subKey: "pinchSub" },
     { id: "catch",       cat: "ot", track: "arm",     icon: "🧤", promptKey: "catchPrompt",   titleKey: "catchTitle",   nameKey: "catchName",      subKey: "catchSub" },
@@ -92,6 +108,17 @@
     { id: "simon",       cat: "ot", track: "arm",     icon: "🧠", promptKey: "simonPrompt",   titleKey: "simonTitle",   nameKey: "simonName",       subKey: "simonSub" },
     { id: "sensory",     cat: "ot", track: "arm",     icon: "🌈", promptKey: "sensoryPrompt", titleKey: "sensoryTitle", nameKey: "sensoryName",    subKey: "sensorySub" },
     { id: "bilateral",   cat: "ot", track: "arm",     icon: "🤝", promptKey: "bilatPrompt",   titleKey: "bilatTitle",   nameKey: "bilatName",      subKey: "bilatSub" },
+
+    // Expanded OT — now playable therapy games
+    { id: "beads",       cat: "ot", track: "arm",     icon: "📿", promptKey: "beadsPrompt",   titleKey: "beadsTitle",   nameKey: "beadsName",      subKey: "beadsSub" },
+    { id: "buttons",     cat: "ot", track: "arm",     icon: "🔘", promptKey: "buttonsPrompt", titleKey: "buttonsTitle", nameKey: "buttonsName",  subKey: "buttonsSub" },
+    { id: "cut",         cat: "ot", track: "arm",     icon: "✂️", promptKey: "cutPrompt",     titleKey: "cutTitle",     nameKey: "cutName",        subKey: "cutSub" },
+    { id: "puzzle",      cat: "ot", track: "arm",     icon: "🧩", promptKey: "puzzlePrompt",  titleKey: "puzzleTitle",  nameKey: "puzzleName",     subKey: "puzzleSub" },
+    { id: "playdough",   cat: "ot", track: "arm",     icon: "🟠", promptKey: "playdoughPrompt",titleKey:"playdoughTitle",nameKey:"playdoughName",subKey: "playdoughSub" },
+    { id: "oral",        cat: "ot", track: "arm",     icon: "👄", promptKey: "oralPrompt",    titleKey: "oralTitle",    nameKey: "oralName",       subKey: "oralSub" },
+    { id: "brush",       cat: "ot", track: "arm",     icon: "🪥", promptKey: "brushPrompt",   titleKey: "brushTitle",   nameKey: "brushName",      subKey: "brushSub" },
+    { id: "handwriting", cat: "ot", track: "arm",     icon: "📝", promptKey: "handwritingPrompt",titleKey:"handwritingTitle",nameKey:"handwritingName",subKey:"handwritingSub" },
+    { id: "toilet",      cat: "ot", track: "arm",     icon: "🚻", promptKey: "toiletPrompt",  titleKey: "toiletTitle",  nameKey: "toiletName",     subKey: "toiletSub" },
   ];
 
   function catalogEntry(id) {
@@ -220,6 +247,38 @@
       simonName: "Simon Says", simonSub: "Copy the move when Simon says.", simonTitle: "Simon says", simonPrompt: "Do what Simon says", simonSetup: "Caregiver calls out moves. Child copies only when Simon says.",
       sensoryName: "Texture Hunt", sensorySub: "Touch soft, hard, and bumpy.", sensoryTitle: "Feel the textures", sensoryPrompt: "Touch the texture", sensorySetup: "Prepare 3 textures (soft, rough, bumpy). Child touches each one.",
       bilatName: "Two-Hand Clap", bilatSub: "Use both hands together.", bilatTitle: "Both hands together", bilatPrompt: "Both hands together", bilatSetup: "Encourage using both hands together — clap, hold, or roll a ball.",
+      // Expanded PT
+      proneName: "Prone on Elbows", proneSub: "Lift head and chest while lying on tummy.", proneTitle: "Tummy lift", pronePrompt: "Lift your head", proneSetup: "Lie on the tummy. Prop on forearms and lift the head and chest.",
+      sidelyingName: "Side-Lying Play", sidelyingSub: "Play with both hands while lying on your side.", sidelyingTitle: "Side play", sidelyingPrompt: "Reach with both hands", sidelyingSetup: "Lie on the side with support. Use both hands to play with a toy.",
+      rollingName: "Rolling Practice", rollingSub: "Roll from back to tummy and back.", rollingTitle: "Roll over", rollingPrompt: "Roll your body", rollingSetup: "Lie on a mat. Roll slowly from back to tummy and return.",
+      kneelingName: "Tall Kneeling", kneelingSub: "Kneel upright and hold steady.", kneelingTitle: "Tall kneel", kneelingPrompt: "Kneel tall", kneelingSetup: "Kneel on a soft mat, hips over knees. Hold the position with support.",
+      halfKneelName: "Half-Kneeling", halfKneelSub: "One knee down, other foot forward.", halfKneelTitle: "Half kneel", halfKneelPrompt: "Hold half kneel", halfKneelSetup: "Put one knee down and the other foot flat in front. Hold with support.",
+      wallStandName: "Wall Standing", wallStandSub: "Stand tall with back to the wall.", wallStandTitle: "Wall stand", wallStandPrompt: "Stand tall", wallStandSetup: "Stand with back and heels touching a wall. Hold with support.",
+      heelRaiseName: "Heel Raises", heelRaiseSub: "Rise onto tiptoes and lower.", heelRaiseTitle: "Tip-toe lift", heelRaisePrompt: "Rise onto toes", heelRaiseSetup: "Hold a rail. Rise onto tiptoes, hold, then lower slowly.",
+      stepUpName: "Step-Ups", stepUpSub: "Step up and down a low block.", stepUpTitle: "Step up", stepUpPrompt: "Step up", stepUpSetup: "Use a low step with a rail. Step up with one foot, then the other.",
+      obstacleName: "Obstacle Stepping", obstacleSub: "Step over small objects.", obstacleTitle: "Step over", obstaclePrompt: "Step over", obstacleSetup: "Place small soft objects in a line. Step over each one with support.",
+      ballThrowName: "Ball Sit & Throw", ballThrowSub: "Sit on a ball and throw.", ballThrowTitle: "Ball throw", ballThrowPrompt: "Throw the ball", ballThrowSetup: "Sit on a therapy ball with support. Throw and catch a soft ball.",
+      pnfName: "PNF Diagonals", pnfSub: "Move the arm in a diagonal pattern.", pnfTitle: "Diagonal reach", pnfPrompt: "Reach across", pnfSetup: "Reach the hand down and across the body, then up and out.",
+      aquaticName: "Aquatic Movement", aquaticSub: "Walk or kick in shallow water.", aquaticTitle: "Water walk", aquaticPrompt: "Move in water", aquaticSetup: "In shallow water with support, walk or kick slowly.",
+      horseName: "Hippotherapy Prep", horseSub: "Sit astride a bolster and balance.", horseTitle: "Horse ride", horsePrompt: "Hold steady", horseSetup: "Sit astride a large bolster or peanut ball. Hold the position while gently rocking.",
+      breathingName: "Belly Breathing", breathingSub: "Slow deep breaths with hand on tummy.", breathingTitle: "Belly breaths", breathingPrompt: "Breathe slowly", breathingSetup: "Lie or sit comfortably. Place a hand on the tummy and breathe slowly.",
+      "step-upSetup": "Use a low step with a rail. Step up with one foot, then the other.",
+      "half-kneelSetup": "Put one knee down and the other foot flat in front. Hold with support.",
+      "wall-standSetup": "Stand with back and heels touching a wall. Hold with support.",
+      "heel-raiseSetup": "Hold a rail. Rise onto tiptoes, hold, then lower slowly.",
+      "ball-throwSetup": "Sit on a therapy ball with support. Throw and catch a soft ball.",
+      guidedSetup: "Keep the child visible in the camera and follow the caregiver guide.",
+
+      // Expanded OT
+      beadsName: "Threading Beads", beadsSub: "Thread beads onto a string.", beadsTitle: "Bead thread", beadsPrompt: "Thread the bead", beadsSetup: "Hold a thick string and thread large beads one by one.",
+      buttonsName: "Buttoning", buttonsSub: "Fasten and unfasten buttons.", buttonsTitle: "Button up", buttonsPrompt: "Button it", buttonsSetup: "Use a dressing board with large buttons. Practice fastening and opening.",
+      cutName: "Scissor Skills", cutSub: "Cut along a thick line.", cutTitle: "Cut the line", cutPrompt: "Cut forward", cutSetup: "Hold safety scissors with help. Cut along a thick straight line.",
+      puzzleName: "Shape Sorting", puzzleSub: "Match shapes into a sorter.", puzzleTitle: "Shape match", puzzlePrompt: "Match the shape", puzzleSetup: "Pick up a shape and fit it into the matching hole.",
+      playdoughName: "Play-Dough Work", playdoughSub: "Roll, pinch and shape dough.", playdoughTitle: "Dough play", playdoughPrompt: "Squeeze the dough", playdoughSetup: "Use soft play dough. Roll, pinch and squeeze with both hands.",
+      oralName: "Oral-Motor Play", oralSub: "Blow bubbles or sip through a straw.", oralTitle: "Blow bubbles", oralPrompt: "Blow gently", oralSetup: "Use a straw or bubble wand. Blow gently to strengthen mouth muscles.",
+      brushName: "Sensory Brushing", brushSub: "Firm brushing of arms and legs.", brushTitle: "Brush time", brushPrompt: "Brush gently", brushSetup: "Use a soft brush. Gently brush arms and legs as directed by the therapist.",
+      handwritingName: "Pre-Writing Strokes", handwritingSub: "Trace lines, circles and crosses.", handwritingTitle: "Trace strokes", handwritingPrompt: "Trace the line", handwritingSetup: "Use a finger or crayon to trace lines, circles and crosses.",
+      toiletName: "Toileting Steps", toiletSub: "Practice pull down, sit, wipe, wash.", toiletTitle: "Toilet steps", toiletPrompt: "Follow the steps", toiletSetup: "Practice each step of toileting with caregiver help.",
     },
     sw: {
       chooseLanguage: "Chagua lugha kuanza.",
@@ -281,6 +340,38 @@
       simonName: "Simon Anasema", simonSub: "Rudia Simon anaposema.", simonTitle: "Simon anasema", simonPrompt: "Fanya Simon anachosema", simonSetup: "Mlezi asema vitendo. Mtoto arudie tu Simon anaposema.",
       sensoryName: "Uchunguzi wa Miundo", sensorySub: "Gusa laini, gumu, na yenye matuta.", sensoryTitle: "Hisi miundo", sensoryPrompt: "Gusa mundo", sensorySetup: "Andaa miundo 3 (laini, gumu, matuta). Mtoto aguse kila moja.",
       bilatName: "Makofi ya Mikono Miwili", bilatSub: "Tumia mikono miwili pamoja.", bilatTitle: "Mikono miwili pamoja", bilatPrompt: "Mikono miwili pamoja", bilatSetup: "Himiza kutumia mikono miwili pamoja — kupiga makofi, kushika au kuviringisha mpira.",
+      // Expanded PT
+      proneName: "Kujitegemeza tumboni", proneSub: "Inua kichwa na kifua huku ukiwa tumbini.", proneTitle: "Inua tumbo", pronePrompt: "Inua kichwa", proneSetup: "Lala tumbani. Jitegemeze kwa magoti na inua kichwa na kifua.",
+      sidelyingName: "Kucheza kwa ubavu", sidelyingSub: "Cheza na mikono yote miwili huku ukiwa kwa ubavu.", sidelyingTitle: "Cheza kwa ubavu", sidelyingPrompt: "Fikia kwa mikono yote", sidelyingSetup: "Lala kwa ubavu na msaada. Tumia mikono yote miwili kucheza na toy.",
+      rollingName: "Kuzunguka Mwili", rollingSub: "Zunguka kwa tumbo kisha rudi.", rollingTitle: "Zunguka", rollingPrompt: "Zunguka mwili", rollingSetup: "Lala kwenye mkeka. Zunguka polepole kwa tumbo kisha rudi.",
+      kneelingName: "Kupiga Magoti Imara", kneelingSub: "Piga magoti wima na shika imara.", kneelingTitle: "Magoti imara", kneelingPrompt: "Piga magoti wima", kneelingSetup: "Piga magoti kwenye mkeka laini, viuno juu ya magoti. Shika na msaada.",
+      halfKneelName: "Kupiga Magoti Moja", halfKneelSub: "Goti moja chini, mguu mbele.", halfKneelTitle: "Nusu magoti", halfKneelPrompt: "Shika nusu magoti", halfKneelSetup: "Weka goti moja chini na mguu mwingine mbele. Shika na msaada.",
+      wallStandName: "Kusimama Ukuta", wallStandSub: "Simama wima mgongo kwa ukuta.", wallStandTitle: "Simama ukuta", wallStandPrompt: "Simama wima", wallStandSetup: "Simama mgongo na visigino vikigusa ukuta. Shika na msaada.",
+      heelRaiseName: "Kuinua Kisigino", heelRaiseSub: "Inua mwili kwa vidole vya mguu.", heelRaiseTitle: "Inua vidole", heelRaisePrompt: "Inua vidole vya mguu", heelRaiseSetup: "Shika reli. Inua mwili kwa vidole, shika, kisha shuka polepole.",
+      stepUpName: "Kupanda Jukwaa", stepUpSub: "Panda na shuka jukwaa dogo.", stepUpTitle: "Panda jukwaa", stepUpPrompt: "Panda jukwaa", stepUpSetup: "Tumia jukwaa dogo na reli. Panda kwa mguu mmoja, kisha mwingine.",
+      obstacleName: "Kuzinguka Vizuizi", obstacleSub: "Ruka vitu vidogo.", obstacleTitle: "Ruka vizuizi", obstaclePrompt: "Ruka vizuizi", obstacleSetup: "Weka vitu vidogo laini kwenye mstari. Ruka kila kimoja na msaada.",
+      ballThrowName: "Kuketi na Kutupa Mpira", ballThrowSub: "Keti kwenye mpira na utupe.", ballThrowTitle: "Tupa mpira", ballThrowPrompt: "Tupa mpira", ballThrowSetup: "Keti kwenye mpira wa tiba na msaada. Tupa na kamata mpira laini.",
+      pnfName: "Mienendo ya PNF", pnfSub: "Sogeza mkono kwa mstari wa katikati.", pnfTitle: "Fikia katikati", pnfPrompt: "Fikia ng'ambo", pnfSetup: "Sogeza mkono chini na ng'ambo ya mwili, kisha juu na nje.",
+      aquaticName: "Mazoezi ya Majini", aquaticSub: "Tembea au piga teke majini.", aquaticTitle: "Tembea majini", aquaticPrompt: "Sogea majini", aquaticSetup: "Majini ya kina kifupi na msaada, tembea au piga teke polepole.",
+      horseName: "Maandalizi ya Hipotherapy", horseSub: "Keti juu ya bolster na ushibe mizani.", horseTitle: "Kupanda farasi", horsePrompt: "Shika imara", horseSetup: "Keti juu ya bolster kubwa au mpira wa karanga. Shika wima huku ukisogea polepole.",
+      breathingName: "Kupumua Tumbo", breathingSub: "Pumua polepole na mkono tumboni.", breathingTitle: "Pumua tumbo", breathingPrompt: "Pumua polepole", breathingSetup: "Lala au kaa kwa utulivu. Weka mkono tumboni na pumua polepole.",
+      "step-upSetup": "Tumia jukwaa dogo na reli. Panda kwa mguu mmoja, kisha mwingine.",
+      "half-kneelSetup": "Weka goti moja chini na mguu mwingine mbele. Shika na msaada.",
+      "wall-standSetup": "Simama mgongo na visigino vikigusa ukuta. Shika na msaada.",
+      "heel-raiseSetup": "Shika reli. Inua mwili kwa vidole, shika, kisha shuka polepole.",
+      "ball-throwSetup": "Keti kwenye mpira wa tiba na msaada. Tupa na kamata mpira laini.",
+      guidedSetup: "Hakikisha mtoto anaonekana kwenye kamera na fuata mwongozo wa mlezi.",
+
+      // Expanded OT
+      beadsName: "Kushona Shanga", beadsSub: "Tia shanga kwenye kamba.", beadsTitle: "Shona shanga", beadsPrompt: "Tia shanga", beadsSetup: "Shika kamba nene na tia shanga kubwa moja baada ya nyingine.",
+      buttonsName: "Kufunga Vifungo", buttonsSub: "Funga na fungua vifungo.", buttonsTitle: "Funga vifungo", buttonsPrompt: "Funga kizibo", buttonsSetup: "Tumia ubao wa kufua wenye vifungo vikubwa. Zoeza kufunga na kufungua.",
+      cutName: "Kukata kwa Makasi", cutSub: "Kata kando ya mstari mweupe.", cutTitle: "Kata mstari", cutPrompt: "Kata mbele", cutSetup: "Shika makasi salama kwa msaada. Kata kando ya mstari mweupe.",
+      puzzleName: "Kufananisha Mumbo", puzzleSub: "Linganisha mumbo na tundu lake.", puzzleTitle: "Linganisha mumbo", puzzlePrompt: "Linganisha umbo", puzzleSetup: "Chukua umbo na liweke kwenye tundu linalofanana.",
+      playdoughName: "Kazi ya Doh", playdoughSub: "Oga, bana na unda doh.", playdoughTitle: "Cheza na doh", playdoughPrompt: "Bana doh", playdoughSetup: "Tumia doh laini. Oga, bana na nyonga kwa mikono yote miwili.",
+      oralName: "Mazoezi ya Mdomo", oralSub: "Puliza puzo au kunywa kwa mrija.", oralTitle: "Puliza puzo", oralPrompt: "Puliza polepole", oralSetup: "Tumia mrija au kijipuzi cha puzo. Puliza polepole kuimarisha misuli ya mdomo.",
+      brushName: "Kuchubua Ngozi", brushSub: "Chubua mikono na miguu kwa nguvu.", brushTitle: "Muda wa kuchubua", brushPrompt: "Chubua polepole", brushSetup: "Tumia brashi laini. Chubua mikono na miguu polepole kama alivyotibu.",
+      handwritingName: "Mistari ya Kuandika", handwritingSub: "Fuatilia mistari, duara na vizio.", handwritingTitle: "Fuatilia mistari", handwritingPrompt: "Fuatilia mstari", handwritingSetup: "Tumia kidole au krayoni kufuatilia mistari, duara na vizio.",
+      toiletName: "Hatua za Choo", toiletSub: "Zoeza kuvua, kuketi, kufuta, kunawa.", toiletTitle: "Hatua za choo", toiletPrompt: "Fuatilia hatua", toiletSetup: "Zoeza kila hatua ya kwenda choo kwa msaada wa mlezi.",
     },
     ki: {
       chooseLanguage: "Thuura rũthiomi rwa kwambĩrĩria.",
@@ -336,6 +427,38 @@
       simonName: "Simon Aroga", simonSub: "Rũmĩrĩra Simon oga.", simonTitle: "Simon aroga", simonPrompt: "Ĩka Simon aroga", simonSetup: "Mũmũmenyereri oge ciĩko. Mwana arũmĩrĩrie tu Simon aroga.",
       sensoryName: "Gũthethania Mĩthemba", sensorySub: "Hutia kĩhũthũ, kĩũmu na gĩkĩrĩ na matuta.", sensoryTitle: "Hutia mĩthemba", sensoryPrompt: "Hutia mũthemba", sensorySetup: "Haarĩria mĩthemba 3 (mĩhũthũ, mĩũmu, ĩrĩ na matuta). Mwana ahutie o ũmwe.",
       bilatName: "Ihũũra cia Moko Meerĩ", bilatSub: "Hũthĩra moko meerĩ hamwe.", bilatTitle: "Moko meerĩ hamwe", bilatPrompt: "Moko meerĩ hamwe", bilatSetup: "Ĩrĩra mwana ahũthĩre moko meerĩ hamwe — kũhũra ihũũra, kũnyiita kana kũviringithia mũpĩra.",
+      // Expanded PT
+      proneName: "Kũrũgama Tumbini", proneSub: "Ambararia mũtwe na kĩfua rĩrĩa tumbini.", proneTitle: "Ambararia tumbo", pronePrompt: "Ambararia mũtwe", proneSetup: "Kama tumbini. Ikinĩra na moko na ũambararie mũtwe na kĩfua.",
+      sidelyingName: "Gũthakĩrĩria Kwa Ubavu", sidelyingSub: "Thakĩrĩria na moko meerĩ rĩrĩa warĩ kwa ubavu.", sidelyingTitle: "Thakĩrĩria kwa ubavu", sidelyingPrompt: "Hũrũrũka na moko meerĩ", sidelyingSetup: "Kama kwa ubavu na ũteithio. Hũthĩra moko meerĩ hamwe gũthakĩrĩria toy.",
+      rollingName: "Gũcũrũka Mwĩrĩ", rollingSub: "Cũrũka tumbini ũcoke wĩhũge.", rollingTitle: "Cũrũka", rollingPrompt: "Cũrũka mwĩrĩ", rollingSetup: "Kama mũtamboinĩ. Cũrũka kahora tumbini ũcoke wĩhũge.",
+      kneelingName: "Kũrũgama Magũrũ", kneelingSub: "Rũgama magũrũ ũnyiite wega.", kneelingTitle: "Magũrũ marũgamĩte", kneelingPrompt: "Rũgama magũrũ wega", kneelingSetup: "Rũgama magũrũ mũtamboinĩ, njohe igũrũ cia magũrũ. Nyiita mũtũũrĩre na ũteithio.",
+      halfKneelName: "Kũrũgama Gũrũ Gũmwe", halfKneelSub: "Gũrũ kũmwe thĩ, kũgũrũ kũngĩ mbere.", halfKneelTitle: "Nusu magũrũ", halfKneelPrompt: "Nyiita nusu magũrũ", halfKneelSetup: "Iga gũrũ kũmwe thĩ na kũgũrũ kũngĩ mbere. Nyiita na ũteithio.",
+      wallStandName: "Kũrũgama Hũgũrũ", wallStandSub: "Rũgama wega na mũgongo hũgũrũ-inĩ.", wallStandTitle: "Rũgama hũgũrũ", wallStandPrompt: "Rũgama wega", wallStandSetup: "Rũgama na mũgongo na ciara igũrũ cia hũgũrũ. Nyiita na ũteithio.",
+      heelRaiseName: "Kũambũrũkia Ciara", heelRaiseSub: "Inũka igũrũ cia ciara ũcoke ũhũge.", heelRaiseTitle: "Inũka ciara", heelRaisePrompt: "Inũka igũrũ cia ciara", heelRaiseSetup: "Nyiitĩrĩra mũrarara. Inũka igũrũ cia ciara, tũma, ũhũge kahora.",
+      stepUpName: "Gũkĩra Jukwaa", stepUpSub: "Kĩra jukwaa nini ũcoke ũhũge.", stepUpTitle: "Kĩra jukwaa", stepUpPrompt: "Kĩra jukwaa", stepUpSetup: "Hũthĩra jukwaa nini na mũrarara. Kĩra na kũgũrũ kũmwe, ũcoke kũngĩ.",
+      obstacleName: "Gũrĩa Mĩbũmbũ", obstacleSub: "Rĩa indo cia nini.", obstacleTitle: "Rĩa mĩbũmbũ", obstaclePrompt: "Rĩa mĩbũmbũ", obstacleSetup: "Iga indo nini laini mũtaro-inĩ. Rĩa o kĩmwe na ũteithio.",
+      ballThrowName: "Gũikara Mũpĩra na Gũtuma", ballThrowSub: "Ikara mũpĩra ũtume.", ballThrowTitle: "Tuma mũpĩra", ballThrowPrompt: "Tuma mũpĩra", ballThrowSetup: "Ikara mũpĩra wa ũhonia na ũteithio. Tuma na ũnyiite mũpĩra mũhũthũ.",
+      pnfName: "Mĩtĩkanio ya PNF", pnfSub: "Hũrũrũka guoko mũtaro wa gatagatĩ.", pnfTitle: "Hũrũrũka gatagatĩ", pnfPrompt: "Hũrũrũka ng'ambo", pnfSetup: "Hũrũrũka guoko thĩ na ng'ambo ya mwĩrĩ, ũcoke igũrũ na nja.",
+      aquaticName: "Mĩtĩkanio ya Maaĩ", aquaticSub: "Thiĩ kana ringe maaĩ-inĩ.", aquaticTitle: "Thiĩ maaĩ-inĩ", aquaticPrompt: "Sogea maaĩ-inĩ", aquaticSetup: "Maaĩ-inĩ matheru na ũteithio, thiĩ kana ringe kahora.",
+      horseName: "Kũhaarĩria Gũka Mbarathi", horseSub: "Ikara igũrũ cia bolster ũrũgamĩte.", horseTitle: "Thiĩ mbarathi", horsePrompt: "Nyiita wega", horseSetup: "Ikara igũrũ cia bolster nene kana mpira wa karanga. Nyiita mũtũũrĩre rĩrĩa ũkĩinĩrio.",
+      breathingName: "Kũhuhĩra Nda", breathingSub: "Huhĩra kahora na moko nda-inĩ.", breathingTitle: "Huhĩra nda", breathingPrompt: "Huhĩra kahora", breathingSetup: "Kama kana ikara na kũrũgama. Iga moko nda-inĩ na ũhuhĩre kahora.",
+      "step-upSetup": "Hũthĩra jukwaa nini na mũrarara. Kĩra na kũgũrũ kũmwe, ũcoke kũngĩ.",
+      "half-kneelSetup": "Iga gũrũ kũmwe thĩ na kũgũrũ kũngĩ mbere. Nyiita na ũteithio.",
+      "wall-standSetup": "Rũgama na mũgongo na ciara igũrũ cia hũgũrũ. Nyiita na ũteithio.",
+      "heel-raiseSetup": "Nyiitĩrĩra mũrarara. Inũka igũrũ cia ciara, tũma, ũhũge kahora.",
+      "ball-throwSetup": "Ikara mũpĩra wa ũhonia na ũteithio. Tuma na ũnyiite mũpĩra mũhũthũ.",
+      guidedSetup: "Tigĩrĩra mwana wonekane kamera-inĩ na rũmĩrĩra mũtaaro wa mũmũmenyereri.",
+
+      // Expanded OT
+      beadsName: "Gũthokia Njeni", beadsSub: "Thokia njeni thĩinĩ wa rũhĩa.", beadsTitle: "Thokia njeni", beadsPrompt: "Thokia njeni", beadsSetup: "Shika rũhĩa rũnene na ũthokie njeni nene imwe hĩndĩ ya ĩngĩ.",
+      buttonsName: "Gũoha Mabatani", buttonsSub: "Oha na wohore mabatani.", buttonsTitle: "Oha mabatani", buttonsPrompt: "Oha kĩzibo", buttonsSetup: "Hũthĩra bao ya kũhũthũra ĩrĩ na mabatani manene. Ĩrutĩra kũoha na kũwĩhũra.",
+      cutName: "Gũtema na Makasi", cutSub: "Tema mũtaro wa kũrũgama.", cutTitle: "Tema mũtaro", cutPrompt: "Tema mbere", cutSetup: "Shika makasi ma kũrũgama na ũteithio. Tema mũtaro wa kũrũgama.",
+      puzzleName: "Gũcũrania Mĩthemba", puzzleSub: "Cũrania mĩthemba na tundu yayo.", puzzleTitle: "Cũrania mĩthemba", puzzlePrompt: "Cũrania mũthemba", puzzleSetup: "Nyita mũthemba ũigĩrĩre tundu rĩrĩa rĩhaanaine.",
+      playdoughName: "Gũthakĩrĩria Doh", playdoughSub: "Oga, nyiita na ũnde doh.", playdoughTitle: "Thakĩrĩria doh", playdoughPrompt: "Nyiita doh", playdoughSetup: "Hũthĩra doh ĩhũthũ. Oga, nyiita na nyiinga na moko meerĩ.",
+      oralName: "Mĩtĩkanio ya Mũromo", oralSub: "Puliza mapura kana kũnyua na mũhũngũ.", oralTitle: "Puliza mapura", oralPrompt: "Puliza kahora", oralSetup: "Hũthĩra mũhũngũ kana kĩjipuzi kĩa mapura. Puliza kahora nĩguo imararie misuli ya mũromo.",
+      brushName: "Gũcũbũra Ngozi", brushSub: "Cũbũra moko na magũrũ na nguvu nini.", brushTitle: "Mũhaka wa kũcũbũra", brushPrompt: "Cũbũra kahora", brushSetup: "Hũthĩra brashi ĩhũthũ. Cũbũra moko na magũrũ kahora ta ũrĩa warutwo.",
+      handwritingName: "Mistari ya Kũandĩka", handwritingSub: "Rũmĩrĩra mistari, mĩthiũrũrĩko na vizio.", handwritingTitle: "Rũmĩrĩra mistari", handwritingPrompt: "Rũmĩrĩra mũtaro", handwritingSetup: "Hũthĩra kĩara kana kraioni gũrũmĩrĩria mistari, mĩthiũrũrĩko na vizio.",
+      toiletName: "Hatua cia Choo", toiletSub: "Ĩrutĩra kũhũrũrũka, gũikara, kũthambia, kũnawa.", toiletTitle: "Hatua cia choo", toiletPrompt: "Rũmĩrĩra hatua", toiletSetup: "Ĩrutĩra o ĩmwe cia hatua cia kwĩha ciao na ũteithio wa mũmũmenyereri.",
     },
   };
 
@@ -365,9 +488,10 @@
 
   function exerciseEnum(id) {
     if (id === "gait") return "gait";
-    if (["balance", "head", "stretch"].indexOf(id) !== -1) return "balance_hold";
-    if (["leg", "march", "squat", "sitstand", "bridge", "ankle", "crawl"].indexOf(id) !== -1) return "leg_kick";
-    if (["arm", "reach", "shoulder", "trunk"].indexOf(id) !== -1) return "arm_raise";
+    if (["balance", "head", "stretch", "ball-throw"].indexOf(id) !== -1) return "balance_hold";
+    if (["prone", "rolling", "kneeling", "half-kneel", "wall-stand", "horse", "breathing"].indexOf(id) !== -1) return "postural_control";
+    if (["leg", "march", "squat", "sitstand", "bridge", "ankle", "crawl", "heel-raise", "step-up", "obstacle", "aquatic"].indexOf(id) !== -1) return "leg_kick";
+    if (["arm", "reach", "shoulder", "trunk", "sidelying", "pnf"].indexOf(id) !== -1) return "arm_raise";
     return "occupational";
   }
 
@@ -476,7 +600,7 @@
     currentExercise = type;
     var entry = catalogEntry(type);
     byId("setupExerciseLabel").textContent = t(entry.nameKey);
-    byId("setupInstruction").textContent = t(entry.id + "Setup") || t(entry.track + "Setup") || "";
+    byId("setupInstruction").textContent = t(entry.id + "Setup") || t(entry.track + "Setup") || t("guidedSetup") || "";
     showScreen("setupScreen");
     startCamera();
   }
