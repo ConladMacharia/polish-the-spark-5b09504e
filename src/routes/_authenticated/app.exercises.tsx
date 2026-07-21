@@ -104,8 +104,8 @@ function ExercisesPage() {
         <div className="mb-6">
           <h1 className="font-display text-3xl">Exercise library</h1>
           <p className="text-sm text-muted-foreground">
-            Physiotherapy and occupational therapy exercises used with children with cerebral palsy. Guided ones
-            open the AI-tracked player; the rest are structured routines to practice at home.
+            Physiotherapy and occupational therapy exercises used with children with cerebral palsy. Every exercise
+            opens the AI-tracked player — tap any card to start a therapy game.
           </p>
         </div>
 
