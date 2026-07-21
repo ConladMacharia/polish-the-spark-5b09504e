@@ -417,6 +417,33 @@
       simonName: "Simon Aroga", simonSub: "Rũmĩrĩra Simon oga.", simonTitle: "Simon aroga", simonPrompt: "Ĩka Simon aroga", simonSetup: "Mũmũmenyereri oge ciĩko. Mwana arũmĩrĩrie tu Simon aroga.",
       sensoryName: "Gũthethania Mĩthemba", sensorySub: "Hutia kĩhũthũ, kĩũmu na gĩkĩrĩ na matuta.", sensoryTitle: "Hutia mĩthemba", sensoryPrompt: "Hutia mũthemba", sensorySetup: "Haarĩria mĩthemba 3 (mĩhũthũ, mĩũmu, ĩrĩ na matuta). Mwana ahutie o ũmwe.",
       bilatName: "Ihũũra cia Moko Meerĩ", bilatSub: "Hũthĩra moko meerĩ hamwe.", bilatTitle: "Moko meerĩ hamwe", bilatPrompt: "Moko meerĩ hamwe", bilatSetup: "Ĩrĩra mwana ahũthĩre moko meerĩ hamwe — kũhũra ihũũra, kũnyiita kana kũviringithia mũpĩra.",
+      // Expanded PT
+      proneName: "Kũrũgama Tumbini", proneSub: "Ambararia mũtwe na kĩfua rĩrĩa tumbini.", proneTitle: "Ambararia tumbo", pronePrompt: "Ambararia mũtwe", proneSetup: "Kama tumbini. Ikinĩra na moko na ũambararie mũtwe na kĩfua.",
+      sidelyingName: "Gũthakĩrĩria Kwa Ubavu", sidelyingSub: "Thakĩrĩria na moko meerĩ rĩrĩa warĩ kwa ubavu.", sidelyingTitle: "Thakĩrĩria kwa ubavu", sidelyingPrompt: "Hũrũrũka na moko meerĩ", sidelyingSetup: "Kama kwa ubavu na ũteithio. Hũthĩra moko meerĩ hamwe gũthakĩrĩria toy.",
+      rollingName: "Gũcũrũka Mwĩrĩ", rollingSub: "Cũrũka tumbini ũcoke wĩhũge.", rollingTitle: "Cũrũka", rollingPrompt: "Cũrũka mwĩrĩ", rollingSetup: "Kama mũtamboinĩ. Cũrũka kahora tumbini ũcoke wĩhũge.",
+      kneelingName: "Kũrũgama Magũrũ", kneelingSub: "Rũgama magũrũ ũnyiite wega.", kneelingTitle: "Magũrũ marũgamĩte", kneelingPrompt: "Rũgama magũrũ wega", kneelingSetup: "Rũgama magũrũ mũtamboinĩ, njohe igũrũ cia magũrũ. Nyiita mũtũũrĩre na ũteithio.",
+      halfKneelName: "Kũrũgama Gũrũ Gũmwe", halfKneelSub: "Gũrũ kũmwe thĩ, kũgũrũ kũngĩ mbere.", halfKneelTitle: "Nusu magũrũ", halfKneelPrompt: "Nyiita nusu magũrũ", halfKneelSetup: "Iga gũrũ kũmwe thĩ na kũgũrũ kũngĩ mbere. Nyiita na ũteithio.",
+      wallStandName: "Kũrũgama Hũgũrũ", wallStandSub: "Rũgama wega na mũgongo hũgũrũ-inĩ.", wallStandTitle: "Rũgama hũgũrũ", wallStandPrompt: "Rũgama wega", wallStandSetup: "Rũgama na mũgongo na ciara igũrũ cia hũgũrũ. Nyiita na ũteithio.",
+      heelRaiseName: "Kũambũrũkia Ciara", heelRaiseSub: "Inũka igũrũ cia ciara ũcoke ũhũge.", heelRaiseTitle: "Inũka ciara", heelRaisePrompt: "Inũka igũrũ cia ciara", heelRaiseSetup: "Nyiitĩrĩra mũrarara. Inũka igũrũ cia ciara, tũma, ũhũge kahora.",
+      stepUpName: "Gũkĩra Jukwaa", stepUpSub: "Kĩra jukwaa nini ũcoke ũhũge.", stepUpTitle: "Kĩra jukwaa", stepUpPrompt: "Kĩra jukwaa", stepUpSetup: "Hũthĩra jukwaa nini na mũrarara. Kĩra na kũgũrũ kũmwe, ũcoke kũngĩ.",
+      obstacleName: "Gũrĩa Mĩbũmbũ", obstacleSub: "Rĩa indo cia nini.", obstacleTitle: "Rĩa mĩbũmbũ", obstaclePrompt: "Rĩa mĩbũmbũ", obstacleSetup: "Iga indo nini laini mũtaro-inĩ. Rĩa o kĩmwe na ũteithio.",
+      ballThrowName: "Gũikara Mũpĩra na Gũtuma", ballThrowSub: "Ikara mũpĩra ũtume.", ballThrowTitle: "Tuma mũpĩra", ballThrowPrompt: "Tuma mũpĩra", ballThrowSetup: "Ikara mũpĩra wa ũhonia na ũteithio. Tuma na ũnyiite mũpĩra mũhũthũ.",
+      pnfName: "Mĩtĩkanio ya PNF", pnfSub: "Hũrũrũka guoko mũtaro wa gatagatĩ.", pnfTitle: "Hũrũrũka gatagatĩ", pnfPrompt: "Hũrũrũka ng'ambo", pnfSetup: "Hũrũrũka guoko thĩ na ng'ambo ya mwĩrĩ, ũcoke igũrũ na nja.",
+      aquaticName: "Mĩtĩkanio ya Maaĩ", aquaticSub: "Thiĩ kana ringe maaĩ-inĩ.", aquaticTitle: "Thiĩ maaĩ-inĩ", aquaticPrompt: "Sogea maaĩ-inĩ", aquaticSetup: "Maaĩ-inĩ matheru na ũteithio, thiĩ kana ringe kahora.",
+      horseName: "Kũhaarĩria Gũka Mbarathi", horseSub: "Ikara igũrũ cia bolster ũrũgamĩte.", horseTitle: "Thiĩ mbarathi", horsePrompt: "Nyiita wega", horseSetup: "Ikara igũrũ cia bolster nene kana mpira wa karanga. Nyiita mũtũũrĩre rĩrĩa ũkĩinĩrio.",
+      breathingName: "Kũhuhĩra Nda", breathingSub: "Huhĩra kahora na moko nda-inĩ.", breathingTitle: "Huhĩra nda", breathingPrompt: "Huhĩra kahora", breathingSetup: "Kama kana ikara na kũrũgama. Iga moko nda-inĩ na ũhuhĩre kahora.",
+      guidedSetup: "Tigĩrĩra mwana wonekane kamera-inĩ na rũmĩrĩra mũtaaro wa mũmũmenyereri.",
+
+      // Expanded OT
+      beadsName: "Gũthokia Njeni", beadsSub: "Thokia njeni thĩinĩ wa rũhĩa.", beadsTitle: "Thokia njeni", beadsPrompt: "Thokia njeni", beadsSetup: "Shika rũhĩa rũnene na ũthokie njeni nene imwe hĩndĩ ya ĩngĩ.",
+      buttonsName: "Gũoha Mabatani", buttonsSub: "Oha na wohore mabatani.", buttonsTitle: "Oha mabatani", buttonsPrompt: "Oha kĩzibo", buttonsSetup: "Hũthĩra bao ya kũhũthũra ĩrĩ na mabatani manene. Ĩrutĩra kũoha na kũwĩhũra.",
+      cutName: "Gũtema na Makasi", cutSub: "Tema mũtaro wa kũrũgama.", cutTitle: "Tema mũtaro", cutPrompt: "Tema mbere", cutSetup: "Shika makasi ma kũrũgama na ũteithio. Tema mũtaro wa kũrũgama.",
+      puzzleName: "Gũcũrania Mĩthemba", puzzleSub: "Cũrania mĩthemba na tundu yayo.", puzzleTitle: "Cũrania mĩthemba", puzzlePrompt: "Cũrania mũthemba", puzzleSetup: "Nyita mũthemba ũigĩrĩre tundu rĩrĩa rĩhaanaine.",
+      playdoughName: "Gũthakĩrĩria Doh", playdoughSub: "Oga, nyiita na ũnde doh.", playdoughTitle: "Thakĩrĩria doh", playdoughPrompt: "Nyiita doh", playdoughSetup: "Hũthĩra doh ĩhũthũ. Oga, nyiita na nyiinga na moko meerĩ.",
+      oralName: "Mĩtĩkanio ya Mũromo", oralSub: "Puliza mapura kana kũnyua na mũhũngũ.", oralTitle: "Puliza mapura", oralPrompt: "Puliza kahora", oralSetup: "Hũthĩra mũhũngũ kana kĩjipuzi kĩa mapura. Puliza kahora nĩguo imararie misuli ya mũromo.",
+      brushName: "Gũcũbũra Ngozi", brushSub: "Cũbũra moko na magũrũ na nguvu nini.", brushTitle: "Mũhaka wa kũcũbũra", brushPrompt: "Cũbũra kahora", brushSetup: "Hũthĩra brashi ĩhũthũ. Cũbũra moko na magũrũ kahora ta ũrĩa warutwo.",
+      handwritingName: "Mistari ya Kũandĩka", handwritingSub: "Rũmĩrĩra mistari, mĩthiũrũrĩko na vizio.", handwritingTitle: "Rũmĩrĩra mistari", handwritingPrompt: "Rũmĩrĩra mũtaro", handwritingSetup: "Hũthĩra kĩara kana kraioni gũrũmĩrĩria mistari, mĩthiũrũrĩko na vizio.",
+      toiletName: "Hatua cia Choo", toiletSub: "Ĩrutĩra kũhũrũrũka, gũikara, kũthambia, kũnawa.", toiletTitle: "Hatua cia choo", toiletPrompt: "Rũmĩrĩra hatua", toiletSetup: "Ĩrutĩra o ĩmwe cia hatua cia kwĩha ciao na ũteithio wa mũmũmenyereri.",
     },
   };
 
