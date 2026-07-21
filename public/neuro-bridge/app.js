@@ -355,6 +355,11 @@
       aquaticName: "Mazoezi ya Majini", aquaticSub: "Tembea au piga teke majini.", aquaticTitle: "Tembea majini", aquaticPrompt: "Sogea majini", aquaticSetup: "Majini ya kina kifupi na msaada, tembea au piga teke polepole.",
       horseName: "Maandalizi ya Hipotherapy", horseSub: "Keti juu ya bolster na ushibe mizani.", horseTitle: "Kupanda farasi", horsePrompt: "Shika imara", horseSetup: "Keti juu ya bolster kubwa au mpira wa karanga. Shika wima huku ukisogea polepole.",
       breathingName: "Kupumua Tumbo", breathingSub: "Pumua polepole na mkono tumboni.", breathingTitle: "Pumua tumbo", breathingPrompt: "Pumua polepole", breathingSetup: "Lala au kaa kwa utulivu. Weka mkono tumboni na pumua polepole.",
+      "step-upSetup": "Tumia jukwaa dogo na reli. Panda kwa mguu mmoja, kisha mwingine.",
+      "half-kneelSetup": "Weka goti moja chini na mguu mwingine mbele. Shika na msaada.",
+      "wall-standSetup": "Simama mgongo na visigino vikigusa ukuta. Shika na msaada.",
+      "heel-raiseSetup": "Shika reli. Inua mwili kwa vidole, shika, kisha shuka polepole.",
+      "ball-throwSetup": "Keti kwenye mpira wa tiba na msaada. Tupa na kamata mpira laini.",
       guidedSetup: "Hakikisha mtoto anaonekana kwenye kamera na fuata mwongozo wa mlezi.",
 
       // Expanded OT
@@ -437,6 +442,11 @@
       aquaticName: "Mĩtĩkanio ya Maaĩ", aquaticSub: "Thiĩ kana ringe maaĩ-inĩ.", aquaticTitle: "Thiĩ maaĩ-inĩ", aquaticPrompt: "Sogea maaĩ-inĩ", aquaticSetup: "Maaĩ-inĩ matheru na ũteithio, thiĩ kana ringe kahora.",
       horseName: "Kũhaarĩria Gũka Mbarathi", horseSub: "Ikara igũrũ cia bolster ũrũgamĩte.", horseTitle: "Thiĩ mbarathi", horsePrompt: "Nyiita wega", horseSetup: "Ikara igũrũ cia bolster nene kana mpira wa karanga. Nyiita mũtũũrĩre rĩrĩa ũkĩinĩrio.",
       breathingName: "Kũhuhĩra Nda", breathingSub: "Huhĩra kahora na moko nda-inĩ.", breathingTitle: "Huhĩra nda", breathingPrompt: "Huhĩra kahora", breathingSetup: "Kama kana ikara na kũrũgama. Iga moko nda-inĩ na ũhuhĩre kahora.",
+      "step-upSetup": "Hũthĩra jukwaa nini na mũrarara. Kĩra na kũgũrũ kũmwe, ũcoke kũngĩ.",
+      "half-kneelSetup": "Iga gũrũ kũmwe thĩ na kũgũrũ kũngĩ mbere. Nyiita na ũteithio.",
+      "wall-standSetup": "Rũgama na mũgongo na ciara igũrũ cia hũgũrũ. Nyiita na ũteithio.",
+      "heel-raiseSetup": "Nyiitĩrĩra mũrarara. Inũka igũrũ cia ciara, tũma, ũhũge kahora.",
+      "ball-throwSetup": "Ikara mũpĩra wa ũhonia na ũteithio. Tuma na ũnyiite mũpĩra mũhũthũ.",
       guidedSetup: "Tigĩrĩra mwana wonekane kamera-inĩ na rũmĩrĩra mũtaaro wa mũmũmenyereri.",
 
       // Expanded OT
