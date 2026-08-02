@@ -1,6 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, PlayCircle, HeartPulse, BookOpen, LineChart, Loader2, Sparkles } from "lucide-react";
+import {
+  LogOut,
+  PlayCircle,
+  BookOpen,
+  Sparkles,
+  Flame,
+  ShieldAlert,
+  Star,
+  Rocket,
+  Smile,
+} from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +18,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
   head: () => ({
-    meta: [{ title: "Home — Neuro-Bridge" }],
+    meta: [{ title: "Home — Neuro-Bridge Dual UX" }],
   }),
   component: CaregiverHome,
 });
@@ -16,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/app/caregiver")({
 function CaregiverHome() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [launching, setLaunching] = useState<string | null>(null);
+  const [uxMode, setUxMode] = useState<"caregiver" | "child">("caregiver");
 
   const { data: profile } = useQuery({
     queryKey: ["me-profile"],
@@ -39,7 +49,6 @@ function CaregiverHome() {
       const uid = userData.user?.id;
       if (!uid) return null;
 
-      // Reuse existing self-managed or claimed patient
       const { data: existing } = await supabase
         .from("patients")
         .select("*")
@@ -49,7 +58,6 @@ function CaregiverHome() {
         .maybeSingle();
       if (existing) return existing;
 
-      // Auto-provision a self-managed patient
       const { data: prof } = await supabase
         .from("profiles")
         .select("full_name, preferred_language")
@@ -83,7 +91,6 @@ function CaregiverHome() {
 
   async function launchTherapy(hash: string) {
     if (!patient) return;
-    setLaunching(hash);
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token ?? "";
     const userId = data.session?.user.id ?? "";
@@ -99,103 +106,242 @@ function CaregiverHome() {
     window.location.href = `/neuro-bridge/index.html#${params.toString()}${hash ? `&nav=${hash}` : ""}`;
   }
 
-  const firstName = profile?.full_name?.split(" ")[0] ?? "caregiver";
+  const firstName = profile?.full_name?.split(" ")[0] ?? "Caregiver";
+  const childName = patient?.child_name ?? "Amani";
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/60 backdrop-blur">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground font-display text-lg">
-              N
-            </span>
-            <div>
-              <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
-                <HeartPulse className="h-4 w-4" /> Caregiver
+    <div
+      className={`min-h-screen ${uxMode === "child" ? "bg-amber-50 text-slate-900" : "bg-background"}`}
+    >
+      {/* Dual Mode Bar */}
+      <div className="bg-slate-900 text-white px-6 py-2.5 flex items-center justify-between text-xs font-semibold">
+        <span className="tracking-wide">NEURO-BRIDGE</span>
+        <div className="inline-flex rounded-full bg-white/10 p-1 gap-1">
+          <button
+            type="button"
+            onClick={() => setUxMode("caregiver")}
+            className={`rounded-full px-3 py-1 transition ${
+              uxMode === "caregiver"
+                ? "bg-amber-400 text-slate-950 font-bold"
+                : "text-white hover:text-amber-200"
+            }`}
+          >
+            Caregiver UX
+          </button>
+          <button
+            type="button"
+            onClick={() => setUxMode("child")}
+            className={`rounded-full px-3 py-1 transition flex items-center gap-1 ${
+              uxMode === "child"
+                ? "bg-purple-600 text-white font-bold"
+                : "text-white hover:text-purple-300"
+            }`}
+          >
+            <Rocket className="h-3 w-3" /> Child's UX 🚀
+          </button>
+        </div>
+      </div>
+
+      {uxMode === "caregiver" ? (
+        /* CAREGIVER BROWSE MODE */
+        <div>
+          <header className="border-b border-border bg-card/60 backdrop-blur">
+            <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 rounded-full border-2 border-slate-900 bg-amber-100 px-3 py-1 shadow-[2px_2px_0px_#0f172a]">
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-pink-500 text-white font-bold text-xs">
+                    {childName.charAt(0)}
+                  </span>
+                  <span className="text-xs font-extrabold text-slate-900">
+                    {childName}, age 6 ▾
+                  </span>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" /> Sign out
+              </Button>
+            </div>
+          </header>
+
+          <main className="mx-auto max-w-4xl px-6 py-8">
+            <div className="mb-6">
+              <h1 className="font-display text-4xl text-slate-900 tracking-tight flex items-center gap-2">
+                Karibu, {firstName} <span className="inline-block animate-bounce">👋</span>
+              </h1>
+              <p className="mt-1 text-sm font-semibold text-slate-600">
+                Today's plan is ready —{" "}
+                <span className="text-blue-600 font-bold">3 exercises · ~12 min</span>
               </p>
-              <p className="font-display text-lg leading-none">Home</p>
+            </div>
+
+            {/* Primary Action Card (Dominant) */}
+            <div
+              onClick={() => launchTherapy("")}
+              className="relative overflow-hidden rounded-3xl border-4 border-slate-950 bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-white shadow-[6px_6px_0px_#0f172a] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0px_#0f172a] mb-6"
+            >
+              <span className="inline-block rounded-lg bg-white/20 px-3 py-1 font-display text-xs tracking-wider uppercase mb-3">
+                TODAY'S MISSION
+              </span>
+              <h2 className="font-display text-3xl font-bold">Start today's session</h2>
+              <p className="mt-1 text-sm opacity-90 font-medium">
+                Arm Raise, Leg Kick & Balance Hold — guided step by step.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-4 text-xs font-extrabold opacity-95">
+                <span>🎯 3 exercises</span>
+                <span>⏱ ~12 min</span>
+                <span>📶 GMFCS II</span>
+              </div>
+              <div className="mt-6 inline-flex items-center gap-2 rounded-xl border-2 border-slate-950 bg-yellow-400 px-5 py-3 font-display font-extrabold text-slate-950 shadow-[3px_3px_0px_rgba(0,0,0,0.3)]">
+                <PlayCircle className="h-5 w-5 fill-slate-950 text-yellow-400" /> Begin session
+              </div>
+            </div>
+
+            {/* Toolkit Grid (2-column) */}
+            <div className="mb-3">
+              <h3 className="font-display text-sm uppercase tracking-wider text-slate-500 font-bold">
+                Your toolkit
+              </h3>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 mb-6">
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/app/exercises" })}
+                className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
+              >
+                <div className="grid h-11 w-11 place-items-center rounded-xl border-2 border-slate-950 bg-lime-400 text-xl font-bold">
+                  🗂️
+                </div>
+                <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
+                  Exercise library
+                </h4>
+                <p className="mt-0.5 text-xs text-slate-600 font-semibold">
+                  Browse all 50 PT & OT moves.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => launchTherapy("libraryScreen")}
+                className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
+              >
+                <div className="grid h-11 w-11 place-items-center rounded-xl border-2 border-slate-950 bg-cyan-400 text-xl font-bold">
+                  🎬
+                </div>
+                <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
+                  Training films
+                </h4>
+                <p className="mt-0.5 text-xs text-slate-600 font-semibold">
+                  Video guides for each move.
+                </p>
+              </button>
+
+              <div className="sm:col-span-2 flex items-center gap-4 rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 shadow-[4px_4px_0px_#0f172a]">
+                <div className="flex items-center gap-1.5 font-display text-3xl font-bold text-pink-600">
+                  <Flame className="h-7 w-7 text-pink-500 fill-pink-500" /> 5
+                </div>
+                <div className="h-10 w-0.5 bg-slate-300" />
+                <div>
+                  <p className="text-xs font-extrabold uppercase text-slate-500">Last session</p>
+                  <p className="font-display text-base text-slate-900 font-bold">
+                    Yesterday · 4/5 · Great form
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tip Card (Dashed Border) */}
+            <div className="rounded-2xl border-3 border-dashed border-slate-950 bg-amber-100/70 p-5 flex gap-3 items-start">
+              <ShieldAlert className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-display text-xs uppercase tracking-wider text-amber-800 font-extrabold">
+                  Tip
+                </p>
+                <h5 className="font-display text-base text-slate-900 font-bold mt-0.5">
+                  Set up beside your child
+                </h5>
+                <p className="mt-1 text-xs font-semibold text-slate-700 leading-relaxed">
+                  Prop the phone so the whole body is visible. Pause if there's pain or unusual
+                  fatigue.
+                </p>
+              </div>
+            </div>
+          </main>
+        </div>
+      ) : (
+        /* CHILD UX MODE */
+        <div className="pb-12">
+          <div className="bg-gradient-to-br from-purple-600 to-indigo-700 text-white px-6 py-10 rounded-b-[40px] text-center shadow-lg relative overflow-hidden">
+            <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-yellow-400 border-4 border-white text-4xl shadow-md mb-3">
+              🦁
+            </div>
+            <h1 className="font-display text-4xl tracking-wider">{childName}'s World! 🚀</h1>
+            <p className="text-sm font-semibold opacity-90 mt-1">
+              Ready for today's superhero moves?
+            </p>
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-5 py-2 font-display text-lg text-yellow-300 shadow">
+              <Star className="h-5 w-5 fill-yellow-300 text-yellow-300" /> 25 STARS EARNED THIS WEEK
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" /> Sign out
-          </Button>
+
+          <main className="mx-auto max-w-xl px-6 py-8 space-y-4">
+            <div
+              onClick={() => launchTherapy("session")}
+              className="rounded-3xl border-4 border-purple-950 bg-white p-5 flex items-center gap-4 shadow-[6px_6px_0px_#2e1065] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1"
+            >
+              <div className="grid h-16 w-16 place-items-center rounded-2xl border-3 border-purple-950 bg-yellow-400 text-3xl shrink-0">
+                🎈
+              </div>
+              <div className="flex-1">
+                <h3 className="font-display text-2xl text-purple-950 font-bold">
+                  Pop the Balloons!
+                </h3>
+                <p className="text-xs font-extrabold text-purple-700">
+                  Raise arms high to reach the sky
+                </p>
+              </div>
+              <span className="rounded-xl border-2 border-purple-950 bg-orange-500 px-4 py-2 font-display text-lg text-white">
+                PLAY!
+              </span>
+            </div>
+
+            <div
+              onClick={() => launchTherapy("session")}
+              className="rounded-3xl border-4 border-purple-950 bg-white p-5 flex items-center gap-4 shadow-[6px_6px_0px_#2e1065] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1"
+            >
+              <div className="grid h-16 w-16 place-items-center rounded-2xl border-3 border-purple-950 bg-yellow-400 text-3xl shrink-0">
+                ⭐
+              </div>
+              <div className="flex-1">
+                <h3 className="font-display text-2xl text-purple-950 font-bold">Kick the Star!</h3>
+                <p className="text-xs font-extrabold text-purple-700">
+                  Super leg kicks into outer space
+                </p>
+              </div>
+              <span className="rounded-xl border-2 border-purple-950 bg-orange-500 px-4 py-2 font-display text-lg text-white">
+                PLAY!
+              </span>
+            </div>
+
+            <div
+              onClick={() => launchTherapy("session")}
+              className="rounded-3xl border-4 border-purple-950 bg-white p-5 flex items-center gap-4 shadow-[6px_6px_0px_#2e1065] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1"
+            >
+              <div className="grid h-16 w-16 place-items-center rounded-2xl border-3 border-purple-950 bg-yellow-400 text-3xl shrink-0">
+                💎
+              </div>
+              <div className="flex-1">
+                <h3 className="font-display text-2xl text-purple-950 font-bold">Statue Power!</h3>
+                <p className="text-xs font-extrabold text-purple-700">
+                  Hold steady like a magic statue
+                </p>
+              </div>
+              <span className="rounded-xl border-2 border-purple-950 bg-orange-500 px-4 py-2 font-display text-lg text-white">
+                PLAY!
+              </span>
+            </div>
+          </main>
         </div>
-      </header>
-
-      <main className="mx-auto max-w-4xl px-6 py-8">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl">Karibu, {firstName} 👋</h1>
-          <p className="text-sm text-muted-foreground">
-            {patient
-              ? `Sessions for ${patient.child_name} save automatically so your therapist can review progress.`
-              : "Setting up your child's profile…"}
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <button
-            type="button"
-            disabled={!patient}
-            onClick={() => launchTherapy("")}
-            className="group rounded-3xl border border-border bg-gradient-to-br from-primary to-primary/70 p-6 text-left text-primary-foreground shadow-md transition-transform hover:-translate-y-0.5 disabled:opacity-70"
-          >
-            {launching === "" ? <Loader2 className="h-8 w-8 animate-spin" /> : <PlayCircle className="h-8 w-8" />}
-            <p className="mt-4 font-display text-2xl">Start therapy</p>
-            <p className="mt-1 text-sm opacity-90">
-              Guided PT & OT exercises in your language.
-            </p>
-          </button>
-
-          <button
-            type="button"
-            disabled={!patient}
-            onClick={() => launchTherapy("libraryScreen")}
-            className="rounded-3xl border border-border bg-card p-6 text-left shadow-sm transition-transform hover:-translate-y-0.5 disabled:opacity-70"
-          >
-            <BookOpen className="h-8 w-8 text-primary" />
-            <p className="mt-4 font-display text-2xl">Reference library</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Video guides for each exercise.
-            </p>
-          </button>
-
-          <button
-            type="button"
-            disabled={!patient}
-            onClick={() => launchTherapy("progressScreen")}
-            className="rounded-3xl border border-border bg-card p-6 text-left shadow-sm transition-transform hover:-translate-y-0.5 disabled:opacity-70"
-          >
-            <LineChart className="h-8 w-8 text-primary" />
-            <p className="mt-4 font-display text-2xl">Progress</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Track how sessions are going day by day.
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate({ to: "/app/exercises" })}
-            className="rounded-3xl border border-border bg-card p-6 text-left shadow-sm transition-transform hover:-translate-y-0.5"
-          >
-            <Sparkles className="h-8 w-8 text-primary" />
-            <p className="mt-4 font-display text-2xl">Exercise library</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Browse all physiotherapy & occupational exercises for CP.
-            </p>
-          </button>
-
-          <div className="rounded-3xl border border-dashed border-border bg-card p-6">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Tip
-            </p>
-            <p className="mt-2 font-display text-xl">Set up beside your child</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Prop the phone or tablet so the whole body is visible. Stop if
-              there's pain, dizziness or unusual fatigue.
-            </p>
-          </div>
-        </div>
-      </main>
+      )}
     </div>
   );
 }

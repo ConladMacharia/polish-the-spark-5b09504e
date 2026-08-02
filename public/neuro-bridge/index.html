@@ -1,476 +1,1877 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Neuro-Bridge — App Flow Prototype</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --ink: #14123A;
-    --ink-soft: #6B6690;
-    --panel: #FFF8EF;
-    --bg: #F4F2FF;
-    --blue: #2F6BFF;
-    --pink: #FF3E7F;
-    --yellow: #FFC93C;
-    --lime: #A6E22E;
-    --cyan: #00B8C4;
-    --border: #E7E2FA;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
-  .phone { max-width: 420px; margin: 0 auto; min-height: 100vh; position: relative; overflow: hidden; background: var(--bg); }
-  .screen { display: none; min-height: 100vh; }
-  .screen.active { display: block; }
-  button { font-family: inherit; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neuro-Bridge — Caregiver & Child Dual UX Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bangers&family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #14123a;
+        --ink-soft: #6b6690;
+        --panel: #fff8ef;
+        --bg: #f4f2ff;
+        --blue: #2f6bff;
+        --pink: #ff3e7f;
+        --yellow: #ffc93c;
+        --lime: #a6e22e;
+        --cyan: #00b8c4;
+        --border: #e7e2fa;
 
-  /* ================= SHARED: header / nav ================= */
-  .header { padding: 18px 20px 6px; display: flex; align-items: center; justify-content: space-between; }
-  .profile-chip { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 2.5px solid var(--ink); border-radius: 999px; padding: 5px 14px 5px 5px; box-shadow: 3px 3px 0 var(--ink); cursor: pointer; }
-  .profile-chip .av { width: 32px; height: 32px; border-radius: 50%; background: var(--pink); border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; font-family: 'Bangers'; color: white; font-size: 16px; }
-  .profile-chip span { font-weight: 800; font-size: 12.5px; color: var(--ink); }
-  .profile-chip .caret { font-size: 9px; color: var(--ink-soft); margin-left: 2px; }
-  .header-icons { display: flex; gap: 8px; }
-  .icon-btn { width: 38px; height: 38px; border-radius: 12px; background: var(--panel); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
+        /* Child mode tokens */
+        --child-bg: #fff9e6;
+        --child-card: #ffffff;
+        --child-purple: #7c4dff;
+        --child-orange: #ff6d00;
+        --child-star: #ffd600;
+        --child-green: #00e676;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Nunito", sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        min-height: 100vh;
+      }
+      .phone {
+        max-width: 440px;
+        margin: 0 auto;
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+        background: var(--bg);
+        border-left: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      .screen {
+        display: none;
+        min-height: 100vh;
+      }
+      .screen.active {
+        display: block;
+      }
+      button {
+        font-family: inherit;
+      }
 
-  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 420px; margin: 0 auto; background: var(--panel); border-top: 3px solid var(--ink); display: flex; justify-around: space-around; padding: 10px 8px 14px; z-index: 50; }
-  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 800; color: var(--ink-soft); cursor: pointer; }
-  .nav-item.active { color: var(--blue); }
-  .nav-item .ic { font-size: 19px; }
+      /* ================= MODE SWITCHER / HEADER ================= */
+      .top-mode-bar {
+        background: var(--ink);
+        color: white;
+        padding: 6px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .mode-switch-pill {
+        display: inline-flex;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 999px;
+        padding: 2px;
+        gap: 2px;
+      }
+      .mode-btn {
+        border: none;
+        background: none;
+        color: white;
+        font-size: 10.5px;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .mode-btn.active {
+        background: var(--yellow);
+        color: var(--ink);
+      }
 
-  /* ================= SCREEN: DASHBOARD ================= */
-  .greeting-row { padding: 6px 20px 18px; }
-  .greeting { font-family: 'Bangers'; font-size: 32px; color: var(--ink); margin: 0 0 2px; display: flex; align-items: center; gap: 8px; }
-  .greeting .wave { display: inline-block; animation: wave 1.8s ease-in-out infinite; transform-origin: 70% 70%; }
-  @keyframes wave { 0%,60%,100% { transform: rotate(0deg); } 10% { transform: rotate(16deg); } 20% { transform: rotate(-8deg); } 30% { transform: rotate(16deg); } 40% { transform: rotate(-4deg); } }
-  .greeting-sub { font-size: 14px; font-weight: 700; color: var(--ink-soft); }
-  .greeting-sub b { color: var(--blue); }
-  .content { padding: 0 20px 100px; }
+      /* ================= CAREGIVER BROWSE MODE: Header / Nav ================= */
+      .header {
+        padding: 14px 20px 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .profile-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--panel);
+        border: 2.5px solid var(--ink);
+        border-radius: 999px;
+        padding: 4px 14px 4px 4px;
+        box-shadow: 3px 3px 0 var(--ink);
+        cursor: pointer;
+      }
+      .profile-chip .av {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--pink);
+        border: 2px solid var(--ink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Bangers";
+        color: white;
+        font-size: 16px;
+      }
+      .profile-chip span {
+        font-weight: 800;
+        font-size: 12.5px;
+        color: var(--ink);
+      }
+      .profile-chip .caret {
+        font-size: 9px;
+        color: var(--ink-soft);
+        margin-left: 2px;
+      }
+      .header-icons {
+        display: flex;
+        gap: 8px;
+      }
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        background: var(--panel);
+        border: 2px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        cursor: pointer;
+      }
 
-  .primary-card { background: linear-gradient(135deg, #3B7BFF, #2653D6); border: 4px solid var(--ink); border-radius: 24px; padding: 22px 20px; color: white; position: relative; overflow: hidden; box-shadow: 7px 7px 0 var(--ink); margin-bottom: 22px; cursor: pointer; }
-  .primary-card:active { transform: translate(4px,4px); box-shadow: 3px 3px 0 var(--ink); }
-  .primary-card .tag { font-family: 'Bangers'; font-size: 12px; letter-spacing: 0.08em; background: rgba(255,255,255,0.2); display: inline-block; padding: 4px 10px; border-radius: 8px; margin-bottom: 10px; }
-  .primary-card h2 { font-family: 'Baloo 2'; font-size: 24px; margin: 0 0 6px; }
-  .primary-card p { margin: 0 0 16px; font-size: 13.5px; font-weight: 700; opacity: 0.9; }
-  .primary-card .meta-row { display: flex; gap: 14px; margin-bottom: 16px; }
-  .primary-card .meta { font-size: 12.5px; font-weight: 800; display: flex; align-items: center; gap: 5px; opacity: 0.95; }
-  .primary-cta { background: var(--yellow); color: var(--ink); border: 3px solid var(--ink); border-radius: 14px; font-family: 'Baloo 2'; font-weight: 800; font-size: 15px; padding: 12px 20px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 3px 3px 0 rgba(0,0,0,0.25); }
-  .primary-card .deco { position: absolute; right: -10px; bottom: -14px; width: 90px; opacity: 0.9; }
+      .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-width: 440px;
+        margin: 0 auto;
+        background: var(--panel);
+        border-top: 3px solid var(--ink);
+        display: flex;
+        justify-around: space-around;
+        padding: 10px 8px 14px;
+        z-index: 50;
+      }
+      .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        font-size: 10px;
+        font-weight: 800;
+        color: var(--ink-soft);
+        cursor: pointer;
+      }
+      .nav-item.active {
+        color: var(--blue);
+      }
+      .nav-item .ic {
+        font-size: 19px;
+      }
 
-  .section-label { font-family: 'Baloo 2'; font-weight: 800; font-size: 14px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; margin: 4px 0 12px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-  .card { background: var(--panel); border: 3px solid var(--ink); border-radius: 18px; padding: 16px 14px; cursor: pointer; box-shadow: 5px 5px 0 var(--ink); transition: transform 0.12s ease, box-shadow 0.12s ease; }
-  .card:active { transform: translate(3px,3px); box-shadow: 2px 2px 0 var(--ink); }
-  .card .badge { width: 42px; height: 42px; border-radius: 12px; border: 2.5px solid var(--ink); display: flex; align-items: center; justify-content: center; font-size: 21px; margin-bottom: 10px; }
-  .bg-lime { background: var(--lime); } .bg-cyan { background: var(--cyan); } .bg-yellow { background: var(--yellow); } .bg-pink { background: var(--pink); }
-  .card h4 { font-family: 'Baloo 2'; font-size: 15.5px; margin: 0 0 3px; }
-  .card p { font-size: 11.5px; font-weight: 700; color: var(--ink-soft); margin: 0; line-height: 1.3; }
-  .progress-card { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; }
-  .progress-card .streak { font-family: 'Bangers'; font-size: 30px; color: var(--pink); display: flex; align-items: center; gap: 4px; }
-  .progress-card .streak-label { font-size: 10.5px; font-weight: 800; color: var(--ink-soft); text-transform: uppercase; }
-  .progress-card .divider { width: 2px; align-self: stretch; background: var(--border); }
-  .progress-card .last-session { flex: 1; }
-  .progress-card .last-session .t { font-size: 12px; font-weight: 800; color: var(--ink-soft); margin-bottom: 2px; }
-  .progress-card .last-session .v { font-family: 'Baloo 2'; font-size: 15px; }
+      /* ================= SCREEN: CAREGIVER DASHBOARD ================= */
+      .greeting-row {
+        padding: 6px 20px 16px;
+      }
+      .greeting {
+        font-family: "Bangers";
+        font-size: 32px;
+        color: var(--ink);
+        margin: 0 0 2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .greeting .wave {
+        display: inline-block;
+        animation: wave 1.8s ease-in-out infinite;
+        transform-origin: 70% 70%;
+      }
+      @keyframes wave {
+        0%,
+        60%,
+        100% {
+          transform: rotate(0deg);
+        }
+        10% {
+          transform: rotate(16deg);
+        }
+        20% {
+          transform: rotate(-8deg);
+        }
+        30% {
+          transform: rotate(16deg);
+        }
+        40% {
+          transform: rotate(-4deg);
+        }
+      }
+      .greeting-sub {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--ink-soft);
+      }
+      .greeting-sub b {
+        color: var(--blue);
+      }
+      .content {
+        padding: 0 20px 100px;
+      }
 
-  .tip-card { background: #FFF1CC; border: 3px dashed var(--ink); border-radius: 18px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
-  .tip-card .icon { font-size: 20px; }
-  .tip-card .tag2 { font-family: 'Bangers'; font-size: 11px; letter-spacing: 0.05em; color: var(--ink); margin-bottom: 2px; }
-  .tip-card h5 { margin: 0 0 3px; font-family: 'Baloo 2'; font-size: 13.5px; }
-  .tip-card p { margin: 0; font-size: 11.5px; font-weight: 700; color: #6B5A20; line-height: 1.4; }
+      .primary-card {
+        background: linear-gradient(135deg, #3b7bff, #2653d6);
+        border: 4px solid var(--ink);
+        border-radius: 24px;
+        padding: 22px 20px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 7px 7px 0 var(--ink);
+        margin-bottom: 22px;
+        cursor: pointer;
+        transition:
+          transform 0.12s ease,
+          box-shadow 0.12s ease;
+      }
+      .primary-card:active {
+        transform: translate(4px, 4px);
+        box-shadow: 3px 3px 0 var(--ink);
+      }
+      .primary-card .tag {
+        font-family: "Bangers";
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        background: rgba(255, 255, 255, 0.22);
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+      }
+      .primary-card h2 {
+        font-family: "Baloo 2";
+        font-size: 24px;
+        margin: 0 0 6px;
+      }
+      .primary-card p {
+        margin: 0 0 16px;
+        font-size: 13.5px;
+        font-weight: 700;
+        opacity: 0.9;
+      }
+      .primary-card .meta-row {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .primary-card .meta {
+        font-size: 12px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        opacity: 0.95;
+      }
+      .primary-cta {
+        background: var(--yellow);
+        color: var(--ink);
+        border: 3px solid var(--ink);
+        border-radius: 14px;
+        font-family: "Baloo 2";
+        font-weight: 800;
+        font-size: 15px;
+        padding: 12px 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.25);
+      }
+      .primary-card .deco {
+        position: absolute;
+        right: -10px;
+        bottom: -14px;
+        width: 90px;
+        opacity: 0.9;
+      }
 
-  /* ================= SCREEN: LIBRARY ================= */
-  .lib-header { padding: 16px 20px 10px; }
-  .lib-title { font-family: 'Baloo 2'; font-weight: 800; font-size: 22px; margin: 0 0 12px; }
-  .search-box { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 2.5px solid var(--ink); border-radius: 14px; padding: 10px 14px; margin-bottom: 12px; }
-  .search-box input { border: none; background: none; outline: none; font-size: 13.5px; font-weight: 700; flex: 1; color: var(--ink); font-family: 'Nunito'; }
-  .tab-row { display: flex; gap: 8px; margin-bottom: 4px; }
-  .tab-btn { border: 2.5px solid var(--ink); background: var(--panel); border-radius: 999px; padding: 7px 16px; font-family: 'Baloo 2'; font-weight: 700; font-size: 12.5px; cursor: pointer; }
-  .tab-btn.active { background: var(--blue); color: white; }
+      .section-label {
+        font-family: "Baloo 2";
+        font-weight: 800;
+        font-size: 14px;
+        color: var(--ink-soft);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin: 4px 0 12px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      .card {
+        background: var(--panel);
+        border: 3px solid var(--ink);
+        border-radius: 18px;
+        padding: 16px 14px;
+        cursor: pointer;
+        box-shadow: 5px 5px 0 var(--ink);
+        transition:
+          transform 0.12s ease,
+          box-shadow 0.12s ease;
+      }
+      .card:active {
+        transform: translate(3px, 3px);
+        box-shadow: 2px 2px 0 var(--ink);
+      }
+      .card .badge {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        border: 2.5px solid var(--ink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 21px;
+        margin-bottom: 10px;
+      }
+      .bg-lime {
+        background: var(--lime);
+      }
+      .bg-cyan {
+        background: var(--cyan);
+      }
+      .bg-yellow {
+        background: var(--yellow);
+      }
+      .bg-pink {
+        background: var(--pink);
+      }
+      .card h4 {
+        font-family: "Baloo 2";
+        font-size: 15.5px;
+        margin: 0 0 3px;
+      }
+      .card p {
+        font-size: 11.5px;
+        font-weight: 700;
+        color: var(--ink-soft);
+        margin: 0;
+        line-height: 1.3;
+      }
+      .progress-card {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .progress-card .streak {
+        font-family: "Bangers";
+        font-size: 30px;
+        color: var(--pink);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .progress-card .streak-label {
+        font-size: 10.5px;
+        font-weight: 800;
+        color: var(--ink-soft);
+        text-transform: uppercase;
+      }
+      .progress-card .divider {
+        width: 2px;
+        align-self: stretch;
+        background: var(--border);
+      }
+      .progress-card .last-session {
+        flex: 1;
+      }
+      .progress-card .last-session .t {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--ink-soft);
+        margin-bottom: 2px;
+      }
+      .progress-card .last-session .v {
+        font-family: "Baloo 2";
+        font-size: 15px;
+      }
 
-  .lib-count { padding: 10px 20px 4px; font-size: 12px; font-weight: 800; color: var(--ink-soft); }
-  .lib-list { padding: 4px 20px 100px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .ex-card { background: var(--panel); border: 2.5px solid var(--ink); border-radius: 16px; overflow: hidden; cursor: pointer; box-shadow: 4px 4px 0 var(--ink); transition: transform 0.1s ease, box-shadow 0.1s ease; }
-  .ex-card:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--ink); }
-  .ex-thumb { position: relative; height: 74px; background: linear-gradient(135deg, #DCE4FF, #C7D4FF); display: flex; align-items: center; justify-content: center; font-size: 26px; }
-  .ex-thumb .play-dot { position: absolute; bottom: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; background: rgba(20,18,58,0.75); display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; }
-  .ex-thumb .ai-tag { position: absolute; top: 6px; left: 6px; font-size: 8.5px; font-weight: 800; background: var(--lime); border: 1.5px solid var(--ink); border-radius: 6px; padding: 2px 5px; }
-  .ex-body { padding: 10px 10px 12px; }
-  .ex-body .cat { font-size: 8.5px; font-weight: 800; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; }
-  .ex-body h5 { margin: 3px 0 4px; font-family: 'Baloo 2'; font-size: 13px; line-height: 1.15; }
-  .ex-body p { margin: 0; font-size: 10.5px; font-weight: 700; color: var(--ink-soft); line-height: 1.3; }
+      .tip-card {
+        background: #fff1cc;
+        border: 3px dashed var(--ink);
+        border-radius: 18px;
+        padding: 14px 16px;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .tip-card .icon {
+        font-size: 20px;
+      }
+      .tip-card .tag2 {
+        font-family: "Bangers";
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        color: var(--ink);
+        margin-bottom: 2px;
+      }
+      .tip-card h5 {
+        margin: 0 0 3px;
+        font-family: "Baloo 2";
+        font-size: 13.5px;
+      }
+      .tip-card p {
+        margin: 0;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #6b5a20;
+        line-height: 1.4;
+      }
 
-  /* video modal */
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(20,18,58,0.55); z-index: 80; display: none; align-items: flex-end; }
-  .modal-backdrop.show { display: flex; }
-  .video-modal { background: var(--panel); width: 100%; max-width: 420px; margin: 0 auto; border-radius: 22px 22px 0 0; border-top: 3px solid var(--ink); padding: 18px 20px 26px; }
-  .video-stage { background: var(--ink); border-radius: 16px; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; margin-bottom: 14px; text-align: center; padding: 20px; }
-  .video-stage .icon { font-size: 30px; margin-bottom: 8px; opacity: 0.8; }
-  .video-stage .msg { font-family: 'Baloo 2'; font-size: 14px; margin-bottom: 4px; }
-  .video-stage .sub { font-size: 11px; font-weight: 700; opacity: 0.65; }
-  .modal-title { font-family: 'Baloo 2'; font-size: 18px; margin: 0 0 4px; }
-  .modal-cat { font-size: 11px; font-weight: 800; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 8px; }
-  .modal-benefit { font-size: 12.5px; font-weight: 700; color: var(--ink-soft); line-height: 1.5; margin-bottom: 14px; }
-  .modal-close { width: 100%; background: var(--ink); color: white; border: none; border-radius: 12px; padding: 12px; font-family: 'Baloo 2'; font-weight: 700; font-size: 14px; cursor: pointer; }
+      /* ================= SCREEN: EXERCISE LIBRARY ================= */
+      .lib-header {
+        padding: 16px 20px 10px;
+      }
+      .lib-title {
+        font-family: "Baloo 2";
+        font-weight: 800;
+        font-size: 22px;
+        margin: 0 0 12px;
+      }
+      .search-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--panel);
+        border: 2.5px solid var(--ink);
+        border-radius: 14px;
+        padding: 10px 14px;
+        margin-bottom: 12px;
+      }
+      .search-box input {
+        border: none;
+        background: none;
+        outline: none;
+        font-size: 13.5px;
+        font-weight: 700;
+        flex: 1;
+        color: var(--ink);
+        font-family: "Nunito";
+      }
+      .tab-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .tab-btn {
+        border: 2.5px solid var(--ink);
+        background: var(--panel);
+        border-radius: 999px;
+        padding: 7px 16px;
+        font-family: "Baloo 2";
+        font-weight: 700;
+        font-size: 12.5px;
+        cursor: pointer;
+      }
+      .tab-btn.active {
+        background: var(--blue);
+        color: white;
+      }
 
-  /* ================= SCREEN: SESSION (calmer palette, scoped) ================= */
-  #screenSession {
-    --s-primary: #3468C0; --s-primary-deep: #244B90; --s-bg: #F4F7FB; --s-ink: #1E2438; --s-ink-soft: #6B7284;
-    --s-card: #FFFFFF; --s-good: #2FB380; --s-good-bg: #E4F7EF; --s-adjust: #E3A72E; --s-adjust-bg: #FDF3DF; --s-border: #E4E9F2;
-    background: var(--s-bg); min-height: 100vh; color: var(--s-ink); position: relative;
-  }
-  .s-exit { position: absolute; top: 14px; left: 14px; z-index: 45; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.25); color: white; border: none; font-size: 16px; cursor: pointer; }
-  .camera-dock { position: absolute; top: 6px; right: 6px; z-index: 40; width: 116px; height: 162px; border-radius: 14px; overflow: hidden; cursor: pointer; border: 3px solid rgba(255,255,255,0.85); box-shadow: 0 4px 14px rgba(0,0,0,0.28); transition: all 0.32s cubic-bezier(.2,.8,.3,1); transform-origin: top right; }
-  .camera-dock.expanded { width: 268px; height: 374px; }
-  .camera-dock.fullscreen { top: 0; right: 0; width: 100%; height: 100%; border-radius: 0; border-width: 0; }
-  .camera-dock.fb-good:not(.expanded):not(.fullscreen) { border-color: var(--s-good); }
-  .camera-dock.fb-adjust:not(.expanded):not(.fullscreen) { border-color: var(--s-adjust); }
-  .camera-feed { width: 100%; height: 100%; background: linear-gradient(160deg, #4A5A78, #232C40); position: relative; }
-  .camera-feed .silhouette { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 55%; opacity: 0.55; }
-  .camera-live-dot { position: absolute; top: 8px; left: 8px; display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.4); border-radius: 999px; padding: 3px 8px 3px 6px; }
-  .camera-live-dot .dot { width: 6px; height: 6px; border-radius: 50%; background: #FF4D4D; animation: livePulse 1.4s ease-in-out infinite; }
-  @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-  .camera-live-dot span { font-size: 9px; font-weight: 800; color: white; letter-spacing: 0.04em; }
-  .camera-hint { position: absolute; bottom: 6px; left: 0; right: 0; text-align: center; font-size: 9.5px; font-weight: 700; color: rgba(255,255,255,0.85); }
-  .camera-dock.expanded .camera-hint { font-size: 11.5px; bottom: 10px; }
-  .camera-dock.fullscreen .camera-hint { display: none; }
-  .framing-guide { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; }
-  .camera-dock.fullscreen .framing-guide { display: flex; }
-  .framing-guide .guide-box { width: 62%; height: 72%; border: 3px dashed rgba(255,255,255,0.55); border-radius: 24px; }
-  .framing-status { position: absolute; top: 0; left: 0; right: 0; padding: 22px 20px; text-align: center; }
-  .framing-status .badge { display: inline-block; background: rgba(0,0,0,0.45); color: white; font-family: 'Baloo 2'; font-weight: 700; font-size: 15px; padding: 9px 18px; border-radius: 999px; }
-  .framing-status.ok .badge { background: var(--s-good); }
-  .voice-cue { position: fixed; left: 50%; bottom: 108px; transform: translateX(-50%) translateY(12px); max-width: 340px; width: calc(100% - 48px); background: var(--s-ink); color: white; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; z-index: 45; opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease; box-shadow: 0 8px 22px rgba(0,0,0,0.25); }
-  .voice-cue.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .voice-cue .speaker { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-  .voice-cue.speaking .speaker { animation: speakerPulse 0.7s ease-in-out infinite; }
-  @keyframes speakerPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.25); } 50% { box-shadow: 0 0 0 6px rgba(255,255,255,0); } }
-  .voice-cue .cue-text { font-size: 13.5px; font-weight: 700; line-height: 1.35; }
-  .camera-backdrop { position: fixed; inset: 0; background: rgba(20,24,40,0.35); opacity: 0; pointer-events: none; transition: opacity 0.28s ease; z-index: 30; }
-  .camera-backdrop.show { opacity: 1; pointer-events: auto; }
-  .status-strip { background: var(--s-primary); color: white; padding: 16px 20px 20px; border-radius: 0 0 22px 22px; }
-  .status-top { display: flex; justify-content: center; align-items: center; margin-bottom: 10px; }
-  .child-name { font-family: 'Baloo 2'; font-weight: 700; font-size: 16px; }
-  .progress-track { height: 7px; background: rgba(255,255,255,0.28); border-radius: 999px; overflow: hidden; }
-  .progress-fill { height: 100%; width: 40%; background: white; border-radius: 999px; transition: width 0.4s ease; }
-  .main-card { padding: 22px 20px 14px; display: flex; flex-direction: column; }
-  .ex-name { font-family: 'Baloo 2'; font-weight: 700; font-size: 22px; text-align: center; margin: 4px 0 2px; }
-  .ex-cue { text-align: center; font-size: 14.5px; font-weight: 700; color: var(--s-ink-soft); margin-bottom: 22px; }
-  .counter-block { background: var(--s-card); border: 1px solid var(--s-border); border-radius: 24px; padding: 26px 20px 22px; text-align: center; box-shadow: 0 4px 18px rgba(30,36,56,0.05); }
-  .counter-label { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; color: var(--s-ink-soft); text-transform: uppercase; margin-bottom: 6px; }
-  .counter-number { font-family: 'DM Mono', monospace; font-weight: 500; font-size: 64px; line-height: 1; letter-spacing: -0.02em; color: var(--s-primary-deep); font-variant-numeric: tabular-nums; }
-  .counter-number .of { font-size: 34px; color: #B7C0D4; margin: 0 4px; }
-  .set-label { margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--s-ink-soft); }
-  .feedback-row { margin-top: 16px; display: flex; align-items: center; gap: 10px; background: var(--s-good-bg); border-radius: 14px; padding: 12px 14px; transition: background 0.3s ease; }
-  .feedback-row.adjust { background: var(--s-adjust-bg); }
-  .feedback-face { width: 34px; height: 34px; border-radius: 50%; background: var(--s-good); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 17px; transition: background 0.3s ease; }
-  .feedback-row.adjust .feedback-face { background: var(--s-adjust); }
-  .feedback-text { font-size: 13.5px; font-weight: 800; color: #1D3B2E; text-align: left; }
-  .feedback-row.adjust .feedback-text { color: #4A3A0D; }
-  .feedback-sub { font-size: 12px; font-weight: 700; color: #4B7A63; margin-top: 1px; }
-  .feedback-row.adjust .feedback-sub { color: #8A6E1F; }
-  .drawer-toggle { margin-top: 16px; text-align: center; font-size: 13px; font-weight: 800; color: var(--s-primary); background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; }
-  .drawer { max-height: 0; overflow: hidden; transition: max-height 0.28s ease; background: var(--s-card); border-radius: 14px; border: 1px solid var(--s-border); margin-top: 8px; }
-  .drawer.open { max-height: 200px; }
-  .drawer-inner { padding: 14px 16px; font-size: 13px; color: var(--s-ink-soft); font-weight: 600; line-height: 1.6; }
-  .drawer-inner b { color: var(--s-ink); }
-  .s-controls { padding: 14px 20px 26px; display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 10px; }
-  .ctrl-btn { border-radius: 16px; border: none; padding: 15px 8px; font-family: 'Baloo 2'; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-  .ctrl-secondary { background: var(--s-card); border: 1.5px solid var(--s-border); color: var(--s-ink); }
-  .ctrl-primary { background: var(--s-primary); color: white; }
-  .ctrl-btn .icon { font-size: 19px; }
-  .ctrl-btn:active { transform: scale(0.96); }
-  .s-complete { display: none; padding: 60px 30px; text-align: center; }
-  .s-complete .big-emoji { font-size: 52px; margin-bottom: 10px; }
-  .s-complete h2 { font-family: 'Baloo 2'; margin: 0 0 8px; }
-  .s-complete p { color: var(--s-ink-soft); font-weight: 700; margin-bottom: 22px; }
-  .s-complete button { background: var(--s-primary); color: white; border: none; border-radius: 14px; padding: 14px 24px; font-family: 'Baloo 2'; font-weight: 700; font-size: 15px; cursor: pointer; }
-</style>
-</head>
-<body>
+      .lib-count {
+        padding: 10px 20px 4px;
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--ink-soft);
+      }
+      .lib-list {
+        padding: 4px 20px 100px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .ex-card {
+        background: var(--panel);
+        border: 2.5px solid var(--ink);
+        border-radius: 16px;
+        overflow: hidden;
+        cursor: pointer;
+        box-shadow: 4px 4px 0 var(--ink);
+        transition:
+          transform 0.1s ease,
+          box-shadow 0.1s ease;
+      }
+      .ex-card:active {
+        transform: translate(2px, 2px);
+        box-shadow: 2px 2px 0 var(--ink);
+      }
+      .ex-thumb {
+        position: relative;
+        height: 78px;
+        background: linear-gradient(135deg, #dce4ff, #c7d4ff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+      }
+      .ex-thumb .play-dot {
+        position: absolute;
+        bottom: 6px;
+        right: 6px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(20, 18, 58, 0.75);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 10px;
+      }
+      .ex-thumb .ai-tag {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        font-size: 8.5px;
+        font-weight: 800;
+        background: var(--lime);
+        border: 1.5px solid var(--ink);
+        border-radius: 6px;
+        padding: 2px 5px;
+      }
+      .ex-body {
+        padding: 10px 10px 12px;
+      }
+      .ex-body .cat {
+        font-size: 8.5px;
+        font-weight: 800;
+        color: var(--ink-soft);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .ex-body h5 {
+        margin: 3px 0 4px;
+        font-family: "Baloo 2";
+        font-size: 13.5px;
+        line-height: 1.15;
+      }
+      .ex-body p {
+        margin: 0;
+        font-size: 10.5px;
+        font-weight: 700;
+        color: var(--ink-soft);
+        line-height: 1.3;
+      }
 
-<div class="phone">
+      /* video modal bottom sheet */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(20, 18, 58, 0.55);
+        z-index: 80;
+        display: none;
+        align-items: flex-end;
+      }
+      .modal-backdrop.show {
+        display: flex;
+      }
+      .video-modal {
+        background: var(--panel);
+        width: 100%;
+        max-width: 440px;
+        margin: 0 auto;
+        border-radius: 24px 24px 0 0;
+        border-top: 3px solid var(--ink);
+        padding: 18px 20px 28px;
+      }
+      .video-stage {
+        background: var(--ink);
+        border-radius: 16px;
+        height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-bottom: 14px;
+        text-align: center;
+        padding: 20px;
+      }
+      .video-stage .icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+        opacity: 0.85;
+      }
+      .video-stage .msg {
+        font-family: "Baloo 2";
+        font-size: 15px;
+        margin-bottom: 4px;
+        color: #fff;
+      }
+      .video-stage .sub {
+        font-size: 11.5px;
+        font-weight: 700;
+        opacity: 0.7;
+        max-width: 280px;
+        line-height: 1.35;
+      }
+      .modal-title {
+        font-family: "Baloo 2";
+        font-size: 19px;
+        margin: 0 0 2px;
+      }
+      .modal-cat {
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--ink-soft);
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .modal-benefit {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--ink-soft);
+        line-height: 1.5;
+        margin-bottom: 16px;
+      }
+      .modal-close {
+        width: 100%;
+        background: var(--ink);
+        color: white;
+        border: none;
+        border-radius: 14px;
+        padding: 12px;
+        font-family: "Baloo 2";
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+      }
 
-  <!-- ================= DASHBOARD ================= -->
-  <div class="screen active" id="screenDashboard">
-    <div class="header">
-      <div class="profile-chip"><div class="av">A</div><span>Amani, age 6</span><span class="caret">▾</span></div>
-      <div class="header-icons">
-        <div class="icon-btn" title="Language">🌐</div>
-        <div class="icon-btn" title="Sign out">⎋</div>
-      </div>
-    </div>
-    <div class="greeting-row">
-      <h1 class="greeting">Karibu, Tere <span class="wave">👋</span></h1>
-      <div class="greeting-sub">Today's plan is ready — <b>3 exercises · ~12 min</b></div>
-    </div>
-    <div class="content">
-      <div class="primary-card" onclick="goToSession()">
-        <div class="tag">TODAY'S MISSION</div>
-        <h2>Start today's session</h2>
-        <p>Arm Raise, Leg Kick & Balance Hold — guided step by step.</p>
-        <div class="meta-row">
-          <div class="meta">🎯 3 exercises</div>
-          <div class="meta">⏱ ~12 min</div>
-          <div class="meta">📶 GMFCS II</div>
+      /* ================= FOCUS MODE: LIVE SESSION VIEW ================= */
+      #screenSession {
+        --s-primary: #3468c0;
+        --s-primary-deep: #244b90;
+        --s-bg: #f4f7fb;
+        --s-ink: #1e2438;
+        --s-ink-soft: #6b7284;
+        --s-card: #ffffff;
+        --s-good: #2fb380;
+        --s-good-bg: #e4f7ef;
+        --s-adjust: #e3a72e;
+        --s-adjust-bg: #fdf3df;
+        --s-border: #e4e9f2;
+        background: var(--s-bg);
+        min-height: 100vh;
+        color: var(--s-ink);
+        position: relative;
+      }
+      .s-exit {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        z-index: 45;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      /* Camera preview overlay thumbnail - fixed anchor top right */
+      .camera-dock {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        z-index: 40;
+        width: 116px;
+        height: 162px;
+        border-radius: 14px;
+        overflow: hidden;
+        cursor: pointer;
+        border: 3px solid rgba(255, 255, 255, 0.85);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+        transition: all 0.32s cubic-bezier(0.2, 0.8, 0.3, 1);
+        transform-origin: top right;
+      }
+      .camera-dock.expanded {
+        width: 268px;
+        height: 374px;
+      }
+      .camera-dock.fullscreen {
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        border-width: 0;
+      }
+      .camera-dock.fb-good:not(.expanded):not(.fullscreen) {
+        border-color: var(--s-good);
+      }
+      .camera-dock.fb-adjust:not(.expanded):not(.fullscreen) {
+        border-color: var(--s-adjust);
+      }
+
+      .camera-feed {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(160deg, #4a5a78, #232c40);
+        position: relative;
+      }
+      .camera-feed .silhouette {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 55%;
+        opacity: 0.55;
+      }
+      .camera-live-dot {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 999px;
+        padding: 3px 8px 3px 6px;
+      }
+      .camera-live-dot .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ff4d4d;
+        animation: livePulse 1.4s ease-in-out infinite;
+      }
+      @keyframes livePulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+      .camera-live-dot span {
+        font-size: 9px;
+        font-weight: 800;
+        color: white;
+        letter-spacing: 0.04em;
+      }
+      .camera-hint {
+        position: absolute;
+        bottom: 6px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 9.5px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .camera-dock.expanded .camera-hint {
+        font-size: 11.5px;
+        bottom: 10px;
+      }
+      .camera-dock.fullscreen .camera-hint {
+        display: none;
+      }
+      .framing-guide {
+        position: absolute;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .camera-dock.fullscreen .framing-guide {
+        display: flex;
+      }
+      .framing-guide .guide-box {
+        width: 62%;
+        height: 72%;
+        border: 3px dashed rgba(255, 255, 255, 0.55);
+        border-radius: 24px;
+      }
+      .framing-status {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 22px 20px;
+        text-align: center;
+      }
+      .framing-status .badge {
+        display: inline-block;
+        background: rgba(0, 0, 0, 0.45);
+        color: white;
+        font-family: "Baloo 2";
+        font-weight: 700;
+        font-size: 15px;
+        padding: 9px 18px;
+        border-radius: 999px;
+      }
+      .framing-status.ok .badge {
+        background: var(--s-good);
+      }
+
+      .voice-cue {
+        position: fixed;
+        left: 50%;
+        bottom: 108px;
+        transform: translateX(-50%) translateY(12px);
+        max-width: 350px;
+        width: calc(100% - 48px);
+        background: var(--s-ink);
+        color: white;
+        border-radius: 16px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 45;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.25s ease,
+          transform 0.25s ease;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+      }
+      .voice-cue.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .voice-cue .speaker {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+      .voice-cue.speaking .speaker {
+        animation: speakerPulse 0.7s ease-in-out infinite;
+      }
+      @keyframes speakerPulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.25);
+        }
+        50% {
+          box-shadow: 0 0 0 6px rgba(255, 255, 255, 0);
+        }
+      }
+      .voice-cue .cue-text {
+        font-size: 13.5px;
+        font-weight: 700;
+        line-height: 1.35;
+      }
+      .camera-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(20, 24, 40, 0.35);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.28s ease;
+        z-index: 30;
+      }
+      .camera-backdrop.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* Focus mode zones */
+      .status-strip {
+        background: var(--s-primary);
+        color: white;
+        padding: 16px 20px 20px;
+        border-radius: 0 0 22px 22px;
+      }
+      .status-top {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .child-name {
+        font-family: "Baloo 2";
+        font-weight: 700;
+        font-size: 16px;
+      }
+      .progress-track {
+        height: 7px;
+        background: rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        width: 40%;
+        background: white;
+        border-radius: 999px;
+        transition: width 0.4s ease;
+      }
+      .main-card {
+        padding: 22px 20px 14px;
+        display: flex;
+        flex-direction: column;
+      }
+      .ex-name {
+        font-family: "Baloo 2";
+        font-weight: 700;
+        font-size: 22px;
+        text-align: center;
+        margin: 4px 0 2px;
+      }
+      .ex-cue {
+        text-align: center;
+        font-size: 14.5px;
+        font-weight: 700;
+        color: var(--s-ink-soft);
+        margin-bottom: 20px;
+      }
+
+      .counter-block {
+        background: var(--s-card);
+        border: 1px solid var(--s-border);
+        border-radius: 24px;
+        padding: 26px 20px 22px;
+        text-align: center;
+        box-shadow: 0 4px 18px rgba(30, 36, 56, 0.05);
+      }
+      .counter-label {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        color: var(--s-ink-soft);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .counter-number {
+        font-family: "DM Mono", monospace;
+        font-weight: 700;
+        font-size: 64px;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        color: var(--s-primary-deep);
+        font-variant-numeric: tabular-nums;
+      }
+      .counter-number .of {
+        font-size: 34px;
+        color: #b7c0d4;
+        margin: 0 4px;
+      }
+      .set-label {
+        margin-top: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--s-ink-soft);
+      }
+
+      .feedback-row {
+        margin-top: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--s-good-bg);
+        border-radius: 14px;
+        padding: 12px 14px;
+        transition: background 0.3s ease;
+      }
+      .feedback-row.adjust {
+        background: var(--s-adjust-bg);
+      }
+      .feedback-face {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--s-good);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        transition: background 0.3s ease;
+      }
+      .feedback-row.adjust .feedback-face {
+        background: var(--s-adjust);
+      }
+      .feedback-text {
+        font-size: 13.5px;
+        font-weight: 800;
+        color: #1d3b2e;
+        text-align: left;
+      }
+      .feedback-row.adjust .feedback-text {
+        color: #4a3a0d;
+      }
+      .feedback-sub {
+        font-size: 12px;
+        font-weight: 700;
+        color: #4b7a63;
+        margin-top: 1px;
+      }
+      .feedback-row.adjust .feedback-sub {
+        color: #8a6e1f;
+      }
+
+      .drawer-toggle {
+        margin-top: 16px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--s-primary);
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        width: 100%;
+      }
+      .drawer {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.28s ease;
+        background: var(--s-card);
+        border-radius: 14px;
+        border: 1px solid var(--s-border);
+        margin-top: 8px;
+      }
+      .drawer.open {
+        max-height: 200px;
+      }
+      .drawer-inner {
+        padding: 14px 16px;
+        font-size: 13px;
+        color: var(--s-ink-soft);
+        font-weight: 600;
+        line-height: 1.6;
+      }
+      .drawer-inner b {
+        color: var(--s-ink);
+      }
+
+      .s-controls {
+        padding: 14px 20px 26px;
+        display: grid;
+        grid-template-columns: 1fr 1.4fr 1fr;
+        gap: 10px;
+      }
+      .ctrl-btn {
+        border-radius: 16px;
+        border: none;
+        padding: 15px 8px;
+        font-family: "Baloo 2";
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+      }
+      .ctrl-secondary {
+        background: var(--s-card);
+        border: 1.5px solid var(--s-border);
+        color: var(--s-ink);
+      }
+      .ctrl-primary {
+        background: var(--s-primary);
+        color: white;
+      }
+      .ctrl-btn .icon {
+        font-size: 19px;
+      }
+      .ctrl-btn:active {
+        transform: scale(0.96);
+      }
+
+      .s-complete {
+        display: none;
+        padding: 60px 30px;
+        text-align: center;
+      }
+      .s-complete .big-emoji {
+        font-size: 52px;
+        margin-bottom: 10px;
+      }
+      .s-complete h2 {
+        font-family: "Baloo 2";
+        margin: 0 0 8px;
+      }
+      .s-complete p {
+        color: var(--s-ink-soft);
+        font-weight: 700;
+        margin-bottom: 22px;
+      }
+      .s-complete button {
+        background: var(--s-primary);
+        color: white;
+        border: none;
+        border-radius: 14px;
+        padding: 14px 24px;
+        font-family: "Baloo 2";
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+      }
+
+      /* ================= CHILD UX MODE ================= */
+      #screenChildDashboard {
+        background: var(--child-bg);
+        min-height: 100vh;
+        color: #2a1054;
+        padding-bottom: 100px;
+      }
+      .child-hero {
+        background: linear-gradient(135deg, #7c4dff, #651fff);
+        padding: 24px 20px 32px;
+        border-radius: 0 0 32px 32px;
+        color: white;
+        text-align: center;
+        position: relative;
+        box-shadow: 0 10px 24px rgba(124, 77, 255, 0.3);
+      }
+      .child-hero .avatar-box {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #ffd600;
+        border: 4px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 42px;
+        margin: 0 auto 12px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      }
+      .child-hero h1 {
+        font-family: "Bangers";
+        font-size: 34px;
+        margin: 0 0 4px;
+        letter-spacing: 0.04em;
+      }
+      .child-hero p {
+        font-size: 14px;
+        font-weight: 800;
+        opacity: 0.9;
+        margin: 0;
+      }
+      .star-banner {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.22);
+        border-radius: 999px;
+        padding: 6px 16px;
+        margin-top: 14px;
+        font-family: "Bangers";
+        font-size: 18px;
+        color: #ffd600;
+        text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+      }
+
+      .child-quest-list {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .child-quest-card {
+        background: white;
+        border: 3px solid #2a1054;
+        border-radius: 24px;
+        padding: 18px 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 5px 5px 0 #2a1054;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+      }
+      .child-quest-card:active {
+        transform: translate(3px, 3px);
+        box-shadow: 2px 2px 0 #2a1054;
+      }
+      .child-quest-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
+        background: #ffd600;
+        border: 2.5px solid #2a1054;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        flex-shrink: 0;
+      }
+      .child-quest-info {
+        flex: 1;
+      }
+      .child-quest-info h3 {
+        font-family: "Baloo 2";
+        font-size: 19px;
+        margin: 0 0 2px;
+      }
+      .child-quest-info p {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 800;
+        color: #651fff;
+      }
+      .child-quest-play {
+        background: #ff6d00;
+        color: white;
+        border: 2.5px solid #2a1054;
+        border-radius: 14px;
+        padding: 8px 14px;
+        font-family: "Bangers";
+        font-size: 16px;
+        letter-spacing: 0.05em;
+      }
+
+      /* Child session game */
+      #screenChildSession {
+        background: #1a0933;
+        color: white;
+        min-height: 100vh;
+        text-align: center;
+        padding: 20px;
+        position: relative;
+      }
+      .child-game-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .child-back-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: white;
+        font-size: 20px;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+      }
+      .child-star-count {
+        font-family: "Bangers";
+        font-size: 24px;
+        color: #ffd600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .mascot-area {
+        background: linear-gradient(180deg, #3a1c71, #d76d77);
+        border: 4px solid #ffd600;
+        border-radius: 28px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      }
+      .mascot-icon {
+        font-size: 64px;
+        animation: bounce 1.4s ease-in-out infinite;
+      }
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-12px);
+        }
+      }
+      .mascot-bubble {
+        background: white;
+        color: #2a1054;
+        border-radius: 18px;
+        padding: 12px 16px;
+        font-family: "Baloo 2";
+        font-weight: 800;
+        font-size: 18px;
+        margin-top: 14px;
+        position: relative;
+      }
+      .mascot-bubble::before {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 0 10px 10px 10px;
+        border-style: solid;
+        border-color: transparent transparent white transparent;
+      }
+      .child-big-counter {
+        font-family: "DM Mono", monospace;
+        font-size: 72px;
+        font-weight: 700;
+        color: #ffd600;
+        text-shadow: 3px 3px 0 #2a1054;
+        margin: 10px 0;
+      }
+      .child-game-btn {
+        background: linear-gradient(135deg, #00e676, #00b0ff);
+        border: 4px solid white;
+        border-radius: 22px;
+        padding: 16px 36px;
+        font-family: "Bangers";
+        font-size: 28px;
+        color: white;
+        text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+        box-shadow: 0 8px 20px rgba(0, 230, 118, 0.4);
+        cursor: pointer;
+      }
+      .child-game-btn:active {
+        transform: scale(0.95);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="phone">
+      <!-- Dual Mode Switcher Bar -->
+      <div class="top-mode-bar">
+        <span>NEURO-BRIDGE</span>
+        <div class="mode-switch-pill">
+          <button class="mode-btn active" id="btnCaregiverMode" onclick="switchUXMode('caregiver')">
+            Caregiver UX
+          </button>
+          <button class="mode-btn" id="btnChildMode" onclick="switchUXMode('child')">
+            Child's UX 🚀
+          </button>
         </div>
-        <div class="primary-cta">▶ Begin session</div>
-        <svg class="deco" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="rgba(255,255,255,0.12)"/></svg>
       </div>
 
-      <div class="section-label">Your toolkit</div>
-      <div class="grid">
-        <div class="card" onclick="goToLibrary()">
-          <div class="badge bg-lime">🗂️</div>
-          <h4>Exercise library</h4>
-          <p>Browse all 50 PT & OT moves.</p>
-        </div>
-        <div class="card" onclick="goToLibrary()">
-          <div class="badge bg-cyan">🎬</div>
-          <h4>Training films</h4>
-          <p>Video guides for each move.</p>
-        </div>
-        <div class="card progress-card">
-          <div><div class="streak">🔥5</div><div class="streak-label">day streak</div></div>
-          <div class="divider"></div>
-          <div class="last-session"><div class="t">Last session</div><div class="v">Yesterday · 4/5 · Great form</div></div>
-        </div>
-      </div>
-
-      <div class="tip-card">
-        <div class="icon">💡</div>
-        <div><div class="tag2">TIP</div><h5>Set up beside your child</h5>
-          <p>Prop the phone so the whole body is visible. Pause if there's pain or unusual fatigue.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= LIBRARY ================= -->
-  <div class="screen" id="screenLibrary">
-    <div class="lib-header">
-      <h2 class="lib-title">Exercise library</h2>
-      <div class="search-box">🔍<input type="text" id="searchInput" placeholder="Search exercises..." oninput="renderLibrary()"></div>
-      <div class="tab-row">
-        <button class="tab-btn active" data-cat="all" onclick="setTab(this,'all')">All</button>
-        <button class="tab-btn" data-cat="physio" onclick="setTab(this,'physio')">Physiotherapy</button>
-        <button class="tab-btn" data-cat="ot" onclick="setTab(this,'ot')">Occupational</button>
-      </div>
-    </div>
-    <div class="lib-count" id="libCount"></div>
-    <div class="lib-list" id="libList"></div>
-  </div>
-
-  <!-- ================= SESSION (calm palette) ================= -->
-  <div class="screen" id="screenSession">
-    <button class="s-exit" onclick="exitSession()">✕</button>
-    <div class="camera-backdrop" id="cameraBackdrop" onclick="toggleCamera('shrink')"></div>
-    <div class="camera-dock" id="cameraDock" onclick="toggleCamera()">
-      <div class="camera-feed">
-        <div class="camera-live-dot"><span class="dot"></span><span>LIVE</span></div>
-        <svg class="silhouette" viewBox="0 0 60 100" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="30" cy="16" r="11" fill="#AEB9CC"/>
-          <path d="M12 100 L16 46 Q30 34 44 46 L48 100 L38 100 L35 60 L32 100 L28 100 L25 60 L22 100 Z" fill="#AEB9CC"/>
-        </svg>
-        <div class="camera-hint">Tap to check framing</div>
-        <div class="framing-guide"><div class="guide-box"></div></div>
-        <div class="framing-status" id="framingStatus"><span class="badge" id="framingBadge">Checking Amani is fully in view…</span></div>
-      </div>
-    </div>
-    <div class="voice-cue" id="voiceCue"><div class="speaker" id="voiceSpeaker">🔊</div><div class="cue-text" id="voiceText"></div></div>
-
-    <div id="sessionRunning">
-      <div class="status-strip">
-        <div class="status-top"><div class="child-name" id="statusLabel">Exercise 1 of 3</div></div>
-        <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:10%"></div></div>
-      </div>
-      <div class="main-card">
-        <div class="ex-name" id="curExName">Arm Raise</div>
-        <div class="ex-cue" id="curExCue">Raise both arms slowly overhead</div>
-        <div class="counter-block">
-          <div class="counter-label">Reps completed</div>
-          <div class="counter-number"><span id="repCount">4</span><span class="of">/</span><span id="repTotal">8</span></div>
-          <div class="set-label" id="setLabel">Set 1 of 2</div>
-          <div class="feedback-row" id="feedbackRow">
-            <div class="feedback-face" id="feedbackFace">🙂</div>
-            <div><div class="feedback-text" id="feedbackText">Nice form — keep going</div><div class="feedback-sub" id="feedbackSub">Arms tracking correctly</div></div>
+      <!-- ================= CAREGIVER DASHBOARD ================= -->
+      <div class="screen active" id="screenDashboard">
+        <div class="header">
+          <div class="profile-chip">
+            <div class="av">A</div>
+            <span>Amani, age 6</span>
+            <span class="caret">▾</span>
           </div>
-          <button class="drawer-toggle" onclick="toggleDrawer()"><span id="drawerArrow">▾</span> <span id="drawerLabel">Full instructions</span></button>
-          <div class="drawer" id="drawer">
-            <div class="drawer-inner"><b>Benefit:</b> Improves shoulder range of motion, upper-limb strength and posture.<br><br><b>How to help:</b> Stand facing Amani. Encourage a slow, controlled lift rather than a fast swing. Stop if there's shoulder pain.</div>
+          <div class="header-icons">
+            <div class="icon-btn" title="Language">🌐</div>
+            <div class="icon-btn" title="Sign out">⎋</div>
           </div>
         </div>
-        <button class="drawer-toggle" style="margin-top:14px; color:var(--s-ink-soft);" onclick="toggleFeedback()">⚙︎ Toggle demo feedback state</button>
+        <div class="greeting-row">
+          <h1 class="greeting">Karibu, Tere <span class="wave">👋</span></h1>
+          <div class="greeting-sub">Today's plan is ready — <b>3 exercises · ~12 min</b></div>
+        </div>
+        <div class="content">
+          <!-- Primary Action Card (Dominant) -->
+          <div class="primary-card" onclick="goToSession()">
+            <div class="tag">TODAY'S MISSION</div>
+            <h2>Start today's session</h2>
+            <p>Arm Raise, Leg Kick & Balance Hold — guided step by step.</p>
+            <div class="meta-row">
+              <div class="meta">🎯 3 exercises</div>
+              <div class="meta">⏱ ~12 min</div>
+              <div class="meta">📶 GMFCS II</div>
+            </div>
+            <div class="primary-cta">▶ Begin session</div>
+            <svg class="deco" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="46" fill="rgba(255,255,255,0.12)" />
+            </svg>
+          </div>
+
+          <!-- Toolkit Grid (Secondary) -->
+          <div class="section-label">Your toolkit</div>
+          <div class="grid">
+            <div class="card" onclick="goToLibrary()">
+              <div class="badge bg-lime">🗂️</div>
+              <h4>Exercise library</h4>
+              <p>Browse all 50 PT & OT moves.</p>
+            </div>
+            <div class="card" onclick="goToLibrary()">
+              <div class="badge bg-cyan">🎬</div>
+              <h4>Training films</h4>
+              <p>Video guides for each move.</p>
+            </div>
+            <div class="card progress-card">
+              <div>
+                <div class="streak">🔥5</div>
+                <div class="streak-label">day streak</div>
+              </div>
+              <div class="divider"></div>
+              <div class="last-session">
+                <div class="t">Last session</div>
+                <div class="v">Yesterday · 4/5 · Great form</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tip Card -->
+          <div class="tip-card">
+            <div class="icon">💡</div>
+            <div>
+              <div class="tag2">TIP</div>
+              <h5>Set up beside your child</h5>
+              <p>
+                Prop the phone so the whole body is visible. Pause if there's pain or unusual
+                fatigue.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="s-controls">
-        <button class="ctrl-btn ctrl-secondary" onclick="replayExercise()"><span class="icon">↺</span> Replay</button>
-        <button class="ctrl-btn ctrl-primary" onclick="nextExercise()"><span class="icon">⏭</span> Next</button>
-        <button class="ctrl-btn ctrl-secondary" onclick="exitSession()"><span class="icon">⏸</span> Pause</button>
+
+      <!-- ================= CAREGIVER LIBRARY ================= -->
+      <div class="screen" id="screenLibrary">
+        <div class="lib-header">
+          <h2 class="lib-title">Exercise library</h2>
+          <div class="search-box">
+            🔍<input
+              type="text"
+              id="searchInput"
+              placeholder="Search 50 PT & OT exercises..."
+              oninput="renderLibrary()"
+            />
+          </div>
+          <div class="tab-row">
+            <button class="tab-btn active" data-cat="all" onclick="setTab(this, 'all')">All</button>
+            <button class="tab-btn" data-cat="physio" onclick="setTab(this, 'physio')">
+              Physiotherapy
+            </button>
+            <button class="tab-btn" data-cat="ot" onclick="setTab(this, 'ot')">Occupational</button>
+          </div>
+        </div>
+        <div class="lib-count" id="libCount"></div>
+        <div class="lib-list" id="libList"></div>
+      </div>
+
+      <!-- ================= CAREGIVER FOCUS MODE (LIVE SESSION) ================= -->
+      <div class="screen" id="screenSession">
+        <button class="s-exit" onclick="exitSession()">✕</button>
+        <div class="camera-backdrop" id="cameraBackdrop" onclick="toggleCamera('shrink')"></div>
+
+        <!-- Camera Preview Thumbnail Overlay (Fixed anchor top right) -->
+        <div class="camera-dock" id="cameraDock" onclick="toggleCamera()">
+          <div class="camera-feed">
+            <div class="camera-live-dot"><span class="dot"></span><span>LIVE</span></div>
+            <svg class="silhouette" viewBox="0 0 60 100" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="30" cy="16" r="11" fill="#AEB9CC" />
+              <path
+                d="M12 100 L16 46 Q30 34 44 46 L48 100 L38 100 L35 60 L32 100 L28 100 L25 60 L22 100 Z"
+                fill="#AEB9CC"
+              />
+            </svg>
+            <div class="camera-hint">Tap to check framing</div>
+            <div class="framing-guide"><div class="guide-box"></div></div>
+            <div class="framing-status" id="framingStatus">
+              <span class="badge" id="framingBadge">Checking Amani is fully in view…</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Voice Cue Container -->
+        <div class="voice-cue" id="voiceCue">
+          <div class="speaker" id="voiceSpeaker">🔊</div>
+          <div class="cue-text" id="voiceText"></div>
+        </div>
+
+        <div id="sessionRunning">
+          <!-- Zone 1: Status strip -->
+          <div class="status-strip">
+            <div class="status-top">
+              <div class="child-name" id="statusLabel">Exercise 1 of 3</div>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill" style="width: 20%"></div>
+            </div>
+          </div>
+
+          <!-- Zone 2: Main Exercise Card -->
+          <div class="main-card">
+            <div class="ex-name" id="curExName">Arm Raise</div>
+            <div class="ex-cue" id="curExCue">Raise both arms slowly overhead</div>
+
+            <!-- Dominant Rep Counter Block -->
+            <div class="counter-block">
+              <div class="counter-label">Reps completed</div>
+              <div class="counter-number">
+                <span id="repCount">4</span><span class="of">/</span><span id="repTotal">8</span>
+              </div>
+              <div class="set-label" id="setLabel">Set 1 of 2</div>
+
+              <!-- Feedback Row (Amber for adjustment, Green for good form - NEVER RED) -->
+              <div class="feedback-row" id="feedbackRow">
+                <div class="feedback-face" id="feedbackFace">🙂</div>
+                <div>
+                  <div class="feedback-text" id="feedbackText">Nice form — keep going</div>
+                  <div class="feedback-sub" id="feedbackSub">Arms tracking correctly</div>
+                </div>
+              </div>
+
+              <!-- Collapsible instructions drawer -->
+              <button class="drawer-toggle" onclick="toggleDrawer()">
+                <span id="drawerArrow">▾</span> <span id="drawerLabel">Full instructions</span>
+              </button>
+              <div class="drawer" id="drawer">
+                <div class="drawer-inner">
+                  <b>Benefit:</b> Improves shoulder range of motion, upper-limb strength and
+                  posture.<br /><br />
+                  <b>Caregiver assist:</b> Stand facing Amani. Encourage a slow, controlled lift
+                  rather than a fast swing. Stop if there's shoulder pain.
+                </div>
+              </div>
+            </div>
+
+            <button
+              class="drawer-toggle"
+              style="margin-top: 14px; color: var(--s-ink-soft)"
+              onclick="toggleFeedback()"
+            >
+              ⚙︎ Toggle demo feedback state (Amber/Green)
+            </button>
+          </div>
+
+          <!-- Zone 3: Controls -->
+          <div class="s-controls">
+            <button class="ctrl-btn ctrl-secondary" onclick="replayExercise()">
+              <span class="icon">↺</span> Replay
+            </button>
+            <button class="ctrl-btn ctrl-primary" onclick="nextExercise()">
+              <span class="icon">⏭</span> Next
+            </button>
+            <button class="ctrl-btn ctrl-secondary" onclick="exitSession()">
+              <span class="icon">⏸</span> Pause
+            </button>
+          </div>
+        </div>
+
+        <!-- Session Completion -->
+        <div class="s-complete" id="sessionComplete">
+          <div class="big-emoji">🎉</div>
+          <h2>Session complete!</h2>
+          <p>Amani finished 3/3 exercises today. Great work!</p>
+          <button onclick="goToDashboard()">Back to home</button>
+        </div>
+      </div>
+
+      <!-- ================= CHILD UX DASHBOARD ================= -->
+      <div class="screen" id="screenChildDashboard">
+        <div class="child-hero">
+          <div class="avatar-box">🦁</div>
+          <h1>Amani's World! 🚀</h1>
+          <p>Ready for today's superhero moves?</p>
+          <div class="star-banner">⭐ 25 STARS EARNED THIS WEEK</div>
+        </div>
+
+        <div class="child-quest-list">
+          <div class="child-quest-card" onclick="startChildGame('arm')">
+            <div class="child-quest-icon">🎈</div>
+            <div class="child-quest-info">
+              <h3>Pop the Balloons!</h3>
+              <p>Raise arms high to reach the sky</p>
+            </div>
+            <button class="child-quest-play">PLAY!</button>
+          </div>
+
+          <div class="child-quest-card" onclick="startChildGame('leg')">
+            <div class="child-quest-icon">⭐</div>
+            <div class="child-quest-info">
+              <h3>Kick the Star!</h3>
+              <p>Super leg kicks into outer space</p>
+            </div>
+            <button class="child-quest-play">PLAY!</button>
+          </div>
+
+          <div class="child-quest-card" onclick="startChildGame('balance')">
+            <div class="child-quest-icon">💎</div>
+            <div class="child-quest-info">
+              <h3>Statue Power!</h3>
+              <p>Hold steady like a magic statue</p>
+            </div>
+            <button class="child-quest-play">PLAY!</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= CHILD UX LIVE GAME ================= -->
+      <div class="screen" id="screenChildSession">
+        <div class="child-game-header">
+          <button class="child-back-btn" onclick="switchUXMode('child')">✕</button>
+          <div class="child-star-count">⭐ <span id="childStars">12</span></div>
+        </div>
+
+        <div class="mascot-area">
+          <div class="mascot-icon" id="childMascot">🦁</div>
+          <div class="mascot-bubble" id="childBubble">
+            Raise your arms to pop the golden balloons!
+          </div>
+        </div>
+
+        <div style="font-family: &quot;Bangers&quot;; font-size: 24px; color: #ffd600">
+          SUPER REPS
+        </div>
+        <div class="child-big-counter" id="childRepCount">4 / 8</div>
+
+        <div style="margin-top: 30px">
+          <button class="child-game-btn" onclick="incChildRep()">POP BALLOON! 🎈</button>
+        </div>
+      </div>
+
+      <!-- ================= CAREGIVER BOTTOM NAV ================= -->
+      <div class="bottom-nav" id="bottomNav">
+        <div class="nav-item active" id="navHome" onclick="goToDashboard()">
+          <div class="ic">🏠</div>
+          Home
+        </div>
+        <div class="nav-item" id="navLibrary" onclick="goToLibrary()">
+          <div class="ic">🗂️</div>
+          Library
+        </div>
+        <div class="nav-item" onclick="goToLibrary()">
+          <div class="ic">📈</div>
+          Progress
+        </div>
+        <div class="nav-item" onclick="goToDashboard()">
+          <div class="ic">👤</div>
+          Profile
+        </div>
       </div>
     </div>
 
-    <div class="s-complete" id="sessionComplete">
-      <div class="big-emoji">🎉</div>
-      <h2>Session complete!</h2>
-      <p>Amani finished 3/3 exercises today. Great work.</p>
-      <button onclick="goToDashboard()">Back to home</button>
+    <!-- Video Bottom-Sheet Modal (Footage not yet added) -->
+    <div class="modal-backdrop" id="videoModal" onclick="closeModalOutside(event)">
+      <div class="video-modal">
+        <div class="video-stage">
+          <div class="icon">🎬</div>
+          <div class="msg">Footage not yet added</div>
+          <div class="sub">This slot is ready — upload or record the demo video for this move.</div>
+        </div>
+        <div class="modal-cat" id="modalCat">PHYSIOTHERAPY</div>
+        <div class="modal-title" id="modalTitle">Arm Raise</div>
+        <div class="modal-benefit" id="modalBenefit">Benefit text goes here.</div>
+        <button class="modal-close" onclick="closeModal()">Close</button>
+      </div>
     </div>
-  </div>
 
-  <!-- ================= BOTTOM NAV ================= -->
-  <div class="bottom-nav" id="bottomNav">
-    <div class="nav-item active" id="navHome" onclick="goToDashboard()"><div class="ic">🏠</div>Home</div>
-    <div class="nav-item" id="navLibrary" onclick="goToLibrary()"><div class="ic">🗂️</div>Library</div>
-    <div class="nav-item" onclick="goToLibrary()"><div class="ic">📈</div>Progress</div>
-    <div class="nav-item" onclick="goToDashboard()"><div class="ic">👤</div>Profile</div>
-  </div>
-</div>
+    <script>
+      let currentUXMode = "caregiver";
+      let framingTimeouts = [];
 
-<!-- video modal -->
-<div class="modal-backdrop" id="videoModal" onclick="closeModalOutside(event)">
-  <div class="video-modal">
-    <div class="video-stage">
-      <div class="icon">🎬</div>
-      <div class="msg">Footage not yet added</div>
-      <div class="sub">This slot is ready — upload or record the demo video for this move.</div>
-    </div>
-    <div class="modal-cat" id="modalCat">PHYSIOTHERAPY</div>
-    <div class="modal-title" id="modalTitle">Arm Raise</div>
-    <div class="modal-benefit" id="modalBenefit">Benefit text goes here.</div>
-    <button class="modal-close" onclick="closeModal()">Close</button>
-  </div>
-</div>
+      function switchUXMode(mode) {
+        currentUXMode = mode;
+        document
+          .getElementById("btnCaregiverMode")
+          .classList.toggle("active", mode === "caregiver");
+        document.getElementById("btnChildMode").classList.toggle("active", mode === "child");
 
-<script>
-  /* ================= navigation ================= */
-  let framingTimeouts = [];
-  function clearFramingSequence() {
-    framingTimeouts.forEach(t => clearTimeout(t));
-    framingTimeouts = [];
-  }
+        if (mode === "caregiver") {
+          goToDashboard();
+        } else {
+          clearFramingSequence();
+          showScreen("screenChildDashboard");
+          document.getElementById("bottomNav").style.display = "none";
+        }
+      }
 
-  function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-  }
+      function clearFramingSequence() {
+        framingTimeouts.forEach((t) => clearTimeout(t));
+        framingTimeouts = [];
+      }
 
-  function goToDashboard() {
-    clearFramingSequence();
-    showScreen('screenDashboard');
-    document.getElementById('bottomNav').style.display = 'flex';
-    document.getElementById('navHome').classList.add('active');
-    document.getElementById('navLibrary').classList.remove('active');
-    const voiceCue = document.getElementById('voiceCue');
-    if (voiceCue) voiceCue.classList.remove('show', 'speaking');
-    if ('speechSynthesis' in window) {
-      try { window.speechSynthesis.cancel(); } catch (e) {}
-    }
-  }
+      function showScreen(id) {
+        document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+        document.getElementById(id).classList.add("active");
+      }
 
-  function goToLibrary() {
-    clearFramingSequence();
-    showScreen('screenLibrary');
-    document.getElementById('bottomNav').style.display = 'flex';
-    document.getElementById('navHome').classList.remove('active');
-    document.getElementById('navLibrary').classList.add('active');
-    const voiceCue = document.getElementById('voiceCue');
-    if (voiceCue) voiceCue.classList.remove('show', 'speaking');
-    if ('speechSynthesis' in window) {
-      try { window.speechSynthesis.cancel(); } catch (e) {}
-    }
-    renderLibrary();
-  }
+      function goToDashboard() {
+        clearFramingSequence();
+        showScreen("screenDashboard");
+        document.getElementById("bottomNav").style.display = "flex";
+        document.getElementById("navHome").classList.add("active");
+        document.getElementById("navLibrary").classList.remove("active");
+        stopSpeech();
+      }
 
-  function goToSession() {
-    showScreen('screenSession');
-    document.getElementById('bottomNav').style.display = 'none';
-    document.getElementById('sessionRunning').style.display = 'block';
-    document.getElementById('sessionComplete').style.display = 'none';
-    resetSessionUI();
-    startFramingSequence();
-  }
+      function goToLibrary() {
+        clearFramingSequence();
+        showScreen("screenLibrary");
+        document.getElementById("bottomNav").style.display = "flex";
+        document.getElementById("navHome").classList.remove("active");
+        document.getElementById("navLibrary").classList.add("active");
+        stopSpeech();
+        renderLibrary();
+      }
 
-  function exitSession() { goToDashboard(); }
+      function goToSession() {
+        showScreen("screenSession");
+        document.getElementById("bottomNav").style.display = "none";
+        document.getElementById("sessionRunning").style.display = "block";
+        document.getElementById("sessionComplete").style.display = "none";
+        resetSessionUI();
+        startFramingSequence();
+      }
 
-  /* ================= LIBRARY DATA ================= */
-  const physioNames = [
-    ["Arm Raise","Shoulder flexion","Improves shoulder ROM, upper-limb strength and posture."],
-    ["Forward Reach","Anterior reach","Trains protraction of the scapula and eye-hand coordination."],
-    ["Shoulder Circles","Shoulder mobility","Reduces stiffness and prevents contractures."],
-    ["Leg Kick","Hip flexion","Strengthens hip flexors and improves stepping pattern."],
-    ["High March","Reciprocal stepping","Builds cadence, balance and reciprocal hip control."],
-    ["Mini Squat","Quadriceps / glutes","Strengthens legs for sit-to-stand and walking."],
-    ["Ankle Pumps","Ankle mobility","Maintains ankle range and supports circulation."],
-    ["Wall Push-Up","Upper-body strength","Builds pushing strength with joint-friendly support."],
-    ["Side Bend","Trunk mobility","Improves lateral trunk control and core activation."],
-    ["Heel-to-Toe Walk","Dynamic balance","Trains balance and controlled foot placement."],
-    ["Standing Balance","Static balance","Builds postural control and standing tolerance."],
-    ["Seated Trunk Rotation","Core rotation","Improves trunk rotation used in reaching and dressing."],
-    ["Hip Abduction","Hip strength","Strengthens hip stabilizers for walking and standing."],
-    ["Bridge Lift","Glute / core","Builds core and pelvic stability."],
-    ["Step-Up","Functional strength","Trains stair and curb navigation strength."],
-    ["Toe Taps","Foot control","Improves selective foot and ankle movement."],
-    ["Knee Extension","Quadriceps","Strengthens knee extensors for stability."],
-    ["Calf Raise","Lower-leg strength","Builds push-off strength for walking."],
-    ["Pelvic Tilt","Core control","Improves pelvic control and lumbar awareness."],
-    ["Arm Circles","Shoulder endurance","Builds shoulder endurance and control."],
-    ["Lunge Reach","Balance + reach","Combines balance with a functional reaching pattern."],
-    ["Star Jump (Modified)","Coordination","Full-body coordination at a gentle, adapted pace."],
-    ["Crawl Pattern","Cross-body coordination","Reinforces reciprocal cross-body movement."],
-    ["Sit-to-Stand","Functional transfer","Trains the most-used daily transfer movement."],
-    ["Wall Slide","Shoulder + posture","Improves shoulder mechanics and upright posture."],
-    ["Single-Leg Stand","Balance","Builds single-limb balance and confidence."],
-    ["Backward Walk","Gait variation","Improves proprioception and gait adaptability."],
-    ["Obstacle Step","Functional mobility","Practices safe stepping over obstacles."],
-    ["Resistance Band Pull","Upper-body strength","Builds pulling strength for daily tasks."]
-  ];
-  const otNames = [
-    ["Pinch & Pick","Pincer grasp","Fine motor precision for feeding and writing."],
-    ["Catch & Toss","Hand-eye coordination","Bilateral timing and visual tracking."],
-    ["Rhythm Clap","Bilateral timing","Auditory processing and midline coordination."],
-    ["Grip Strength","Power grip","Hand strength for holding utensils."],
-    ["Cross the Midline","Bilateral integration","Encourages both brain hemispheres to communicate."],
-    ["Big Drawing","Pre-writing","Shoulder stability that underpins handwriting."],
-    ["Button Practice","Fine motor / dressing","Builds independence with self-dressing tasks."],
-    ["Zipper Pull","Fine motor / dressing","Trains grip and pull coordination for dressing."],
-    ["Puzzle Match","Visual-motor integration","Links visual perception to hand placement."],
-    ["Bead Threading","Fine motor precision","Builds precision grasp and hand stability."],
-    ["Scissor Snips","Bilateral hand use","Trains coordinated two-hand cutting control."],
-    ["Playdough Squeeze","Hand strength","Builds intrinsic hand muscle strength."],
-    ["Stacking Blocks","Visual-motor control","Trains grading of movement and placement."],
-    ["Spoon Scoop","Self-feeding skill","Builds wrist control for independent feeding."],
-    ["Page Turn","Fine motor isolation","Trains isolated finger movement."],
-    ["Peg Board","Precision grasp","Builds pincer precision and hand-eye timing."],
-    ["Tracing Lines","Pre-writing control","Prepares hand control for letter formation."],
-    ["Sorting Shapes","Visual discrimination","Links visual sorting with motor placement."],
-    ["Two-Hand Carry","Bilateral coordination","Trains carrying with both hands together."],
-    ["Finger Tap Sequence","Fine motor sequencing","Builds finger isolation and sequencing."],
-    ["Bilateral Ball Roll","Bilateral coordination","Trains symmetric two-hand control."]
-  ];
-  const exercises = [
-    ...physioNames.map((e,i) => ({ id:'p'+i, name:e[0], sub:e[1], benefit:e[2], cat:'physio', icon:'💪' })),
-    ...otNames.map((e,i) => ({ id:'o'+i, name:e[0], sub:e[1], benefit:e[2], cat:'ot', icon:'✋' }))
-  ];
+      function exitSession() {
+        goToDashboard();
+      }
 
-  let currentTab = 'all';
-  function setTab(el, cat) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    el.classList.add('active');
-    currentTab = cat;
-    renderLibrary();
-  }
+      /* 50 Exercises Catalog (29 PT + 21 OT) */
+      const physioNames = [
+        [
+          "Arm Raise",
+          "Shoulder flexion",
+          "Improves shoulder ROM, upper-limb strength and posture.",
+        ],
+        [
+          "Forward Reach",
+          "Anterior reach",
+          "Trains protraction of the scapula and eye-hand coordination.",
+        ],
+        ["Shoulder Circles", "Shoulder mobility", "Reduces stiffness and prevents contractures."],
+        ["Leg Kick", "Hip flexion", "Strengthens hip flexors and improves stepping pattern."],
+        [
+          "High March",
+          "Reciprocal stepping",
+          "Builds cadence, balance and reciprocal hip control.",
+        ],
+        ["Mini Squat", "Quadriceps / glutes", "Strengthens legs for sit-to-stand and walking."],
+        ["Ankle Pumps", "Ankle mobility", "Maintains ankle range and supports circulation."],
+        [
+          "Wall Push-Up",
+          "Upper-body strength",
+          "Builds pushing strength with joint-friendly support.",
+        ],
+        ["Side Bend", "Trunk mobility", "Improves lateral trunk control and core activation."],
+        ["Heel-to-Toe Walk", "Dynamic balance", "Trains balance and controlled foot placement."],
+        ["Standing Balance", "Static balance", "Builds postural control and standing tolerance."],
+        [
+          "Seated Trunk Rotation",
+          "Core rotation",
+          "Improves trunk rotation used in reaching and dressing.",
+        ],
+        ["Hip Abduction", "Hip strength", "Strengthens hip stabilizers for walking and standing."],
+        ["Bridge Lift", "Glute / core", "Builds core and pelvic stability."],
+        ["Step-Up", "Functional strength", "Trains stair and curb navigation strength."],
+        ["Toe Taps", "Foot control", "Improves selective foot and ankle movement."],
+        ["Knee Extension", "Quadriceps", "Strengthens knee extensors for stability."],
+        ["Calf Raise", "Lower-leg strength", "Builds push-off strength for walking."],
+        ["Pelvic Tilt", "Core control", "Improves pelvic control and lumbar awareness."],
+        ["Arm Circles", "Shoulder endurance", "Builds shoulder endurance and control."],
+        ["Lunge Reach", "Balance + reach", "Combines balance with a functional reaching pattern."],
+        [
+          "Star Jump (Modified)",
+          "Coordination",
+          "Full-body coordination at a gentle, adapted pace.",
+        ],
+        ["Crawl Pattern", "Cross-body coordination", "Reinforces reciprocal cross-body movement."],
+        ["Sit-to-Stand", "Functional transfer", "Trains the most-used daily transfer movement."],
+        ["Wall Slide", "Shoulder + posture", "Improves shoulder mechanics and upright posture."],
+        ["Single-Leg Stand", "Balance", "Builds single-limb balance and confidence."],
+        ["Backward Walk", "Gait variation", "Improves proprioception and gait adaptability."],
+        ["Obstacle Step", "Functional mobility", "Practices safe stepping over obstacles."],
+        ["Resistance Band Pull", "Upper-body strength", "Builds pulling strength for daily tasks."],
+      ];
 
-  function renderLibrary() {
-    const q = (document.getElementById('searchInput').value || '').toLowerCase();
-    const filtered = exercises.filter(e =>
-      (currentTab === 'all' || e.cat === currentTab) && e.name.toLowerCase().includes(q)
-    );
-    document.getElementById('libCount').textContent =
-      (currentTab === 'all' ? 'All exercises' : currentTab === 'physio' ? 'Physiotherapy' : 'Occupational therapy') + ' (' + filtered.length + ')';
-    const list = document.getElementById('libList');
-    list.innerHTML = filtered.map(e => `
+      const otNames = [
+        ["Pinch & Pick", "Pincer grasp", "Fine motor precision for feeding and writing."],
+        ["Catch & Toss", "Hand-eye coordination", "Bilateral timing and visual tracking."],
+        ["Rhythm Clap", "Bilateral timing", "Auditory processing and midline coordination."],
+        ["Grip Strength", "Power grip", "Hand strength for holding utensils."],
+        [
+          "Cross the Midline",
+          "Bilateral integration",
+          "Encourages both brain hemispheres to communicate.",
+        ],
+        ["Big Drawing", "Pre-writing", "Shoulder stability that underpins handwriting."],
+        [
+          "Button Practice",
+          "Fine motor / dressing",
+          "Builds independence with self-dressing tasks.",
+        ],
+        ["Zipper Pull", "Fine motor / dressing", "Trains grip and pull coordination for dressing."],
+        ["Puzzle Match", "Visual-motor integration", "Links visual perception to hand placement."],
+        ["Bead Threading", "Fine motor precision", "Builds precision grasp and hand stability."],
+        ["Scissor Snips", "Bilateral hand use", "Trains coordinated two-hand cutting control."],
+        ["Playdough Squeeze", "Hand strength", "Builds intrinsic hand muscle strength."],
+        ["Stacking Blocks", "Visual-motor control", "Trains grading of movement and placement."],
+        ["Spoon Scoop", "Self-feeding skill", "Builds wrist control for independent feeding."],
+        ["Page Turn", "Fine motor isolation", "Trains isolated finger movement."],
+        ["Peg Board", "Precision grasp", "Builds pincer precision and hand-eye timing."],
+        ["Tracing Lines", "Pre-writing control", "Prepares hand control for letter formation."],
+        ["Sorting Shapes", "Visual discrimination", "Links visual sorting with motor placement."],
+        ["Two-Hand Carry", "Bilateral coordination", "Trains carrying with both hands together."],
+        ["Finger Tap Sequence", "Fine motor sequencing", "Builds finger isolation and sequencing."],
+        ["Bilateral Ball Roll", "Bilateral coordination", "Trains symmetric two-hand control."],
+      ];
+
+      const exercises = [
+        ...physioNames.map((e, i) => ({
+          id: "p" + i,
+          name: e[0],
+          sub: e[1],
+          benefit: e[2],
+          cat: "physio",
+          icon: "💪",
+        })),
+        ...otNames.map((e, i) => ({
+          id: "o" + i,
+          name: e[0],
+          sub: e[1],
+          benefit: e[2],
+          cat: "ot",
+          icon: "✋",
+        })),
+      ];
+
+      let currentTab = "all";
+      function setTab(el, cat) {
+        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+        el.classList.add("active");
+        currentTab = cat;
+        renderLibrary();
+      }
+
+      function renderLibrary() {
+        const q = (document.getElementById("searchInput").value || "").toLowerCase();
+        const filtered = exercises.filter(
+          (e) => (currentTab === "all" || e.cat === currentTab) && e.name.toLowerCase().includes(q),
+        );
+        document.getElementById("libCount").textContent =
+          (currentTab === "all"
+            ? "All 50 exercises"
+            : currentTab === "physio"
+              ? "Physiotherapy (29)"
+              : "Occupational therapy (21)") +
+          " · showing " +
+          filtered.length;
+        const list = document.getElementById("libList");
+        list.innerHTML = filtered
+          .map(
+            (e) => `
       <div class="ex-card" onclick="openModalById('${e.id}')">
         <div class="ex-thumb">
           <span class="ai-tag">AI tracked</span>
@@ -483,167 +1884,259 @@
           <p>${escapeHtml(e.benefit)}</p>
         </div>
       </div>
-    `).join('');
-  }
-
-  function escapeHtml(str) {
-    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
-  function openModalById(id) {
-    const e = exercises.find(item => item.id === id);
-    if (!e) return;
-    document.getElementById('modalCat').textContent = (e.cat === 'physio' ? 'PHYSIOTHERAPY' : 'OCCUPATIONAL') + ' · ' + (e.sub || '').toUpperCase();
-    document.getElementById('modalTitle').textContent = e.name;
-    document.getElementById('modalBenefit').textContent = e.benefit;
-    document.getElementById('videoModal').classList.add('show');
-  }
-
-  function closeModal() { document.getElementById('videoModal').classList.remove('show'); }
-  function closeModalOutside(ev) { if (ev.target.id === 'videoModal') closeModal(); }
-
-  /* ================= SESSION LOGIC ================= */
-  const sessionExercises = [
-    { name: 'Arm Raise', cue: 'Raise both arms slowly overhead', reps: 8, sets: 2 },
-    { name: 'Leg Kick (left)', cue: 'Kick toward the highlighted star', reps: 8, sets: 1 },
-    { name: 'Balance Hold', cue: 'Hold steady, hands on hips', reps: 3, sets: 1 }
-  ];
-  let sessionIndex = 0;
-
-  function resetSessionUI() {
-    sessionIndex = 0;
-    loadExercise();
-  }
-
-  function loadExercise() {
-    const ex = sessionExercises[sessionIndex];
-    document.getElementById('statusLabel').textContent = `Exercise ${sessionIndex+1} of ${sessionExercises.length}`;
-    document.getElementById('progressFill').style.width = Math.round(((sessionIndex) / sessionExercises.length) * 100 + 10) + '%';
-    document.getElementById('curExName').textContent = ex.name;
-    document.getElementById('curExCue').textContent = ex.cue;
-    document.getElementById('repCount').textContent = Math.min(4, ex.reps);
-    document.getElementById('repTotal').textContent = ex.reps;
-    document.getElementById('setLabel').textContent = `Set 1 of ${ex.sets}`;
-  }
-
-  function replayExercise() {
-    loadExercise();
-    speakCue(`Replaying ${sessionExercises[sessionIndex].name}. ${sessionExercises[sessionIndex].cue}`, 3000);
-  }
-
-  function nextExercise() {
-    sessionIndex++;
-    if (sessionIndex >= sessionExercises.length) {
-      document.getElementById('sessionRunning').style.display = 'none';
-      document.getElementById('sessionComplete').style.display = 'block';
-      speakCue("Session complete! Great work today.", 3000);
-    } else {
-      loadExercise();
-      speakCue(`Nice work — moving on to ${sessionExercises[sessionIndex].name}.`, 3000);
-    }
-  }
-
-  function toggleDrawer() {
-    const d = document.getElementById('drawer');
-    const arrow = document.getElementById('drawerArrow');
-    const label = document.getElementById('drawerLabel');
-    const open = d.classList.toggle('open');
-    arrow.textContent = open ? '▴' : '▾';
-    label.textContent = open ? 'Hide instructions' : 'Full instructions';
-  }
-
-  function toggleCamera(force) {
-    const dock = document.getElementById('cameraDock');
-    const backdrop = document.getElementById('cameraBackdrop');
-    if (force === 'fullscreen') { dock.classList.add('fullscreen'); backdrop.classList.add('show'); }
-    else if (force === 'expand') { dock.classList.remove('fullscreen'); dock.classList.add('expanded'); backdrop.classList.add('show'); }
-    else if (force === 'shrink') { dock.classList.remove('expanded','fullscreen'); backdrop.classList.remove('show'); }
-    else {
-      if (dock.classList.contains('fullscreen')) {
-        dock.classList.remove('fullscreen'); backdrop.classList.remove('show');
-      } else {
-        dock.classList.toggle('expanded'); backdrop.classList.toggle('show');
+    `,
+          )
+          .join("");
       }
-    }
-  }
 
-  function speakCue(text, duration) {
-    const cue = document.getElementById('voiceCue');
-    const cueText = document.getElementById('voiceText');
-    if (cueText) cueText.textContent = text;
-    if (cue) cue.classList.add('show','speaking');
-    if ('speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.rate = 0.95;
-        utter.onend = () => cue && cue.classList.remove('speaking');
-        window.speechSynthesis.speak(utter);
-      } catch (e) {}
-    }
-    clearTimeout(window._voiceCueTimeout);
-    window._voiceCueTimeout = setTimeout(() => cue && cue.classList.remove('show','speaking'), duration || 3400);
-  }
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
 
-  function startFramingSequence() {
-    clearFramingSequence();
-    const badge = document.getElementById('framingBadge');
-    const status = document.getElementById('framingStatus');
-    status.classList.remove('ok');
-    badge.textContent = 'Checking Amani is fully in view…';
-    toggleCamera('shrink');
+      function openModalById(id) {
+        const e = exercises.find((item) => item.id === id);
+        if (!e) return;
+        document.getElementById("modalCat").textContent =
+          (e.cat === "physio" ? "PHYSIOTHERAPY" : "OCCUPATIONAL") +
+          " · " +
+          (e.sub || "").toUpperCase();
+        document.getElementById("modalTitle").textContent = e.name;
+        document.getElementById("modalBenefit").textContent = e.benefit;
+        document.getElementById("videoModal").classList.add("show");
+      }
 
-    framingTimeouts.push(setTimeout(() => {
-      toggleCamera('fullscreen');
-      speakCue("Let's check the camera. Make sure Amani's whole body is visible.", 3600);
-    }, 400));
+      function closeModal() {
+        document.getElementById("videoModal").classList.remove("show");
+      }
+      function closeModalOutside(ev) {
+        if (ev.target.id === "videoModal") closeModal();
+      }
 
-    framingTimeouts.push(setTimeout(() => {
-      status.classList.add('ok');
-      badge.textContent = 'Perfect — Amani is fully in frame ✓';
-    }, 2600));
+      /* ================= SESSION LOGIC ================= */
+      const sessionExercises = [
+        { name: "Arm Raise", cue: "Raise both arms slowly overhead", reps: 8, sets: 2 },
+        { name: "Leg Kick (left)", cue: "Kick toward the highlighted star", reps: 8, sets: 1 },
+        { name: "Balance Hold", cue: "Hold steady, hands on hips", reps: 3, sets: 1 },
+      ];
+      let sessionIndex = 0;
 
-    framingTimeouts.push(setTimeout(() => {
-      toggleCamera('shrink');
-      speakCue("Great, starting now. You're doing well — just watch and encourage Amani.", 4200);
-    }, 3900));
-  }
+      function resetSessionUI() {
+        sessionIndex = 0;
+        loadExercise();
+      }
 
-  let adjustState = false;
-  function toggleFeedback() {
-    adjustState = !adjustState;
-    const row = document.getElementById('feedbackRow');
-    const face = document.getElementById('feedbackFace');
-    const text = document.getElementById('feedbackText');
-    const sub = document.getElementById('feedbackSub');
-    const dock = document.getElementById('cameraDock');
-    if (adjustState) {
-      row.classList.add('adjust'); face.textContent = '💡';
-      text.textContent = 'Try lifting a little higher'; sub.textContent = 'Left arm below target angle';
-      dock.classList.remove('fb-good'); dock.classList.add('fb-adjust');
-      speakCue("Almost there — if there's no pain, help raise the arm a little higher.", 3800);
-    } else {
-      row.classList.remove('adjust'); face.textContent = '🙂';
-      text.textContent = 'Nice form — keep going'; sub.textContent = 'Arms tracking correctly';
-      dock.classList.remove('fb-adjust'); dock.classList.add('fb-good');
-      speakCue("That's it, well done — keep going just like that.", 3000);
-    }
-  }
+      function loadExercise() {
+        const ex = sessionExercises[sessionIndex];
+        document.getElementById("statusLabel").textContent =
+          `Exercise ${sessionIndex + 1} of ${sessionExercises.length}`;
+        document.getElementById("progressFill").style.width =
+          Math.round((sessionIndex / sessionExercises.length) * 100 + 20) + "%";
+        document.getElementById("curExName").textContent = ex.name;
+        document.getElementById("curExCue").textContent = ex.cue;
+        document.getElementById("repCount").textContent = Math.min(4, ex.reps);
+        document.getElementById("repTotal").textContent = ex.reps;
+        document.getElementById("setLabel").textContent = `Set 1 of ${ex.sets}`;
+      }
 
-  /* Handle hash navigation from query or fragment */
-  function handleInitialNavigation() {
-    const hash = (window.location.hash || window.location.search || '').toLowerCase();
-    if (hash.includes('library') || hash.includes('libraryscreen')) {
-      goToLibrary();
-    } else if (hash.includes('session') || hash.includes('exercise')) {
-      goToSession();
-    } else {
-      goToDashboard();
-    }
-  }
+      function replayExercise() {
+        loadExercise();
+        speakCue(
+          `Replaying ${sessionExercises[sessionIndex].name}. ${sessionExercises[sessionIndex].cue}`,
+          3000,
+        );
+      }
 
-  handleInitialNavigation();
-</script>
+      function nextExercise() {
+        sessionIndex++;
+        if (sessionIndex >= sessionExercises.length) {
+          document.getElementById("sessionRunning").style.display = "none";
+          document.getElementById("sessionComplete").style.display = "block";
+          speakCue("Session complete! Great work today.", 3000);
+        } else {
+          loadExercise();
+          speakCue(`Nice work — moving on to ${sessionExercises[sessionIndex].name}.`, 3000);
+        }
+      }
 
-</body>
+      function toggleDrawer() {
+        const d = document.getElementById("drawer");
+        const arrow = document.getElementById("drawerArrow");
+        const label = document.getElementById("drawerLabel");
+        const open = d.classList.toggle("open");
+        arrow.textContent = open ? "▴" : "▾";
+        label.textContent = open ? "Hide instructions" : "Full instructions";
+      }
+
+      function toggleCamera(force) {
+        const dock = document.getElementById("cameraDock");
+        const backdrop = document.getElementById("cameraBackdrop");
+        if (force === "fullscreen") {
+          dock.classList.add("fullscreen");
+          backdrop.classList.add("show");
+        } else if (force === "expand") {
+          dock.classList.remove("fullscreen");
+          dock.classList.add("expanded");
+          backdrop.classList.add("show");
+        } else if (force === "shrink") {
+          dock.classList.remove("expanded", "fullscreen");
+          backdrop.classList.remove("show");
+        } else {
+          if (dock.classList.contains("fullscreen")) {
+            dock.classList.remove("fullscreen");
+            backdrop.classList.remove("show");
+          } else {
+            dock.classList.toggle("expanded");
+            backdrop.classList.toggle("show");
+          }
+        }
+      }
+
+      function stopSpeech() {
+        const voiceCue = document.getElementById("voiceCue");
+        if (voiceCue) voiceCue.classList.remove("show", "speaking");
+        if ("speechSynthesis" in window) {
+          try {
+            window.speechSynthesis.cancel();
+          } catch (e) {}
+        }
+      }
+
+      function speakCue(text, duration) {
+        const cue = document.getElementById("voiceCue");
+        const cueText = document.getElementById("voiceText");
+        if (cueText) cueText.textContent = text;
+        if (cue) cue.classList.add("show", "speaking");
+        if ("speechSynthesis" in window) {
+          try {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.rate = 0.95;
+            utter.onend = () => cue && cue.classList.remove("speaking");
+            window.speechSynthesis.speak(utter);
+          } catch (e) {}
+        }
+        clearTimeout(window._voiceCueTimeout);
+        window._voiceCueTimeout = setTimeout(
+          () => cue && cue.classList.remove("show", "speaking"),
+          duration || 3400,
+        );
+      }
+
+      function startFramingSequence() {
+        clearFramingSequence();
+        const badge = document.getElementById("framingBadge");
+        const status = document.getElementById("framingStatus");
+        status.classList.remove("ok");
+        badge.textContent = "Checking Amani is fully in view…";
+        toggleCamera("shrink");
+
+        framingTimeouts.push(
+          setTimeout(() => {
+            toggleCamera("fullscreen");
+            speakCue("Let's check the camera. Make sure Amani's whole body is visible.", 3600);
+          }, 400),
+        );
+
+        framingTimeouts.push(
+          setTimeout(() => {
+            status.classList.add("ok");
+            badge.textContent = "Perfect — Amani is fully in frame ✓";
+          }, 2600),
+        );
+
+        framingTimeouts.push(
+          setTimeout(() => {
+            toggleCamera("shrink");
+            speakCue(
+              "Great, starting now. You're doing well — just watch and encourage Amani.",
+              4200,
+            );
+          }, 3900),
+        );
+      }
+
+      let adjustState = false;
+      function toggleFeedback() {
+        adjustState = !adjustState;
+        const row = document.getElementById("feedbackRow");
+        const face = document.getElementById("feedbackFace");
+        const text = document.getElementById("feedbackText");
+        const sub = document.getElementById("feedbackSub");
+        const dock = document.getElementById("cameraDock");
+        if (adjustState) {
+          row.classList.add("adjust");
+          face.textContent = "💡";
+          text.textContent = "Try lifting a little higher";
+          sub.textContent = "Left arm below target angle";
+          dock.classList.remove("fb-good");
+          dock.classList.add("fb-adjust");
+          speakCue("Almost there — if there's no pain, help raise the arm a little higher.", 3800);
+        } else {
+          row.classList.remove("adjust");
+          face.textContent = "🙂";
+          text.textContent = "Nice form — keep going";
+          sub.textContent = "Arms tracking correctly";
+          dock.classList.remove("fb-adjust");
+          dock.classList.add("fb-good");
+          speakCue("That's it, well done — keep going just like that.", 3000);
+        }
+      }
+
+      /* Child UX Game Logic */
+      let childScoreReps = 4;
+      let childStars = 12;
+      function startChildGame(type) {
+        showScreen("screenChildSession");
+        childScoreReps = 4;
+        document.getElementById("childRepCount").textContent = childScoreReps + " / 8";
+        const mascot = document.getElementById("childMascot");
+        const bubble = document.getElementById("childBubble");
+        if (type === "arm") {
+          mascot.textContent = "🎈";
+          bubble.textContent = "Reach high to pop the balloon!";
+        } else if (type === "leg") {
+          mascot.textContent = "⭐";
+          bubble.textContent = "Super leg kick towards the stars!";
+        } else {
+          mascot.textContent = "💎";
+          bubble.textContent = "Hold steady like a magic statue!";
+        }
+      }
+
+      function incChildRep() {
+        if (childScoreReps < 8) {
+          childScoreReps++;
+          childStars += 2;
+          document.getElementById("childRepCount").textContent = childScoreReps + " / 8";
+          document.getElementById("childStars").textContent = childStars;
+          document.getElementById("childBubble").textContent = "AWESOME! +2 Stars ⭐ Keep going!";
+          speakCue("Awesome job! You popped it!", 2000);
+        } else {
+          document.getElementById("childBubble").textContent =
+            "VICTORY! You completed the mission! 🎉";
+          speakCue("Hooray! Mission accomplished!", 3000);
+        }
+      }
+
+      /* Handle hash navigation */
+      function handleInitialNavigation() {
+        const hash = (window.location.hash || window.location.search || "").toLowerCase();
+        if (hash.includes("library") || hash.includes("libraryscreen")) {
+          goToLibrary();
+        } else if (hash.includes("session") || hash.includes("exercise")) {
+          goToSession();
+        } else if (hash.includes("child")) {
+          switchUXMode("child");
+        } else {
+          goToDashboard();
+        }
+      }
+
+      handleInitialNavigation();
+    </script>
+  </body>
 </html>

@@ -59,9 +59,9 @@ function Landing() {
               Therapy that reaches home.
             </h1>
             <p className="mt-5 max-w-lg text-base text-muted-foreground md:text-lg">
-              Neuro-Bridge helps caregivers deliver the exercises a therapist prescribed
-              for children with cerebral palsy — with live AI form feedback, in the
-              family's own language.
+              Neuro-Bridge helps caregivers deliver the exercises a therapist prescribed for
+              children with cerebral palsy — with live AI form feedback, in the family's own
+              language.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -138,20 +138,17 @@ function Landing() {
             {
               icon: <HeartHandshake className="h-6 w-6" />,
               title: "Prescribed by a therapist",
-              body:
-                "Your child's therapist creates a plan tailored to GMFCS level, affected side, and goals. You just follow it at home.",
+              body: "Your child's therapist creates a plan tailored to GMFCS level, affected side, and goals. You just follow it at home.",
             },
             {
               icon: <Activity className="h-6 w-6" />,
               title: "AI form guidance",
-              body:
-                "Camera-based pose tracking corrects form in real time — no wearables, works on a phone or tablet.",
+              body: "Camera-based pose tracking corrects form in real time — no wearables, works on a phone or tablet.",
             },
             {
               icon: <Languages className="h-6 w-6" />,
               title: "Speaks your language",
-              body:
-                "Every prompt, video and progress note in English, Kiswahili, or Gikuyu.",
+              body: "Every prompt, video and progress note in English, Kiswahili, or Gikuyu.",
             },
           ].map((f) => (
             <div key={f.title} className="rounded-3xl border border-border bg-card p-6 shadow-sm">

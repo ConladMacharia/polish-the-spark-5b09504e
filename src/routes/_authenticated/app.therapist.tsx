@@ -3,15 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import {
-  Copy,
-  LogOut,
-  Plus,
-  Stethoscope,
-  User,
-  Calendar,
-  Sparkles,
-} from "lucide-react";
+import { Copy, LogOut, Plus, Stethoscope, User, Calendar, Sparkles } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -134,8 +126,8 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       </div>
       <h3 className="mt-4 font-display text-xl">No patients yet</h3>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        Add your first patient. You'll get an 8-character code to hand to the
-        caregiver — they enter it once to link their account.
+        Add your first patient. You'll get an 8-character code to hand to the caregiver — they enter
+        it once to link their account.
       </p>
       <Button className="mt-6 rounded-full" onClick={onCreate}>
         <Plus className="mr-2 h-4 w-4" /> New patient
@@ -153,9 +145,7 @@ function PatientCard({ patient }: { patient: any }) {
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Patient
-          </p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Patient</p>
           <p className="font-display text-xl">{patient.child_name}</p>
         </div>
         <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
@@ -277,9 +267,7 @@ function NewPatientDialog({ onDone }: { onDone: () => void }) {
             <Label>GMFCS level</Label>
             <Select
               value={form.gmfcs_level}
-              onValueChange={(v) =>
-                setForm({ ...form, gmfcs_level: v as (typeof GMFCS)[number] })
-              }
+              onValueChange={(v) => setForm({ ...form, gmfcs_level: v as (typeof GMFCS)[number] })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select" />

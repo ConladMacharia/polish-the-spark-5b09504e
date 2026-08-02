@@ -1,18 +1,22 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowLeft, PlayCircle, Search, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, PlayCircle, Search, Sparkles, Loader2, Video, X } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { EXERCISES, type ExerciseCategory } from "@/lib/exercise-catalog";
+import { EXERCISES, type Exercise, type ExerciseCategory } from "@/lib/exercise-catalog";
 
 export const Route = createFileRoute("/_authenticated/app/exercises")({
   head: () => ({
     meta: [
       { title: "Exercise library — Neuro-Bridge" },
-      { name: "description", content: "Full list of physiotherapy and occupational therapy exercises for children with cerebral palsy." },
+      {
+        name: "description",
+        content:
+          "Full 50-exercise catalog of physiotherapy and occupational therapy for cerebral palsy.",
+      },
     ],
   }),
   component: ExercisesPage,
@@ -22,6 +26,7 @@ function ExercisesPage() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<"all" | ExerciseCategory>("all");
   const [q, setQ] = useState("");
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [launching, setLaunching] = useState<string | null>(null);
 
   const { data: patient } = useQuery({
@@ -49,17 +54,14 @@ function ExercisesPage() {
       return (
         e.name.toLowerCase().includes(term) ||
         e.focus.toLowerCase().includes(term) ||
-        e.description.toLowerCase().includes(term)
+        e.description.toLowerCase().includes(term) ||
+        e.benefits.toLowerCase().includes(term)
       );
     });
   }, [filter, q]);
 
-  const grouped = useMemo(() => {
-    return {
-      pt: filtered.filter((e) => e.category === "pt"),
-      ot: filtered.filter((e) => e.category === "ot"),
-    };
-  }, [filtered]);
+  const physioCount = useMemo(() => EXERCISES.filter((e) => e.category === "pt").length, []);
+  const otCount = useMemo(() => EXERCISES.filter((e) => e.category === "ot").length, []);
 
   async function launch(slug: string) {
     if (!patient) return;
@@ -81,8 +83,8 @@ function ExercisesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/60 backdrop-blur">
+    <div className="min-h-screen bg-background text-foreground pb-12">
+      <header className="border-b border-border bg-card/60 backdrop-blur sticky top-0 z-40">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-3">
             <Button asChild variant="ghost" size="sm">
@@ -91,10 +93,10 @@ function ExercisesPage() {
               </Link>
             </Button>
             <div>
-              <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
-                <Sparkles className="h-4 w-4" /> Library
+              <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+                <Sparkles className="h-3.5 w-3.5 text-primary" /> Library
               </p>
-              <p className="font-display text-lg leading-none">Exercises</p>
+              <p className="font-display text-lg leading-none font-bold">Exercise library</p>
             </div>
           </div>
         </div>
@@ -102,25 +104,32 @@ function ExercisesPage() {
 
       <main className="mx-auto max-w-5xl px-6 py-8">
         <div className="mb-6">
-          <h1 className="font-display text-3xl">Exercise library</h1>
-          <p className="text-sm text-muted-foreground">
-            Physiotherapy and occupational therapy exercises used with children with cerebral palsy. Every exercise
-            opens the AI-tracked player — tap any card to start a therapy game.
+          <h1 className="font-display text-3xl font-bold">Exercise library</h1>
+          <p className="mt-1 text-sm text-muted-foreground font-medium">
+            Full 50-exercise CP reference catalog ({physioCount} Physiotherapy + {otCount}{" "}
+            Occupational therapy).
           </p>
         </div>
 
+        {/* Filter and Search Bar */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="inline-flex rounded-full border border-border bg-card p-1 text-sm">
+          <div className="inline-flex rounded-full border-2 border-slate-900 bg-amber-50 p-1 text-xs font-bold shadow-[2px_2px_0px_#0f172a]">
             {(["all", "pt", "ot"] as const).map((k) => (
               <button
                 key={k}
                 type="button"
                 onClick={() => setFilter(k)}
                 className={`rounded-full px-4 py-1.5 transition ${
-                  filter === k ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"
+                  filter === k
+                    ? "bg-blue-600 text-white shadow"
+                    : "text-slate-700 hover:text-slate-900"
                 }`}
               >
-                {k === "all" ? "All" : k === "pt" ? "Physiotherapy" : "Occupational"}
+                {k === "all"
+                  ? `All (${EXERCISES.length})`
+                  : k === "pt"
+                    ? `Physiotherapy (${physioCount})`
+                    : `Occupational (${otCount})`}
               </button>
             ))}
           </div>
@@ -129,74 +138,128 @@ function ExercisesPage() {
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search exercises…"
-              className="pl-9"
+              placeholder="Search 50 exercises…"
+              className="pl-9 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl font-medium"
             />
           </div>
         </div>
 
-        {(["pt", "ot"] as const).map((cat) => {
-          const list = grouped[cat];
-          if (list.length === 0) return null;
-          return (
-            <section key={cat} className="mb-10">
-              <h2 className="mb-3 font-display text-xl">
-                {cat === "pt" ? "Physiotherapy" : "Occupational therapy"}
-                <span className="ml-2 text-sm text-muted-foreground">({list.length})</span>
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {list.map((e) => (
-                  <article
-                    key={e.slug}
-                    onClick={() => launch(e.slug)}
-                    className="flex flex-col rounded-2xl border border-border bg-card p-4 shadow-sm cursor-pointer transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="text-3xl leading-none">{e.icon}</div>
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                        AI tracked
-                      </span>
-                    </div>
-                    <h3 className="mt-3 font-display text-lg leading-tight">{e.name}</h3>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{e.focus}</p>
-                    <p className="mt-2 text-sm text-foreground/80">{e.description}</p>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground/70">Benefit: </span>
-                      {e.benefits}
-                    </p>
-                    <div className="mt-4">
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        disabled={!patient || launching === e.slug}
-                        onClick={(evt) => { evt.stopPropagation(); launch(e.slug); }}
-                      >
-                        {launching === e.slug ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <PlayCircle className="mr-2 h-4 w-4" />
-                        )}
-                        Start
-                      </Button>
-                    </div>
-                  </article>
-                ))}
+        <div className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          {filter === "all"
+            ? `All Exercises (${filtered.length})`
+            : filter === "pt"
+              ? `Physiotherapy (${filtered.length})`
+              : `Occupational (${filtered.length})`}
+        </div>
+
+        {/* 2-Column Exercise Cards Grid */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((e) => (
+            <article
+              key={e.slug}
+              onClick={() => setSelectedExercise(e)}
+              className="flex flex-col rounded-2xl border-3 border-slate-950 bg-card shadow-[4px_4px_0px_#0f172a] cursor-pointer transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 overflow-hidden"
+            >
+              <div className="relative h-24 bg-gradient-to-br from-indigo-100 to-blue-200 flex items-center justify-center text-4xl">
+                <span className="absolute top-2 left-2 text-[10px] font-extrabold bg-lime-400 border border-slate-950 px-1.5 py-0.5 rounded-md text-slate-950">
+                  AI tracked
+                </span>
+                {e.icon}
+                <div className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-slate-900/80 text-white grid place-items-center text-xs">
+                  <PlayCircle className="h-4 w-4 fill-white text-slate-900" />
+                </div>
               </div>
-            </section>
-          );
-        })}
+              <div className="p-4 flex-1 flex flex-col justify-between">
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                    {e.category === "pt" ? "Physiotherapy" : "Occupational"} · {e.focus}
+                  </p>
+                  <h3 className="mt-1 font-display text-lg font-bold leading-tight">{e.name}</h3>
+                  <p className="mt-1.5 text-xs text-muted-foreground font-semibold line-clamp-2">
+                    {e.benefits}
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs font-bold text-blue-600">
+                  <span>Tap to view details</span>
+                  <span className="text-slate-900">▶</span>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
 
         {filtered.length === 0 && (
-          <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            No exercises match your search.
-          </p>
+          <div className="rounded-2xl border-2 border-dashed border-border p-12 text-center text-sm text-muted-foreground font-medium">
+            No exercises match your search criteria.
+          </div>
         )}
 
-        <div className="mt-8">
-          <Button variant="outline" onClick={() => navigate({ to: "/app/caregiver" })}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to home
-          </Button>
-        </div>
+        {/* Video Bottom-Sheet Modal */}
+        {selectedExercise && (
+          <div
+            className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+            onClick={() => setSelectedExercise(null)}
+          >
+            <div
+              className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl border-3 border-slate-950 bg-card p-6 shadow-2xl animate-in slide-in-from-bottom duration-200"
+              onClick={(evt) => evt.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-extrabold uppercase text-muted-foreground">
+                  {selectedExercise.category === "pt" ? "Physiotherapy" : "Occupational"} ·{" "}
+                  {selectedExercise.focus}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedExercise(null)}
+                  className="rounded-full p-1 hover:bg-accent text-slate-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Video Stage Placeholder */}
+              <div className="rounded-2xl bg-slate-950 text-white h-48 flex flex-col items-center justify-center p-6 text-center mb-4">
+                <Video className="h-10 w-10 text-slate-400 mb-2 opacity-80" />
+                <p className="font-display text-lg font-bold text-white">Footage not yet added</p>
+                <p className="mt-1 text-xs text-slate-400 font-medium max-w-xs">
+                  This slot is ready — upload or record the demo video for this move.
+                </p>
+              </div>
+
+              <h2 className="font-display text-2xl font-bold">{selectedExercise.name}</h2>
+              <p className="mt-1 text-sm font-semibold text-slate-700">
+                {selectedExercise.description}
+              </p>
+              <p className="mt-2 text-xs text-slate-500 font-medium leading-relaxed">
+                <strong className="text-slate-900">Clinical Benefit: </strong>
+                {selectedExercise.benefits}
+              </p>
+
+              <div className="mt-6 flex gap-3">
+                <Button
+                  className="flex-1 rounded-xl font-display font-bold border-2 border-slate-950 shadow-[2px_2px_0px_#0f172a]"
+                  disabled={!patient || launching === selectedExercise.slug}
+                  onClick={() => launch(selectedExercise.slug)}
+                >
+                  {launching === selectedExercise.slug ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <PlayCircle className="mr-2 h-4 w-4" />
+                  )}
+                  Start therapy game
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedExercise(null)}
+                  className="rounded-xl font-display font-bold border-2 border-slate-950"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

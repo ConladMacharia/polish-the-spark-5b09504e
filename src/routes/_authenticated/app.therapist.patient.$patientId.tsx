@@ -2,14 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import {
-  ArrowLeft,
-  Sparkles,
-  Activity,
-  HeartPulse,
-  Calendar,
-  Loader2,
-} from "lucide-react";
+import { ArrowLeft, Sparkles, Activity, HeartPulse, Calendar, Loader2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -92,16 +85,12 @@ function PatientDetail() {
   const totalSessions = sessions?.length ?? 0;
   const avgCompletion =
     sessions && sessions.length
-      ? Math.round(
-          sessions.reduce((a, s) => a + (s.completion_pct ?? 0), 0) / sessions.length,
-        )
+      ? Math.round(sessions.reduce((a, s) => a + (s.completion_pct ?? 0), 0) / sessions.length)
       : 0;
   const avgCorrect =
     sessions && sessions.length
       ? Math.round(
-          (sessions.reduce((a, s) => a + (s.avg_correctness ?? 0), 0) /
-            sessions.length) *
-            100,
+          (sessions.reduce((a, s) => a + (s.avg_correctness ?? 0), 0) / sessions.length) * 100,
         ) / 100
       : null;
 
@@ -158,8 +147,16 @@ function PatientDetail() {
         </section>
 
         <section className="grid gap-4 sm:grid-cols-3">
-          <StatCard icon={<Calendar className="h-5 w-5" />} label="Sessions (30d)" value={totalSessions} />
-          <StatCard icon={<Activity className="h-5 w-5" />} label="Avg completion" value={`${avgCompletion}%`} />
+          <StatCard
+            icon={<Calendar className="h-5 w-5" />}
+            label="Sessions (30d)"
+            value={totalSessions}
+          />
+          <StatCard
+            icon={<Activity className="h-5 w-5" />}
+            label="Avg completion"
+            value={`${avgCompletion}%`}
+          />
           <StatCard
             icon={<HeartPulse className="h-5 w-5" />}
             label="Avg form score"
@@ -171,8 +168,8 @@ function PatientDetail() {
           <h2 className="mb-3 font-display text-2xl">AI progress reports</h2>
           {!reports || reports.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
-              No reports yet. Click <strong>Generate AI report</strong> to analyze the
-              last 30 days of sessions and pain logs.
+              No reports yet. Click <strong>Generate AI report</strong> to analyze the last 30 days
+              of sessions and pain logs.
             </div>
           ) : (
             <div className="space-y-4">
@@ -204,8 +201,8 @@ function PatientDetail() {
           <h2 className="mb-3 font-display text-2xl">Recent sessions</h2>
           {!sessions || sessions.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
-              No sessions logged yet. Once the caregiver runs a therapy session, it
-              will appear here.
+              No sessions logged yet. Once the caregiver runs a therapy session, it will appear
+              here.
             </div>
           ) : (
             <div className="overflow-hidden rounded-2xl border border-border">
@@ -222,9 +219,7 @@ function PatientDetail() {
                 <tbody className="divide-y divide-border bg-card">
                   {sessions.map((s) => (
                     <tr key={s.id}>
-                      <td className="px-4 py-2">
-                        {new Date(s.started_at).toLocaleDateString()}
-                      </td>
+                      <td className="px-4 py-2">{new Date(s.started_at).toLocaleDateString()}</td>
                       <td className="px-4 py-2">{s.exercise}</td>
                       <td className="px-4 py-2">
                         {s.reps_completed}/{s.reps_target}

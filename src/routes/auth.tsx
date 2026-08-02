@@ -16,8 +16,7 @@ export const Route = createFileRoute("/auth")({
       { title: "Sign in — Neuro-Bridge" },
       {
         name: "description",
-        content:
-          "Sign in or create your Neuro-Bridge account as a therapist or caregiver.",
+        content: "Sign in or create your Neuro-Bridge account as a therapist or caregiver.",
       },
     ],
   }),
@@ -259,8 +258,8 @@ function AuthPage() {
           </Button>
           {tab === "signup" && (
             <p className="mt-3 text-center text-xs text-muted-foreground">
-              With Google, you'll join as a <span className="font-semibold capitalize">{role}</span>.
-              You can change this later.
+              With Google, you'll join as a <span className="font-semibold capitalize">{role}</span>
+              . You can change this later.
             </p>
           )}
         </div>
