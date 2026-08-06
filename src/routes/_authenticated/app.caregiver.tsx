@@ -1,24 +1,28 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  LogOut,
-  PlayCircle,
-  BookOpen,
-  Sparkles,
-  Flame,
-  ShieldAlert,
-  Star,
-  Rocket,
-  Smile,
-} from "lucide-react";
+import { LogOut, PlayCircle, Flame, ShieldAlert, Star, Rocket } from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { LanguageSettings } from "@/components/LanguageSettings";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
   head: () => ({
-    meta: [{ title: "Home — Neuro-Bridge Dual UX" }],
+    meta: [
+      { title: "Caregiver home — Neuro-Bridge" },
+      {
+        name: "description",
+        content:
+          "Launch today's therapist-prescribed session, browse the exercise library, and switch the app into any of 43 Kenyan languages.",
+      },
+      { property: "og:title", content: "Caregiver home — Neuro-Bridge" },
+      {
+        property: "og:description",
+        content: "Guided home therapy for children with cerebral palsy, in your own language.",
+      },
+    ],
   }),
   component: CaregiverHome,
 });
@@ -26,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/app/caregiver")({
 function CaregiverHome() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { t, lang } = useLanguage();
   const [uxMode, setUxMode] = useState<"caregiver" | "child">("caregiver");
 
   const { data: profile } = useQuery({
@@ -102,6 +107,7 @@ function CaregiverHome() {
       token,
       url: supabaseUrl,
       apikey,
+      lang,
     });
     window.location.href = `/neuro-bridge/index.html#${params.toString()}${hash ? `&nav=${hash}` : ""}`;
   }
@@ -126,7 +132,7 @@ function CaregiverHome() {
                 : "text-white hover:text-amber-200"
             }`}
           >
-            Caregiver UX
+            {t("caregiverUx")}
           </button>
           <button
             type="button"
@@ -137,7 +143,7 @@ function CaregiverHome() {
                 : "text-white hover:text-purple-300"
             }`}
           >
-            <Rocket className="h-3 w-3" /> Child's UX 🚀
+            <Rocket className="h-3 w-3" /> {t("childUx")} 🚀
           </button>
         </div>
       </div>
@@ -153,24 +159,28 @@ function CaregiverHome() {
                     {childName.charAt(0)}
                   </span>
                   <span className="text-xs font-extrabold text-slate-900">
-                    {childName}, age 6 ▾
+                    {childName}, {t("ageLabel")} ▾
                   </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="mr-2 h-4 w-4" /> Sign out
-              </Button>
+              <div className="flex items-center gap-1">
+                <LanguageSettings />
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" /> {t("signOut")}
+                </Button>
+              </div>
             </div>
           </header>
 
           <main className="mx-auto max-w-4xl px-6 py-8">
             <div className="mb-6">
               <h1 className="font-display text-4xl text-slate-900 tracking-tight flex items-center gap-2">
-                Karibu, {firstName} <span className="inline-block animate-bounce">👋</span>
+                {t("greeting", { name: firstName })}{" "}
+                <span className="inline-block animate-bounce">👋</span>
               </h1>
               <p className="mt-1 text-sm font-semibold text-slate-600">
-                Today's plan is ready —{" "}
-                <span className="text-blue-600 font-bold">3 exercises · ~12 min</span>
+                {t("todayPlanReady")} —{" "}
+                <span className="text-blue-600 font-bold">{t("planSummary")}</span>
               </p>
             </div>
 
@@ -180,26 +190,25 @@ function CaregiverHome() {
               className="relative overflow-hidden rounded-3xl border-4 border-slate-950 bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-white shadow-[6px_6px_0px_#0f172a] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0px_#0f172a] mb-6"
             >
               <span className="inline-block rounded-lg bg-white/20 px-3 py-1 font-display text-xs tracking-wider uppercase mb-3">
-                TODAY'S MISSION
+                {t("todaysMission")}
               </span>
-              <h2 className="font-display text-3xl font-bold">Start today's session</h2>
-              <p className="mt-1 text-sm opacity-90 font-medium">
-                Arm Raise, Leg Kick & Balance Hold — guided step by step.
-              </p>
+              <h2 className="font-display text-3xl font-bold">{t("startTodaySession")}</h2>
+              <p className="mt-1 text-sm opacity-90 font-medium">{t("sessionDescription")}</p>
               <div className="mt-4 flex flex-wrap gap-4 text-xs font-extrabold opacity-95">
-                <span>🎯 3 exercises</span>
-                <span>⏱ ~12 min</span>
-                <span>📶 GMFCS II</span>
+                <span>🎯 {t("threeExercises")}</span>
+                <span>⏱ {t("twelveMinutes")}</span>
+                <span>📶 {t("gmfcsBadge")}</span>
               </div>
               <div className="mt-6 inline-flex items-center gap-2 rounded-xl border-2 border-slate-950 bg-yellow-400 px-5 py-3 font-display font-extrabold text-slate-950 shadow-[3px_3px_0px_rgba(0,0,0,0.3)]">
-                <PlayCircle className="h-5 w-5 fill-slate-950 text-yellow-400" /> Begin session
+                <PlayCircle className="h-5 w-5 fill-slate-950 text-yellow-400" />{" "}
+                {t("beginSession")}
               </div>
             </div>
 
             {/* Toolkit Grid (2-column) */}
             <div className="mb-3">
               <h3 className="font-display text-sm uppercase tracking-wider text-slate-500 font-bold">
-                Your toolkit
+                {t("yourToolkit")}
               </h3>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 mb-6">
@@ -212,10 +221,10 @@ function CaregiverHome() {
                   🗂️
                 </div>
                 <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
-                  Exercise library
+                  {t("exerciseLibrary")}
                 </h4>
                 <p className="mt-0.5 text-xs text-slate-600 font-semibold">
-                  Browse all 50 PT & OT moves.
+                  {t("exerciseLibrarySub")}
                 </p>
               </button>
 
@@ -228,10 +237,10 @@ function CaregiverHome() {
                   🎬
                 </div>
                 <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
-                  Training films
+                  {t("trainingFilms")}
                 </h4>
                 <p className="mt-0.5 text-xs text-slate-600 font-semibold">
-                  Video guides for each move.
+                  {t("trainingFilmsSub")}
                 </p>
               </button>
 
@@ -241,9 +250,11 @@ function CaregiverHome() {
                 </div>
                 <div className="h-10 w-0.5 bg-slate-300" />
                 <div>
-                  <p className="text-xs font-extrabold uppercase text-slate-500">Last session</p>
+                  <p className="text-xs font-extrabold uppercase text-slate-500">
+                    {t("lastSession")}
+                  </p>
                   <p className="font-display text-base text-slate-900 font-bold">
-                    Yesterday · 4/5 · Great form
+                    {t("lastSessionValue")}
                   </p>
                 </div>
               </div>
@@ -254,14 +265,13 @@ function CaregiverHome() {
               <ShieldAlert className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />
               <div>
                 <p className="font-display text-xs uppercase tracking-wider text-amber-800 font-extrabold">
-                  Tip
+                  {t("tip")}
                 </p>
                 <h5 className="font-display text-base text-slate-900 font-bold mt-0.5">
-                  Set up beside your child
+                  {t("tipTitle")}
                 </h5>
                 <p className="mt-1 text-xs font-semibold text-slate-700 leading-relaxed">
-                  Prop the phone so the whole body is visible. Pause if there's pain or unusual
-                  fatigue.
+                  {t("tipBody")}
                 </p>
               </div>
             </div>
@@ -271,74 +281,44 @@ function CaregiverHome() {
         /* CHILD UX MODE */
         <div className="pb-12">
           <div className="bg-gradient-to-br from-purple-600 to-indigo-700 text-white px-6 py-10 rounded-b-[40px] text-center shadow-lg relative overflow-hidden">
+            <div className="absolute right-3 top-3">
+              <LanguageSettings />
+            </div>
             <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-yellow-400 border-4 border-white text-4xl shadow-md mb-3">
               🦁
             </div>
-            <h1 className="font-display text-4xl tracking-wider">{childName}'s World! 🚀</h1>
-            <p className="text-sm font-semibold opacity-90 mt-1">
-              Ready for today's superhero moves?
-            </p>
+            <h1 className="font-display text-4xl tracking-wider">
+              {t("childWorldTitle", { name: childName })} 🚀
+            </h1>
+            <p className="text-sm font-semibold opacity-90 mt-1">{t("childWorldSub")}</p>
             <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-5 py-2 font-display text-lg text-yellow-300 shadow">
-              <Star className="h-5 w-5 fill-yellow-300 text-yellow-300" /> 25 STARS EARNED THIS WEEK
+              <Star className="h-5 w-5 fill-yellow-300 text-yellow-300" /> {t("starsEarned")}
             </div>
           </div>
 
           <main className="mx-auto max-w-xl px-6 py-8 space-y-4">
-            <div
-              onClick={() => launchTherapy("session")}
-              className="rounded-3xl border-4 border-purple-950 bg-white p-5 flex items-center gap-4 shadow-[6px_6px_0px_#2e1065] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1"
-            >
-              <div className="grid h-16 w-16 place-items-center rounded-2xl border-3 border-purple-950 bg-yellow-400 text-3xl shrink-0">
-                🎈
+            {[
+              { icon: "🎈", title: t("gamePopBalloons"), sub: t("gamePopBalloonsSub") },
+              { icon: "⭐", title: t("gameKickStar"), sub: t("gameKickStarSub") },
+              { icon: "💎", title: t("gameStatue"), sub: t("gameStatueSub") },
+            ].map((g) => (
+              <div
+                key={g.icon}
+                onClick={() => launchTherapy("session")}
+                className="rounded-3xl border-4 border-purple-950 bg-white p-5 flex items-center gap-4 shadow-[6px_6px_0px_#2e1065] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1"
+              >
+                <div className="grid h-16 w-16 place-items-center rounded-2xl border-3 border-purple-950 bg-yellow-400 text-3xl shrink-0">
+                  {g.icon}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-display text-2xl text-purple-950 font-bold">{g.title}</h3>
+                  <p className="text-xs font-extrabold text-purple-700">{g.sub}</p>
+                </div>
+                <span className="rounded-xl border-2 border-purple-950 bg-orange-500 px-4 py-2 font-display text-lg text-white">
+                  {t("play")}
+                </span>
               </div>
-              <div className="flex-1">
-                <h3 className="font-display text-2xl text-purple-950 font-bold">
-                  Pop the Balloons!
-                </h3>
-                <p className="text-xs font-extrabold text-purple-700">
-                  Raise arms high to reach the sky
-                </p>
-              </div>
-              <span className="rounded-xl border-2 border-purple-950 bg-orange-500 px-4 py-2 font-display text-lg text-white">
-                PLAY!
-              </span>
-            </div>
-
-            <div
-              onClick={() => launchTherapy("session")}
-              className="rounded-3xl border-4 border-purple-950 bg-white p-5 flex items-center gap-4 shadow-[6px_6px_0px_#2e1065] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1"
-            >
-              <div className="grid h-16 w-16 place-items-center rounded-2xl border-3 border-purple-950 bg-yellow-400 text-3xl shrink-0">
-                ⭐
-              </div>
-              <div className="flex-1">
-                <h3 className="font-display text-2xl text-purple-950 font-bold">Kick the Star!</h3>
-                <p className="text-xs font-extrabold text-purple-700">
-                  Super leg kicks into outer space
-                </p>
-              </div>
-              <span className="rounded-xl border-2 border-purple-950 bg-orange-500 px-4 py-2 font-display text-lg text-white">
-                PLAY!
-              </span>
-            </div>
-
-            <div
-              onClick={() => launchTherapy("session")}
-              className="rounded-3xl border-4 border-purple-950 bg-white p-5 flex items-center gap-4 shadow-[6px_6px_0px_#2e1065] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1"
-            >
-              <div className="grid h-16 w-16 place-items-center rounded-2xl border-3 border-purple-950 bg-yellow-400 text-3xl shrink-0">
-                💎
-              </div>
-              <div className="flex-1">
-                <h3 className="font-display text-2xl text-purple-950 font-bold">Statue Power!</h3>
-                <p className="text-xs font-extrabold text-purple-700">
-                  Hold steady like a magic statue
-                </p>
-              </div>
-              <span className="rounded-xl border-2 border-purple-950 bg-orange-500 px-4 py-2 font-display text-lg text-white">
-                PLAY!
-              </span>
-            </div>
+            ))}
           </main>
         </div>
       )}
