@@ -12,6 +12,8 @@ import { useEffect } from "react";
 import appCss from "../styles.css?url";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
+
 
 function NotFoundComponent() {
   return (
