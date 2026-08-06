@@ -1583,6 +1583,7 @@
           apikey: p.get("apikey"),
           nav: p.get("nav"),
           exercise: p.get("exercise"),
+          lang: p.get("lang"),
         };
         if (ctx.token) sessionStorage.setItem("nbAuth", JSON.stringify(ctx));
         // Scrub hash so tokens don't linger in URL bar
@@ -1647,10 +1648,54 @@
     } catch (_) {}
   }
 
+  // Language chosen in the React dashboard wins, and is remembered here too.
+  if (authCtx && authCtx.lang) {
+    var handedLang = languages.some(function (l) {
+      return l.code === authCtx.lang;
+    })
+      ? authCtx.lang
+      : null;
+    if (handedLang) {
+      currentLang = handedLang;
+      try {
+        localStorage.setItem("neuroBridgeLanguage", currentLang);
+      } catch (_) {}
+    }
+  }
+
+  // Generated translations for the 40 machine-translated Kenyan languages live in
+  // /neuro-bridge/locales/<code>.json and are merged into `tx` on demand.
+  var localeLoads = {};
+  function loadLocale(code, done) {
+    if (!code || tx[code] || code === "en") return done && done();
+    if (localeLoads[code]) {
+      localeLoads[code].then(function () {
+        done && done();
+      });
+      return;
+    }
+    localeLoads[code] = fetch("locales/" + code + ".json")
+      .then(function (r) {
+        return r.ok ? r.json() : null;
+      })
+      .then(function (data) {
+        if (data) tx[code] = data;
+      })
+      .catch(function () {});
+    localeLoads[code].then(function () {
+      done && done();
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", init);
   if (document.readyState !== "loading") init();
 
   function init() {
+    loadLocale(currentLang, function () {
+      applyTranslations();
+      renderExerciseGrid();
+      renderVideoSlots();
+    });
     renderLanguageGrid();
     renderExerciseGrid();
     applyTranslations();
@@ -1679,9 +1724,11 @@
       if (lang) {
         currentLang = lang.dataset.lang;
         localStorage.setItem("neuroBridgeLanguage", currentLang);
-        applyTranslations();
-        renderVideoSlots();
-        renderExerciseGrid();
+        loadLocale(currentLang, function () {
+          applyTranslations();
+          renderVideoSlots();
+          renderExerciseGrid();
+        });
         showScreen("homeScreen");
       }
       var cat = event.target.closest("[data-cat]");

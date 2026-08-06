@@ -218,6 +218,7 @@ export type Database = {
           next_followup_at: string | null
           preferred_language: Database["public"]["Enums"]["preferred_language"]
           therapist_id: string | null
+          ui_language: string
           updated_at: string
         }
         Insert: {
@@ -237,6 +238,7 @@ export type Database = {
           next_followup_at?: string | null
           preferred_language?: Database["public"]["Enums"]["preferred_language"]
           therapist_id?: string | null
+          ui_language?: string
           updated_at?: string
         }
         Update: {
@@ -256,6 +258,7 @@ export type Database = {
           next_followup_at?: string | null
           preferred_language?: Database["public"]["Enums"]["preferred_language"]
           therapist_id?: string | null
+          ui_language?: string
           updated_at?: string
         }
         Relationships: []
@@ -268,6 +271,7 @@ export type Database = {
           id: string
           phone: string | null
           preferred_language: Database["public"]["Enums"]["preferred_language"]
+          ui_language: string
           updated_at: string
         }
         Insert: {
@@ -277,6 +281,7 @@ export type Database = {
           id: string
           phone?: string | null
           preferred_language?: Database["public"]["Enums"]["preferred_language"]
+          ui_language?: string
           updated_at?: string
         }
         Update: {
@@ -286,6 +291,7 @@ export type Database = {
           id?: string
           phone?: string | null
           preferred_language?: Database["public"]["Enums"]["preferred_language"]
+          ui_language?: string
           updated_at?: string
         }
         Relationships: []
