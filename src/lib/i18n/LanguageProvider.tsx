@@ -29,6 +29,15 @@ function format(template: string, vars?: Record<string, string | number>) {
   );
 }
 
+/** Translate a key in an explicit language (used before state updates settle). */
+export function translateIn(
+  code: string,
+  key: StringKey,
+  vars?: Record<string, string | number>,
+) {
+  return format(resolve(code, key), vars);
+}
+
 interface LanguageContextValue {
   lang: string;
   setLanguage: (code: string) => void;

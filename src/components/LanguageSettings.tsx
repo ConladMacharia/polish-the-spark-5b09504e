@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LANGUAGES, CURATED_LANGUAGES } from "@/lib/i18n/languages";
-import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { translateIn, useLanguage } from "@/lib/i18n/LanguageProvider";
 
 export function LanguageSettings() {
   const { lang, setLanguage, t } = useLanguage();
@@ -28,7 +28,7 @@ export function LanguageSettings() {
   function pick(code: string) {
     setLanguage(code);
     const picked = LANGUAGES.find((l) => l.code === code);
-    toast.success(t("languageChanged", { lang: picked?.native ?? code }));
+    toast.success(translateIn(code, "languageChanged", { lang: picked?.native ?? code }));
     setOpen(false);
   }
 
