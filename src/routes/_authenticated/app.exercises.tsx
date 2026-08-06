@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EXERCISES, type Exercise, type ExerciseCategory } from "@/lib/exercise-catalog";
+import { LanguageSettings } from "@/components/LanguageSettings";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 export const Route = createFileRoute("/_authenticated/app/exercises")({
   head: () => ({
@@ -24,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/app/exercises")({
 
 function ExercisesPage() {
   const navigate = useNavigate();
+  const { t, lang } = useLanguage();
   const [filter, setFilter] = useState<"all" | ExerciseCategory>("all");
   const [q, setQ] = useState("");
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
@@ -78,6 +81,7 @@ function ExercisesPage() {
       url: supabaseUrl,
       apikey,
       exercise: slug,
+      lang,
     });
     window.location.href = `/neuro-bridge/index.html#${params.toString()}`;
   }
@@ -89,25 +93,25 @@ function ExercisesPage() {
           <div className="flex items-center gap-3">
             <Button asChild variant="ghost" size="sm">
               <Link to="/app/caregiver">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Home
+                <ArrowLeft className="mr-2 h-4 w-4" /> {t("home")}
               </Link>
             </Button>
             <div>
               <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground font-semibold">
-                <Sparkles className="h-3.5 w-3.5 text-primary" /> Library
+                <Sparkles className="h-3.5 w-3.5 text-primary" /> {t("libraryEyebrow")}
               </p>
-              <p className="font-display text-lg leading-none font-bold">Exercise library</p>
+              <p className="font-display text-lg leading-none font-bold">{t("libraryTitle")}</p>
             </div>
+            <LanguageSettings />
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8">
         <div className="mb-6">
-          <h1 className="font-display text-3xl font-bold">Exercise library</h1>
+          <h1 className="font-display text-3xl font-bold">{t("libraryTitle")}</h1>
           <p className="mt-1 text-sm text-muted-foreground font-medium">
-            Full 50-exercise CP reference catalog ({physioCount} Physiotherapy + {otCount}{" "}
-            Occupational therapy).
+            {t("librarySubtitle", { pt: physioCount, ot: otCount })}
           </p>
         </div>
 
@@ -126,10 +130,10 @@ function ExercisesPage() {
                 }`}
               >
                 {k === "all"
-                  ? `All (${EXERCISES.length})`
+                  ? t("filterAll", { count: EXERCISES.length })
                   : k === "pt"
-                    ? `Physiotherapy (${physioCount})`
-                    : `Occupational (${otCount})`}
+                    ? t("filterPhysio", { count: physioCount })
+                    : t("filterOccupational", { count: otCount })}
               </button>
             ))}
           </div>
@@ -138,7 +142,7 @@ function ExercisesPage() {
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search 50 exercises…"
+              placeholder={t("searchExercises")}
               className="pl-9 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl font-medium"
             />
           </div>
@@ -146,10 +150,10 @@ function ExercisesPage() {
 
         <div className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {filter === "all"
-            ? `All Exercises (${filtered.length})`
+            ? t("allExercises", { count: filtered.length })
             : filter === "pt"
-              ? `Physiotherapy (${filtered.length})`
-              : `Occupational (${filtered.length})`}
+              ? t("filterPhysio", { count: filtered.length })
+              : t("filterOccupational", { count: filtered.length })}
         </div>
 
         {/* 2-Column Exercise Cards Grid */}
@@ -162,7 +166,7 @@ function ExercisesPage() {
             >
               <div className="relative h-24 bg-gradient-to-br from-indigo-100 to-blue-200 flex items-center justify-center text-4xl">
                 <span className="absolute top-2 left-2 text-[10px] font-extrabold bg-lime-400 border border-slate-950 px-1.5 py-0.5 rounded-md text-slate-950">
-                  AI tracked
+                  {t("aiTracked")}
                 </span>
                 {e.icon}
                 <div className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-slate-900/80 text-white grid place-items-center text-xs">
@@ -172,7 +176,7 @@ function ExercisesPage() {
               <div className="p-4 flex-1 flex flex-col justify-between">
                 <div>
                   <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
-                    {e.category === "pt" ? "Physiotherapy" : "Occupational"} · {e.focus}
+                    {e.category === "pt" ? t("physiotherapy") : t("occupational")} · {e.focus}
                   </p>
                   <h3 className="mt-1 font-display text-lg font-bold leading-tight">{e.name}</h3>
                   <p className="mt-1.5 text-xs text-muted-foreground font-semibold line-clamp-2">
@@ -180,7 +184,7 @@ function ExercisesPage() {
                   </p>
                 </div>
                 <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs font-bold text-blue-600">
-                  <span>Tap to view details</span>
+                  <span>{t("tapForDetails")}</span>
                   <span className="text-slate-900">▶</span>
                 </div>
               </div>
@@ -190,7 +194,7 @@ function ExercisesPage() {
 
         {filtered.length === 0 && (
           <div className="rounded-2xl border-2 border-dashed border-border p-12 text-center text-sm text-muted-foreground font-medium">
-            No exercises match your search criteria.
+            {t("noExercisesMatch")}
           </div>
         )}
 
@@ -206,7 +210,7 @@ function ExercisesPage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-extrabold uppercase text-muted-foreground">
-                  {selectedExercise.category === "pt" ? "Physiotherapy" : "Occupational"} ·{" "}
+                  {selectedExercise.category === "pt" ? t("physiotherapy") : t("occupational")} ·{" "}
                   {selectedExercise.focus}
                 </span>
                 <button
@@ -221,9 +225,9 @@ function ExercisesPage() {
               {/* Video Stage Placeholder */}
               <div className="rounded-2xl bg-slate-950 text-white h-48 flex flex-col items-center justify-center p-6 text-center mb-4">
                 <Video className="h-10 w-10 text-slate-400 mb-2 opacity-80" />
-                <p className="font-display text-lg font-bold text-white">Footage not yet added</p>
+                <p className="font-display text-lg font-bold text-white">{t("footageMissing")}</p>
                 <p className="mt-1 text-xs text-slate-400 font-medium max-w-xs">
-                  This slot is ready — upload or record the demo video for this move.
+                  {t("footageMissingSub")}
                 </p>
               </div>
 
@@ -232,7 +236,7 @@ function ExercisesPage() {
                 {selectedExercise.description}
               </p>
               <p className="mt-2 text-xs text-slate-500 font-medium leading-relaxed">
-                <strong className="text-slate-900">Clinical Benefit: </strong>
+                <strong className="text-slate-900">{t("clinicalBenefit")} </strong>
                 {selectedExercise.benefits}
               </p>
 
@@ -247,14 +251,14 @@ function ExercisesPage() {
                   ) : (
                     <PlayCircle className="mr-2 h-4 w-4" />
                   )}
-                  Start therapy game
+                  {t("startTherapyGame")}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setSelectedExercise(null)}
                   className="rounded-xl font-display font-bold border-2 border-slate-950"
                 >
-                  Close
+                  {t("close")}
                 </Button>
               </div>
             </div>
