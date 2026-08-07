@@ -3,9 +3,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Copy, LogOut, Plus, Stethoscope, User, Calendar, Sparkles } from "lucide-react";
+import { Copy, LogOut, Plus, Stethoscope, User, Calendar, Sparkles, Moon, Sun } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +56,7 @@ function TherapistDashboard() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const { data: patients, isLoading } = useQuery({
     queryKey: ["patients"],
@@ -85,19 +87,33 @@ function TherapistDashboard() {
       />
 
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-display text-3xl">Patients</h1>
             <p className="text-sm text-muted-foreground">
               Create a patient, share the claim code with the caregiver.
             </p>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="rounded-full">
-                <Plus className="mr-2 h-4 w-4" /> New patient
-              </Button>
-            </DialogTrigger>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleTheme}
+              className="rounded-full"
+            >
+              {theme === "dark" ? (
+                <Sun className="mr-2 h-4 w-4" />
+              ) : (
+                <Moon className="mr-2 h-4 w-4" />
+              )}
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </Button>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg" className="rounded-full">
+                  <Plus className="mr-2 h-4 w-4" /> New patient
+                </Button>
+              </DialogTrigger>
             <NewPatientDialog onDone={() => setOpen(false)} />
           </Dialog>
         </div>
