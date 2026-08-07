@@ -114,9 +114,11 @@ function TherapistDashboard() {
                   <Plus className="mr-2 h-4 w-4" /> New patient
                 </Button>
               </DialogTrigger>
-            <NewPatientDialog onDone={() => setOpen(false)} />
-          </Dialog>
+              <NewPatientDialog onDone={() => setOpen(false)} />
+            </Dialog>
+          </div>
         </div>
+
 
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
