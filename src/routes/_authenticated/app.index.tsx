@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated/app/")({
   beforeLoad: async () => {
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) throw redirect({ to: "/auth" });
+    if (!userData.user) throw redirect({ to: "/app/caregiver" });
 
     const { data: roles } = await supabase
       .from("user_roles")

@@ -33,10 +33,10 @@ function Landing() {
           <span className="font-display text-xl">Neuro-Bridge</span>
         </Link>
         <Link
-          to="/auth"
+          to="/app"
           className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
         >
-          Sign in
+          Open app
         </Link>
       </header>
 
@@ -65,10 +65,10 @@ function Landing() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                to="/auth"
+                to="/app"
                 className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
               >
-                Get started
+                Open app
               </Link>
               <a
                 href="#how-it-works"

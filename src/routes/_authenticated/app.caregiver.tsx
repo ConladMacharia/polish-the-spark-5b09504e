@@ -176,7 +176,7 @@ function CaregiverHome() {
 
             {/* Primary Action Card (Dominant) */}
             <div
-              onClick={() => launchTherapy("")}
+              onClick={() => navigate({ to: "/app/session" })}
               className="relative overflow-hidden rounded-3xl border-4 border-slate-950 bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-white shadow-[6px_6px_0px_#0f172a] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0px_#0f172a] mb-6"
             >
               <span className="inline-block rounded-lg bg-white/20 px-3 py-1 font-display text-xs tracking-wider uppercase mb-3">
