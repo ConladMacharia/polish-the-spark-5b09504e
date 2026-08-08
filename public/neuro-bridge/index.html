@@ -40,6 +40,7 @@
         color: var(--ink);
         min-height: 100vh;
       }
+      .flag { display: inline-block; margin-left: 0.5rem; vertical-align: text-bottom; line-height: 1; }
       .phone {
         max-width: 440px;
         margin: 0 auto;
@@ -1359,7 +1360,7 @@
     <div class="phone">
       <!-- Dual Mode Switcher Bar -->
       <div class="top-mode-bar">
-        <span>NEURO-BRIDGE</span>
+        <span>NEURO-BRIDGE <span class="flag" role="img" aria-label="Kenyan flag">🇰🇪</span></span>
         <div class="mode-switch-pill">
           <button class="mode-btn active" id="btnCaregiverMode" onclick="switchUXMode('caregiver')">
             Caregiver UX

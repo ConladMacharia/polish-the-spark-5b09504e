@@ -31,7 +31,7 @@ function Landing() {
             N
           </span>
           <span className="font-display text-xl">
-            Neuro-Bridge <span className="ml-2" role="img" aria-label="Kenyan flag">🇰🇪</span>
+            Neuro-Bridge <span className="flag" role="img" aria-label="Kenyan flag">🇰🇪</span>
           </span>
         </Link>
         <Link

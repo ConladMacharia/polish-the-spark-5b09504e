@@ -175,3 +175,11 @@
     letter-spacing: -0.01em;
   }
 }
+
+/* Small utility for inline flag icons when Tailwind utilities may not be present */
+.flag {
+  display: inline-block;
+  margin-left: 0.5rem;
+  vertical-align: text-bottom;
+  line-height: 1;
+}
