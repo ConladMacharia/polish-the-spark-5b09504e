@@ -30,7 +30,9 @@ function Landing() {
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground font-display text-lg">
             N
           </span>
-          <span className="font-display text-xl">Neuro-Bridge</span>
+          <span className="font-display text-xl">
+            Neuro-Bridge <span className="ml-2" role="img" aria-label="Kenyan flag">🇰🇪</span>
+          </span>
         </Link>
         <Link
           to="/auth"
