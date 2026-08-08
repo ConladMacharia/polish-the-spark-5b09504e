@@ -56,7 +56,7 @@ export const LANGUAGES: LanguageDef[] = [
 ];
 
 /** Languages with reviewed, hand-written translations. */
-export const CURATED_LANGUAGES = ["en", "sw", "ki"];
+export const CURATED_LANGUAGES = ["en", "sw", "ki", "mas", "tur", "dig", "nyf", "dav"];
 
 export function getLanguage(code: string): LanguageDef {
   return LANGUAGES.find((l) => l.code === code) ?? LANGUAGES[0];
