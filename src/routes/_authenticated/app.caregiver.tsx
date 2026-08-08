@@ -214,22 +214,6 @@ function CaregiverHome() {
             <div className="grid gap-4 sm:grid-cols-2 mb-6">
               <button
                 type="button"
-                onClick={() => navigate({ to: "/app/exercises" })}
-                className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
-              >
-                <div className="grid h-11 w-11 place-items-center rounded-xl border-2 border-slate-950 bg-lime-400 text-xl font-bold">
-                  🗂️
-                </div>
-                <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
-                  {t("exerciseLibrary")}
-                </h4>
-                <p className="mt-0.5 text-xs text-slate-600 font-semibold">
-                  {t("exerciseLibrarySub")}
-                </p>
-              </button>
-
-              <button
-                type="button"
                 onClick={() => launchTherapy("libraryScreen")}
                 className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
               >
@@ -241,6 +225,22 @@ function CaregiverHome() {
                 </h4>
                 <p className="mt-0.5 text-xs text-slate-600 font-semibold">
                   {t("trainingFilmsSub")}
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/app/exercises" })}
+                className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
+              >
+                <div className="grid h-11 w-11 place-items-center rounded-xl border-2 border-slate-950 bg-lime-400 text-xl font-bold">
+                  🗂️
+                </div>
+                <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
+                  {t("exerciseLibrary")}
+                </h4>
+                <p className="mt-0.5 text-xs text-slate-600 font-semibold">
+                  {t("exerciseLibrarySub")}
                 </p>
               </button>
 
