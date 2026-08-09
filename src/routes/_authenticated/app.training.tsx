@@ -241,7 +241,7 @@ function TrainingPage() {
             </div>
 
             <div className="space-y-3">
-              {exercisesForSubcat(activeCategory, activeSubcat).map((ex) => (
+              {exercisesForSubcat(activeCategory, activeSubcat).map((ex: Exercise) => (
                 <div key={ex.slug} className="flex items-center justify-between rounded-lg border border-border p-3 bg-white shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="text-2xl">{ex.icon}</div>
