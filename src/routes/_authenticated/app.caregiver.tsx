@@ -256,6 +256,14 @@ function CaregiverHome() {
                   </span>
                   <span className="mt-1">Lower body</span>
                 </div>
+                <div className="mt-3 text-[10px] font-semibold leading-4 text-slate-700">
+                  <div>Open Hand / Make a Fist</div>
+                  <div>Thumb-to-Finger Touch (each finger)</div>
+                  <div>Finger Spread &amp; Close</div>
+                  <div>Pincer Grasp (thumb + index)</div>
+                  <div>Power Grasp (simulated object)</div>
+                  <div>Individual Finger Lift</div>
+                </div>
                 <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
                   {t("exerciseLibrary")}
                 </h4>
