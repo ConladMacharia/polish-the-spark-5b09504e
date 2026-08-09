@@ -216,7 +216,7 @@ function CaregiverHome() {
               <div className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a]">
                 <button
                   type="button"
-                  onClick={() => setTrainingStage((prev) => (prev === "home" ? "body" : prev))}
+                  onClick={() => navigate({ to: "/_authenticated/app/training" })}
                   className="w-full text-left transition-transform active:translate-x-0.5 active:translate-y-0.5"
                 >
                   <div className="flex h-16 w-16 flex-col justify-center rounded-xl border-2 border-slate-950 bg-cyan-400 p-1.5 text-[6px] font-black uppercase leading-3 text-slate-900">
