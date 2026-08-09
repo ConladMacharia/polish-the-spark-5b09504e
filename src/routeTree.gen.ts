@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppTrainingRouteImport } from './routes/_authenticated/app.training'
 import { Route as AuthenticatedAppTherapistRouteImport } from './routes/_authenticated/app.therapist'
 import { Route as AuthenticatedAppExercisesRouteImport } from './routes/_authenticated/app.exercises'
 import { Route as AuthenticatedAppCaregiverRouteImport } from './routes/_authenticated/app.caregiver'
@@ -43,6 +44,12 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppTrainingRoute =
+  AuthenticatedAppTrainingRouteImport.update({
+    id: '/training',
+    path: '/training',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppTherapistRoute =
   AuthenticatedAppTherapistRouteImport.update({
     id: '/therapist',
@@ -75,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/app/caregiver': typeof AuthenticatedAppCaregiverRoute
   '/app/exercises': typeof AuthenticatedAppExercisesRoute
   '/app/therapist': typeof AuthenticatedAppTherapistRouteWithChildren
+  '/app/training': typeof AuthenticatedAppTrainingRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/therapist/patient/$patientId': typeof AuthenticatedAppTherapistPatientPatientIdRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesByTo {
   '/app/caregiver': typeof AuthenticatedAppCaregiverRoute
   '/app/exercises': typeof AuthenticatedAppExercisesRoute
   '/app/therapist': typeof AuthenticatedAppTherapistRouteWithChildren
+  '/app/training': typeof AuthenticatedAppTrainingRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/therapist/patient/$patientId': typeof AuthenticatedAppTherapistPatientPatientIdRoute
 }
@@ -96,6 +105,7 @@ export interface FileRoutesById {
   '/_authenticated/app/caregiver': typeof AuthenticatedAppCaregiverRoute
   '/_authenticated/app/exercises': typeof AuthenticatedAppExercisesRoute
   '/_authenticated/app/therapist': typeof AuthenticatedAppTherapistRouteWithChildren
+  '/_authenticated/app/training': typeof AuthenticatedAppTrainingRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/therapist/patient/$patientId': typeof AuthenticatedAppTherapistPatientPatientIdRoute
 }
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/app/caregiver'
     | '/app/exercises'
     | '/app/therapist'
+    | '/app/training'
     | '/app/'
     | '/app/therapist/patient/$patientId'
   fileRoutesByTo: FileRoutesByTo
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/app/caregiver'
     | '/app/exercises'
     | '/app/therapist'
+    | '/app/training'
     | '/app'
     | '/app/therapist/patient/$patientId'
   id:
@@ -128,6 +140,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/caregiver'
     | '/_authenticated/app/exercises'
     | '/_authenticated/app/therapist'
+    | '/_authenticated/app/training'
     | '/_authenticated/app/'
     | '/_authenticated/app/therapist/patient/$patientId'
   fileRoutesById: FileRoutesById
@@ -173,6 +186,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/training': {
+      id: '/_authenticated/app/training'
+      path: '/training'
+      fullPath: '/app/training'
+      preLoaderRoute: typeof AuthenticatedAppTrainingRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/therapist': {
@@ -225,6 +245,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppCaregiverRoute: typeof AuthenticatedAppCaregiverRoute
   AuthenticatedAppExercisesRoute: typeof AuthenticatedAppExercisesRoute
   AuthenticatedAppTherapistRoute: typeof AuthenticatedAppTherapistRouteWithChildren
+  AuthenticatedAppTrainingRoute: typeof AuthenticatedAppTrainingRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
@@ -232,6 +253,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppCaregiverRoute: AuthenticatedAppCaregiverRoute,
   AuthenticatedAppExercisesRoute: AuthenticatedAppExercisesRoute,
   AuthenticatedAppTherapistRoute: AuthenticatedAppTherapistRouteWithChildren,
+  AuthenticatedAppTrainingRoute: AuthenticatedAppTrainingRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
 
@@ -257,3 +279,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
