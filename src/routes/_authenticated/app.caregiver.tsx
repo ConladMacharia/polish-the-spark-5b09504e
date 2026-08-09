@@ -32,6 +32,7 @@ function CaregiverHome() {
   const qc = useQueryClient();
   const { t, lang } = useLanguage();
   const [uxMode, setUxMode] = useState<"caregiver" | "child">("caregiver");
+  const [trainingStage, setTrainingStage] = useState<"home" | "body" | "upper" | "lower" | "hand">("home");
 
   const { data: profile } = useQuery({
     queryKey: ["me-profile"],
@@ -212,31 +213,147 @@ function CaregiverHome() {
               </h3>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 mb-6">
-              <button
-                type="button"
-                onClick={() => launchTherapy("libraryScreen")}
-                className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
-              >
-                <div className="flex h-16 w-16 flex-col justify-center rounded-xl border-2 border-slate-950 bg-cyan-400 p-1.5 text-[6px] font-black uppercase leading-3 text-slate-900">
-                  <span>Upper body</span>
-                  <span className="ml-1 mt-0.5 text-[5px] font-semibold normal-case leading-3">
-                    Shoulder
-                    <br />
-                    Elbow
-                    <br />
-                    Wrist
-                    <br />
-                    Hand &amp; Fingers
-                  </span>
-                  <span className="mt-1">Lower body</span>
-                </div>
-                <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
-                  {t("trainingFilms")}
-                </h4>
-                <p className="mt-0.5 text-xs text-slate-600 font-semibold">
-                  {t("trainingFilmsSub")}
-                </p>
-              </button>
+              <div className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a]">
+                <button
+                  type="button"
+                  onClick={() => setTrainingStage((prev) => (prev === "home" ? "body" : prev))}
+                  className="w-full text-left transition-transform active:translate-x-0.5 active:translate-y-0.5"
+                >
+                  <div className="flex h-16 w-16 flex-col justify-center rounded-xl border-2 border-slate-950 bg-cyan-400 p-1.5 text-[6px] font-black uppercase leading-3 text-slate-900">
+                    <span>Upper body</span>
+                    <span className="ml-1 mt-0.5 text-[5px] font-semibold normal-case leading-3">
+                      Shoulder
+                      <br />
+                      Elbow
+                      <br />
+                      Wrist
+                      <br />
+                      Hand &amp; Fingers
+                    </span>
+                    <span className="mt-1">Lower body</span>
+                  </div>
+                  <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
+                    {t("trainingFilms")}
+                  </h4>
+                  <p className="mt-0.5 text-xs text-slate-600 font-semibold">
+                    {t("trainingFilmsSub")}
+                  </p>
+                </button>
+
+                {trainingStage !== "home" && (
+                  <div className="mt-3 space-y-2">
+                    {trainingStage === "body" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setTrainingStage("upper")}
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          Upper body
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTrainingStage("lower")}
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          Lower body
+                        </button>
+                      </>
+                    )}
+
+                    {trainingStage === "upper" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setTrainingStage("body")}
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          ← Back to body
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTrainingStage("hand")}
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          Hand &amp; Fingers
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          Shoulder
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          Elbow
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          Wrist
+                        </button>
+                      </>
+                    )}
+
+                    {trainingStage === "hand" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setTrainingStage("upper")}
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          ← Back to upper body
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          Open Hand / Make a Fist
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          Thumb-to-Finger Touch (each finger)
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          Finger Spread &amp; Close
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          Pincer Grasp (thumb + index)
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          Power Grasp (simulated object)
+                        </button>
+                        <button
+                          type="button"
+                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                        >
+                          Individual Finger Lift
+                        </button>
+                      </>
+                    )}
+
+                    {trainingStage === "lower" && (
+                      <div className="rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-[2px_2px_0px_#0f172a]">
+                        Lower body options will appear here.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <button
                 type="button"
@@ -255,14 +372,6 @@ function CaregiverHome() {
                     Hand &amp; Fingers
                   </span>
                   <span className="mt-1">Lower body</span>
-                </div>
-                <div className="mt-3 text-[10px] font-semibold leading-4 text-slate-700">
-                  <div>Open Hand / Make a Fist</div>
-                  <div>Thumb-to-Finger Touch (each finger)</div>
-                  <div>Finger Spread &amp; Close</div>
-                  <div>Pincer Grasp (thumb + index)</div>
-                  <div>Power Grasp (simulated object)</div>
-                  <div>Individual Finger Lift</div>
                 </div>
                 <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
                   {t("exerciseLibrary")}
