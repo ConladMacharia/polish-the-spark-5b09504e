@@ -220,17 +220,11 @@ function CaregiverHome() {
                   className="w-full text-left transition-transform active:translate-x-0.5 active:translate-y-0.5"
                 >
                   <div className="flex h-16 w-16 flex-col justify-center rounded-xl border-2 border-slate-950 bg-cyan-400 p-1.5 text-[6px] font-black uppercase leading-3 text-slate-900">
-                    <span>Upper body</span>
+                    <span>{"\n"}</span>
                     <span className="ml-1 mt-0.5 text-[5px] font-semibold normal-case leading-3">
-                      Shoulder
-                      <br />
-                      Elbow
-                      <br />
-                      Wrist
-                      <br />
-                      Hand &amp; Fingers
+                      {"\n"}
                     </span>
-                    <span className="mt-1">Lower body</span>
+                    <span className="mt-1">{"\n"}</span>
                   </div>
                   <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
                     {t("trainingFilms")}
