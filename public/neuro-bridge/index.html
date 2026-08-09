@@ -1899,9 +1899,7 @@
           " · showing " +
           filtered.length;
         const list = document.getElementById("libList");
-        list.innerHTML = filtered
-          .map(
-            (e) => `
+        const card = (e) => `
       <div class="ex-card" onclick="openModalById('${e.id}')">
         <div class="ex-thumb">
           <span class="ai-tag">AI tracked</span>
@@ -1914,8 +1912,25 @@
           <p>${escapeHtml(e.benefit)}</p>
         </div>
       </div>
-    `,
-          )
+    `;
+        const groups = [
+          { key: "upper", label: "Upper body", icon: "💪" },
+          { key: "lower", label: "Lower body", icon: "🦵" },
+        ];
+        list.innerHTML = groups
+          .map((g) => {
+            const items = filtered.filter((e) => e.region === g.key);
+            if (!items.length) return "";
+            return `
+      <div class="lib-group">
+        <div class="lib-group-head">
+          <span class="lib-group-icon">${g.icon}</span>
+          <h3 class="lib-group-title">${g.label}</h3>
+          <span class="lib-group-count">${items.length}</span>
+        </div>
+        <div class="lib-group-items">${items.map(card).join("")}</div>
+      </div>`;
+          })
           .join("");
       }
 
