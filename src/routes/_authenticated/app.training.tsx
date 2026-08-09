@@ -73,35 +73,36 @@ function TrainingPage() {
             id: "shoulder",
             label: "Shoulder",
             icon: "🦾",
-            // replace with specified shoulder subsections via keywords matching exercises
-            keywords: [
-              "forward reach",
-              "flexion",
-              "arm lowering",
-              "extension",
-              "side reach",
-              "abduction",
-              "cross body",
-              "adduction",
-              "rotation",
-              "internal rotation",
-              "external rotation",
+            items: [
+              { slug: "arm", name: "Forward reach", focus: "Flexion" },
+              { slug: "arm-circles", name: "Arm lowering", focus: "Extension" },
+              { slug: "side-bend", name: "Side reach", focus: "Abduction" },
+              { slug: "midline", name: "Cross body reach", focus: "Adduction" },
+              { slug: "wall-slide", name: "Rotation", focus: "Internal and external rotation" },
             ],
           },
           {
             id: "elbow",
             label: "Elbow",
             icon: "💪",
-            keywords: ["bend", "straighten", "flexion", "extension", "supination", "pronation", "palm up", "palm down"],
+            items: [
+              { slug: "reach", name: "Bend and straighten", focus: "Flexion and extension" },
+              { slug: "shoulder", name: "Palm up, palm down", focus: "Supination and pronation" },
+            ],
           },
           {
             id: "wrist",
             label: "Wrist",
             icon: "🖐️",
-            keywords: ["wrist bend up", "extension", "wrist bend down", "flexion", "radial", "ulnar", "tilt", "deviation"],
+            items: [
+              { slug: "draw", name: "Wrist bend up", focus: "Extension" },
+              { slug: "tracing", name: "Wrist bend down", focus: "Flexion" },
+              { slug: "page-turn", name: "Side to side wrist tilt", focus: "Radial and ulnar deviation" },
+            ],
           },
           { id: "hand", label: "Hand & Fingers", icon: "🤲", keywords: ["hand", "finger", "grasp", "pincer", "thumb"] },
         ],
+
       },
       {
         id: "lower",
@@ -126,17 +127,24 @@ function TrainingPage() {
   function exercisesForSubcat(catId: string, subId: string) {
     const cat = findCategory(catId);
     if (!cat) return [] as Exercise[];
-    const sub = cat.subcats.find((s: any) => s.id === subId);
+    const sub: any = cat.subcats.find((s: any) => s.id === subId);
     const track = cat.track;
     const base = EXERCISES.filter((e) => (track === "leg" ? (e.track === "leg" || e.track === "balance") : e.track === track));
     if (!sub) return base;
-    const keywords: string[] = sub.keywords;
+    if (sub.items) {
+      return sub.items.map((it: any) => {
+        const found = EXERCISES.find((e) => e.slug === it.slug);
+        return { ...(found ?? ({} as Exercise)), slug: it.slug, name: it.name, focus: it.focus, icon: "" } as Exercise;
+      });
+    }
+    const keywords: string[] = sub.keywords ?? [];
     const matches = base.filter((e) => {
       const hay = `${e.name} ${e.focus} ${e.description} ${e.slug}`.toLowerCase();
       return keywords.some((k) => hay.includes(k));
     });
     return matches.length ? matches : base;
   }
+
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-12">
@@ -233,7 +241,7 @@ function TrainingPage() {
             </div>
 
             <div className="space-y-3">
-              {exercisesForSubcat(activeCategory, activeSubcat).map((ex) => (
+              {exercisesForSubcat(activeCategory, activeSubcat).map((ex: Exercise) => (
                 <div key={ex.slug} className="flex items-center justify-between rounded-lg border border-border p-3 bg-white shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="text-2xl">{ex.icon}</div>
