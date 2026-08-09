@@ -461,6 +461,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_patient_by_code: { Args: { _claim_code: string }; Returns: string }
       generate_claim_code: { Args: never; Returns: string }
       has_role: {
         Args: {
