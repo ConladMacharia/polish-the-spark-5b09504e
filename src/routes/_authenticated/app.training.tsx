@@ -215,7 +215,7 @@ function TrainingPage() {
                   </div>
                   <div>
                     <Button onClick={() => launch(ex.slug)} disabled={launching === ex.slug} className="bg-blue-600 text-white">
-                      <PlayCircle className="mr-2 h-4 w-4" /> {t("beginSession")}
+                      <PlayCircle className="mr-2 h-4 w-4" /> Watch short video
                     </Button>
                   </div>
                 </div>
