@@ -73,35 +73,36 @@ function TrainingPage() {
             id: "shoulder",
             label: "Shoulder",
             icon: "🦾",
-            // replace with specified shoulder subsections via keywords matching exercises
-            keywords: [
-              "forward reach",
-              "flexion",
-              "arm lowering",
-              "extension",
-              "side reach",
-              "abduction",
-              "cross body",
-              "adduction",
-              "rotation",
-              "internal rotation",
-              "external rotation",
+            items: [
+              { slug: "arm", name: "Forward reach", focus: "Flexion" },
+              { slug: "arm-circles", name: "Arm lowering", focus: "Extension" },
+              { slug: "side-bend", name: "Side reach", focus: "Abduction" },
+              { slug: "midline", name: "Cross body reach", focus: "Adduction" },
+              { slug: "wall-slide", name: "Rotation", focus: "Internal and external rotation" },
             ],
           },
           {
             id: "elbow",
             label: "Elbow",
             icon: "💪",
-            keywords: ["bend", "straighten", "flexion", "extension", "supination", "pronation", "palm up", "palm down"],
+            items: [
+              { slug: "reach", name: "Bend and straighten", focus: "Flexion and extension" },
+              { slug: "shoulder", name: "Palm up, palm down", focus: "Supination and pronation" },
+            ],
           },
           {
             id: "wrist",
             label: "Wrist",
             icon: "🖐️",
-            keywords: ["wrist bend up", "extension", "wrist bend down", "flexion", "radial", "ulnar", "tilt", "deviation"],
+            items: [
+              { slug: "draw", name: "Wrist bend up", focus: "Extension" },
+              { slug: "tracing", name: "Wrist bend down", focus: "Flexion" },
+              { slug: "page-turn", name: "Side to side wrist tilt", focus: "Radial and ulnar deviation" },
+            ],
           },
           { id: "hand", label: "Hand & Fingers", icon: "🤲", keywords: ["hand", "finger", "grasp", "pincer", "thumb"] },
         ],
+
       },
       {
         id: "lower",
