@@ -1829,6 +1829,33 @@
         ["Bilateral Ball Roll", "Bilateral coordination", "Trains symmetric two-hand control."],
       ];
 
+      /* Body-region grouping: every exercise belongs to Upper body or Lower body */
+      const lowerBodyNames = new Set([
+        "Leg Kick",
+        "High March",
+        "Mini Squat",
+        "Ankle Pumps",
+        "Heel-to-Toe Walk",
+        "Standing Balance",
+        "Hip Abduction",
+        "Bridge Lift",
+        "Step-Up",
+        "Toe Taps",
+        "Knee Extension",
+        "Calf Raise",
+        "Pelvic Tilt",
+        "Lunge Reach",
+        "Star Jump (Modified)",
+        "Sit-to-Stand",
+        "Single-Leg Stand",
+        "Backward Walk",
+        "Obstacle Step",
+      ]);
+
+      function regionOf(name) {
+        return lowerBodyNames.has(name) ? "lower" : "upper";
+      }
+
       const exercises = [
         ...physioNames.map((e, i) => ({
           id: "p" + i,
@@ -1836,7 +1863,8 @@
           sub: e[1],
           benefit: e[2],
           cat: "physio",
-          icon: "💪",
+          region: regionOf(e[0]),
+          icon: regionOf(e[0]) === "lower" ? "🦵" : "💪",
         })),
         ...otNames.map((e, i) => ({
           id: "o" + i,
@@ -1844,6 +1872,7 @@
           sub: e[1],
           benefit: e[2],
           cat: "ot",
+          region: "upper",
           icon: "✋",
         })),
       ];
