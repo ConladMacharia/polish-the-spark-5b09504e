@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { PlayCircle, ArrowLeft } from "lucide-react";
-import { ArrowLeft } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -124,8 +123,8 @@ function TrainingPage() {
               <ArrowLeft className="h-4 w-4 text-slate-900" />
             </button>
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">{t("training")}</p>
-              <p className="font-display text-lg font-bold text-slate-900">{t("trainingTitle")}</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">{t("exerciseLibrary")}</p>
+              <p className="font-display text-lg font-bold text-slate-900">{t("yourToolkit")}</p>
             </div>
           </div>
           <LanguageSettings />
@@ -216,7 +215,7 @@ function TrainingPage() {
                   </div>
                   <div>
                     <Button onClick={() => launch(ex.slug)} disabled={launching === ex.slug} className="bg-blue-600 text-white">
-                      <PlayCircle className="mr-2 h-4 w-4" /> {t("start")}
+                      <PlayCircle className="mr-2 h-4 w-4" /> {t("beginSession")}
                     </Button>
                   </div>
                 </div>
