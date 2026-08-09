@@ -127,17 +127,24 @@ function TrainingPage() {
   function exercisesForSubcat(catId: string, subId: string) {
     const cat = findCategory(catId);
     if (!cat) return [] as Exercise[];
-    const sub = cat.subcats.find((s: any) => s.id === subId);
+    const sub: any = cat.subcats.find((s: any) => s.id === subId);
     const track = cat.track;
     const base = EXERCISES.filter((e) => (track === "leg" ? (e.track === "leg" || e.track === "balance") : e.track === track));
     if (!sub) return base;
-    const keywords: string[] = sub.keywords;
+    if (sub.items) {
+      return sub.items.map((it: any) => {
+        const found = EXERCISES.find((e) => e.slug === it.slug);
+        return { ...(found ?? ({} as Exercise)), slug: it.slug, name: it.name, focus: it.focus, icon: "" } as Exercise;
+      });
+    }
+    const keywords: string[] = sub.keywords ?? [];
     const matches = base.filter((e) => {
       const hay = `${e.name} ${e.focus} ${e.description} ${e.slug}`.toLowerCase();
       return keywords.some((k) => hay.includes(k));
     });
     return matches.length ? matches : base;
   }
+
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-12">
