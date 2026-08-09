@@ -69,10 +69,38 @@ function TrainingPage() {
         icon: "💪",
         track: "arm",
         subcats: [
-          { id: "shoulder", label: "Shoulder", keywords: ["shoulder", "posture"] },
-          { id: "elbow", label: "Elbow", keywords: ["elbow"] },
-          { id: "wrist", label: "Wrist", keywords: ["wrist"] },
-          { id: "hand", label: "Hand & Fingers", keywords: ["hand", "finger", "grasp", "pincer", "thumb"] },
+          {
+            id: "shoulder",
+            label: "Shoulder",
+            icon: "🦾",
+            // replace with specified shoulder subsections via keywords matching exercises
+            keywords: [
+              "forward reach",
+              "flexion",
+              "arm lowering",
+              "extension",
+              "side reach",
+              "abduction",
+              "cross body",
+              "adduction",
+              "rotation",
+              "internal rotation",
+              "external rotation",
+            ],
+          },
+          {
+            id: "elbow",
+            label: "Elbow",
+            icon: "💪",
+            keywords: ["bend", "straighten", "flexion", "extension", "supination", "pronation", "palm up", "palm down"],
+          },
+          {
+            id: "wrist",
+            label: "Wrist",
+            icon: "🖐️",
+            keywords: ["wrist bend up", "extension", "wrist bend down", "flexion", "radial", "ulnar", "tilt", "deviation"],
+          },
+          { id: "hand", label: "Hand & Fingers", icon: "🤲", keywords: ["hand", "finger", "grasp", "pincer", "thumb"] },
         ],
       },
       {
@@ -173,17 +201,18 @@ function TrainingPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
               {findCategory(activeCategory)!.subcats.map((s: any) => (
-                <button
-                  key={s.id}
-                  onClick={() => {
-                    setActiveSubcat(s.id);
-                    setStage("exercises");
-                  }}
-                  className="rounded-2xl border-2 border-slate-900 bg-white p-4 text-left shadow hover:shadow-lg hover:bg-slate-50 transition"
-                >
-                  <div className="font-bold text-slate-900">{s.label}</div>
-                </button>
-              ))}
+                  <button
+                    key={s.id}
+                    onClick={() => {
+                      setActiveSubcat(s.id);
+                      setStage("exercises");
+                    }}
+                    className="rounded-2xl border-2 border-slate-900 bg-white p-4 text-left shadow hover:shadow-lg hover:bg-slate-50 transition flex items-center gap-3"
+                  >
+                    <div className="text-2xl">{s.icon}</div>
+                    <div className="font-bold text-slate-900">{s.label}</div>
+                  </button>
+                ))}
             </div>
           </div>
         )}
@@ -213,10 +242,18 @@ function TrainingPage() {
                       <div className="text-xs text-slate-600">{ex.focus}</div>
                     </div>
                   </div>
-                  <div>
+                  <div className="flex flex-col items-end gap-2">
                     <Button onClick={() => launch(ex.slug)} disabled={launching === ex.slug} className="bg-blue-600 text-white">
                       <PlayCircle className="mr-2 h-4 w-4" />
                     </Button>
+                    <button
+                      type="button"
+                      onClick={() => launch(ex.slug)}
+                      className="text-xs text-blue-600 font-medium hover:underline"
+                      aria-label={`Watch short video for ${ex.name}`}
+                    >
+                      watch short video
+                    </button>
                   </div>
                 </div>
               ))}
