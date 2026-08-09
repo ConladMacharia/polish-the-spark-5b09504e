@@ -504,9 +504,42 @@
       }
       .lib-list {
         padding: 4px 20px 100px;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+      .lib-group-items {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px;
+      }
+      .lib-group-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        padding-bottom: 6px;
+        border-bottom: 2.5px dashed var(--ink);
+      }
+      .lib-group-icon {
+        font-size: 18px;
+      }
+      .lib-group-title {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--ink);
+      }
+      .lib-group-count {
+        margin-left: auto;
+        background: var(--ink);
+        color: #fff;
+        border-radius: 999px;
+        padding: 2px 9px;
+        font-size: 11px;
+        font-weight: 800;
       }
       .ex-card {
         background: var(--panel);
@@ -1829,6 +1862,33 @@
         ["Bilateral Ball Roll", "Bilateral coordination", "Trains symmetric two-hand control."],
       ];
 
+      /* Body-region grouping: every exercise belongs to Upper body or Lower body */
+      const lowerBodyNames = new Set([
+        "Leg Kick",
+        "High March",
+        "Mini Squat",
+        "Ankle Pumps",
+        "Heel-to-Toe Walk",
+        "Standing Balance",
+        "Hip Abduction",
+        "Bridge Lift",
+        "Step-Up",
+        "Toe Taps",
+        "Knee Extension",
+        "Calf Raise",
+        "Pelvic Tilt",
+        "Lunge Reach",
+        "Star Jump (Modified)",
+        "Sit-to-Stand",
+        "Single-Leg Stand",
+        "Backward Walk",
+        "Obstacle Step",
+      ]);
+
+      function regionOf(name) {
+        return lowerBodyNames.has(name) ? "lower" : "upper";
+      }
+
       const exercises = [
         ...physioNames.map((e, i) => ({
           id: "p" + i,
@@ -1836,7 +1896,8 @@
           sub: e[1],
           benefit: e[2],
           cat: "physio",
-          icon: "💪",
+          region: regionOf(e[0]),
+          icon: regionOf(e[0]) === "lower" ? "🦵" : "💪",
         })),
         ...otNames.map((e, i) => ({
           id: "o" + i,
@@ -1844,6 +1905,7 @@
           sub: e[1],
           benefit: e[2],
           cat: "ot",
+          region: "upper",
           icon: "✋",
         })),
       ];
@@ -1870,9 +1932,7 @@
           " · showing " +
           filtered.length;
         const list = document.getElementById("libList");
-        list.innerHTML = filtered
-          .map(
-            (e) => `
+        const card = (e) => `
       <div class="ex-card" onclick="openModalById('${e.id}')">
         <div class="ex-thumb">
           <span class="ai-tag">AI tracked</span>
@@ -1885,8 +1945,25 @@
           <p>${escapeHtml(e.benefit)}</p>
         </div>
       </div>
-    `,
-          )
+    `;
+        const groups = [
+          { key: "upper", label: "Upper body", icon: "💪" },
+          { key: "lower", label: "Lower body", icon: "🦵" },
+        ];
+        list.innerHTML = groups
+          .map((g) => {
+            const items = filtered.filter((e) => e.region === g.key);
+            if (!items.length) return "";
+            return `
+      <div class="lib-group">
+        <div class="lib-group-head">
+          <span class="lib-group-icon">${g.icon}</span>
+          <h3 class="lib-group-title">${g.label}</h3>
+          <span class="lib-group-count">${items.length}</span>
+        </div>
+        <div class="lib-group-items">${items.map(card).join("")}</div>
+      </div>`;
+          })
           .join("");
       }
 
