@@ -1584,6 +1584,7 @@
           nav: p.get("nav"),
           exercise: p.get("exercise"),
           lang: p.get("lang"),
+          autocam: (p.get("autocam") === "1" || p.get("autocam") === "true") || false,
         };
         if (ctx.token) sessionStorage.setItem("nbAuth", JSON.stringify(ctx));
         // Scrub hash so tokens don't linger in URL bar
@@ -1713,6 +1714,7 @@
     } else if (authCtx && authCtx.nav) {
       setTimeout(function () {
         showScreen(authCtx.nav);
+        if (authCtx.autocam) startCamera();
       }, 0);
     }
     document.addEventListener("click", function (event) {

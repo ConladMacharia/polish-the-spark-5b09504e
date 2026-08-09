@@ -81,6 +81,7 @@ function ExercisesPage() {
       url: supabaseUrl,
       apikey,
       exercise: slug,
+      autocam: "1",
       lang,
     });
     window.location.href = `/neuro-bridge/index.html#${params.toString()}`;

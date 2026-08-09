@@ -108,6 +108,7 @@ function CaregiverHome() {
       token,
       url: supabaseUrl,
       apikey,
+      autocam: "1",
       lang,
     });
     window.location.href = `/neuro-bridge/index.html#${params.toString()}${hash ? `&nav=${hash}` : ""}`;
