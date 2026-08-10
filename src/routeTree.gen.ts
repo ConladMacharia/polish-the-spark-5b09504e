@@ -15,9 +15,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppTherapistRouteImport } from './routes/_authenticated/app.therapist'
+import { Route as AuthenticatedAppSessionRouteImport } from './routes/_authenticated/app.session'
 import { Route as AuthenticatedAppExercisesRouteImport } from './routes/_authenticated/app.exercises'
 import { Route as AuthenticatedAppCaregiverRouteImport } from './routes/_authenticated/app.caregiver'
-import { Route as AuthenticatedAppSessionRouteImport } from './routes/_authenticated/app.session'
 import { Route as AuthenticatedAppTherapistPatientPatientIdRouteImport } from './routes/_authenticated/app.therapist.patient.$patientId'
 
 const AuthRoute = AuthRouteImport.update({
@@ -50,6 +50,11 @@ const AuthenticatedAppTherapistRoute =
     path: '/therapist',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppSessionRoute = AuthenticatedAppSessionRouteImport.update({
+  id: '/session',
+  path: '/session',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppExercisesRoute =
   AuthenticatedAppExercisesRouteImport.update({
     id: '/exercises',
@@ -60,12 +65,6 @@ const AuthenticatedAppCaregiverRoute =
   AuthenticatedAppCaregiverRouteImport.update({
     id: '/caregiver',
     path: '/caregiver',
-    getParentRoute: () => AuthenticatedAppRoute,
-  } as any)
-const AuthenticatedAppSessionRoute =
-  AuthenticatedAppSessionRouteImport.update({
-    id: '/session',
-    path: '/session',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppTherapistPatientPatientIdRoute =
@@ -195,6 +194,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppTherapistRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/session': {
+      id: '/_authenticated/app/session'
+      path: '/session'
+      fullPath: '/app/session'
+      preLoaderRoute: typeof AuthenticatedAppSessionRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/exercises': {
       id: '/_authenticated/app/exercises'
       path: '/exercises'
@@ -207,13 +213,6 @@ declare module '@tanstack/react-router' {
       path: '/caregiver'
       fullPath: '/app/caregiver'
       preLoaderRoute: typeof AuthenticatedAppCaregiverRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/session': {
-      id: '/_authenticated/app/session'
-      path: '/session'
-      fullPath: '/app/session'
-      preLoaderRoute: typeof AuthenticatedAppSessionRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/therapist/patient/$patientId': {
