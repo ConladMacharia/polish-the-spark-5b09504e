@@ -1,9 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { PlayCircle, ArrowLeft, Loader2 } from "lucide-react";
+import { useMemo, useRef, useState, useEffect } from "react";
+import { PlayCircle, ArrowLeft } from "lucide-react";
 
-import { supabase } from "@/integrations/supabase/client";
 import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
@@ -30,45 +28,57 @@ export const Route = createFileRoute("/_authenticated/app/exercises")({
 });
 
 function LiveSessionPage() {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const navigate = useNavigate();
-  const [launching, setLaunching] = useState<string | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
-  const { data: patient } = useQuery({
-    queryKey: ["my-patient"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
-      if (!uid) return null;
-      const { data } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("claimed_by_caregiver_id", uid)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
+  useEffect(() => {
+    if (!selectedExercise) return;
 
-  async function launch(slug: string) {
-    setLaunching(slug);
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token ?? "";
-    const userId = data.session?.user.id ?? "";
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-    const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-    const params = new URLSearchParams({
-      patient: patient?.id ?? "",
-      caregiver: userId,
-      token,
-      url: supabaseUrl,
-      apikey,
-      exercise: slug,
-      autocam: "1",
-      lang,
-    });
-    window.location.href = `/neuro-bridge/index.html#${params.toString()}`;
+    let cancelled = false;
+    let localStream: MediaStream | null = null;
+
+    async function startCamera() {
+      setCameraError(null);
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false,
+        });
+        if (cancelled) {
+          localStream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        if (videoRef.current) {
+          videoRef.current.srcObject = localStream;
+          await videoRef.current.play();
+        }
+        setStream(localStream);
+      } catch (error) {
+        setCameraError("Camera access failed. Please allow camera permission.");
+      }
+    }
+
+    startCamera();
+
+    return () => {
+      cancelled = true;
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
+      }
+      setStream(null);
+    };
+  }, [selectedExercise]);
+
+  function closeCamera() {
+    setSelectedExercise(null);
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
   }
 
   const categories = useMemo(
@@ -229,9 +239,8 @@ function LiveSessionPage() {
                         <button
                           key={`${sub.id}-${ex.slug}`}
                           type="button"
-                          onClick={() => launch(ex.slug)}
-                          disabled={launching === ex.slug}
-                          className="flex flex-col overflow-hidden rounded-2xl border-3 border-slate-950 bg-card text-left shadow-[4px_4px_0px_#0f172a] transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-60"
+                        onClick={() => setSelectedExercise(ex)}
+                        className="flex flex-col overflow-hidden rounded-2xl border-3 border-slate-950 bg-card text-left shadow-[4px_4px_0px_#0f172a] transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
                         >
                           <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-indigo-100 to-blue-200 text-4xl">
                             <span className="absolute left-2 top-2 rounded-md border border-slate-950 bg-lime-400 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-950">
@@ -239,11 +248,7 @@ function LiveSessionPage() {
                             </span>
                             {ex.icon}
                             <div className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-slate-900/80">
-                              {launching === ex.slug ? (
-                                <Loader2 className="h-4 w-4 animate-spin text-white" />
-                              ) : (
-                                <PlayCircle className="h-4 w-4 fill-white text-slate-900" />
-                              )}
+                              <PlayCircle className="h-4 w-4 fill-white text-slate-900" />
                             </div>
                           </div>
                           <div className="flex flex-1 flex-col justify-between p-4">
@@ -269,6 +274,47 @@ function LiveSessionPage() {
           </section>
         ))}
       </main>
+
+      {selectedExercise ? (
+        <div className="fixed inset-0 z-50 bg-slate-950/95 text-white px-4 py-5 sm:px-6">
+          <div className="mx-auto flex max-w-5xl flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Live tracking</p>
+                <h2 className="text-2xl font-bold">{selectedExercise.name}</h2>
+                <p className="text-sm text-slate-300">{selectedExercise.focus}</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeCamera}
+                className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+              >
+                Close
+              </button>
+            </div>
+            <div className="relative overflow-hidden rounded-[2rem] bg-black shadow-2xl">
+              <video
+                ref={videoRef}
+                className="h-[70vh] w-full object-cover"
+                muted
+                playsInline
+                autoPlay
+              />
+              {!stream && !cameraError ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 text-sm text-slate-200">
+                  Requesting camera access…
+                </div>
+              ) : null}
+              {cameraError ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 px-4 text-center text-sm text-red-300">
+                  <p>{cameraError}</p>
+                  <p className="mt-2">Please allow camera access in your browser.</p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

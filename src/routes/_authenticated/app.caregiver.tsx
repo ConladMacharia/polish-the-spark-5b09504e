@@ -30,9 +30,8 @@ export const Route = createFileRoute("/_authenticated/app/caregiver")({
 function CaregiverHome() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const [uxMode, setUxMode] = useState<"caregiver" | "child">("caregiver");
-  const [trainingStage, setTrainingStage] = useState<"home" | "body" | "upper" | "lower" | "hand">("home");
 
   const { data: profile } = useQuery({
     queryKey: ["me-profile"],
@@ -95,23 +94,8 @@ function CaregiverHome() {
     navigate({ to: "/auth", replace: true });
   }
 
-  async function launchTherapy(hash: string) {
-    if (!patient) return;
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token ?? "";
-    const userId = data.session?.user.id ?? "";
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-    const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-    const params = new URLSearchParams({
-      patient: patient.id,
-      caregiver: userId,
-      token,
-      url: supabaseUrl,
-      apikey,
-      autocam: "1",
-      lang,
-    });
-    window.location.href = `/neuro-bridge/index.html#${params.toString()}${hash ? `&nav=${hash}` : ""}`;
+  function goToExercises() {
+    navigate({ to: "/app/exercises" });
   }
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "Caregiver";
@@ -188,7 +172,7 @@ function CaregiverHome() {
 
             {/* Primary Action Card (Dominant) */}
             <div
-              onClick={() => launchTherapy("")}
+              onClick={goToExercises}
               className="relative overflow-hidden rounded-3xl border-4 border-slate-950 bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-white shadow-[6px_6px_0px_#0f172a] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0px_#0f172a] mb-6"
             >
               <span className="inline-block rounded-lg bg-white/20 px-3 py-1 font-display text-xs tracking-wider uppercase mb-3">
@@ -214,143 +198,7 @@ function CaregiverHome() {
               </h3>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 mb-6">
-              <div className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a]">
                 <button
-                  type="button"
-                  onClick={() => navigate({ to: "/app/training" })}
-                  className="w-full text-left transition-transform active:translate-x-0.5 active:translate-y-0.5"
-                >
-                  <div className="flex h-16 w-16 flex-col justify-center rounded-xl border-2 border-slate-950 bg-cyan-400 p-1.5 text-[6px] font-black uppercase leading-3 text-slate-900">
-                    <span>{"\n"}</span>
-                    <span className="ml-1 mt-0.5 text-[5px] font-semibold normal-case leading-3">
-                      {"\n"}
-                    </span>
-                    <span className="mt-1">{"\n"}</span>
-                  </div>
-                  <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
-                    {t("trainingFilms")}
-                  </h4>
-                  <p className="mt-0.5 text-xs text-slate-600 font-semibold">
-                    {t("trainingFilmsSub")}
-                  </p>
-                </button>
-
-                {trainingStage !== "home" && (
-                  <div className="mt-3 space-y-2">
-                    {trainingStage === "body" && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setTrainingStage("upper")}
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          Upper body
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setTrainingStage("lower")}
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          Lower body
-                        </button>
-                      </>
-                    )}
-
-                    {trainingStage === "upper" && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setTrainingStage("body")}
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          ← Back to body
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setTrainingStage("hand")}
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          Hand &amp; Fingers
-                        </button>
-                        <button
-                          type="button"
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          Shoulder
-                        </button>
-                        <button
-                          type="button"
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          Elbow
-                        </button>
-                        <button
-                          type="button"
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          Wrist
-                        </button>
-                      </>
-                    )}
-
-                    {trainingStage === "hand" && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setTrainingStage("upper")}
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          ← Back to upper body
-                        </button>
-                        <button
-                          type="button"
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          Open Hand / Make a Fist
-                        </button>
-                        <button
-                          type="button"
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          Thumb-to-Finger Touch (each finger)
-                        </button>
-                        <button
-                          type="button"
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          Finger Spread &amp; Close
-                        </button>
-                        <button
-                          type="button"
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          Pincer Grasp (thumb + index)
-                        </button>
-                        <button
-                          type="button"
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          Power Grasp (simulated object)
-                        </button>
-                        <button
-                          type="button"
-                          className="w-full rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-left text-[11px] font-semibold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
-                        >
-                          Individual Finger Lift
-                        </button>
-                      </>
-                    )}
-
-                    {trainingStage === "lower" && (
-                      <div className="rounded-xl border-2 border-slate-950 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-[2px_2px_0px_#0f172a]">
-                        Lower body options will appear here.
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <button
                 type="button"
                 onClick={() => navigate({ to: "/app/exercises" })}
                 className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
@@ -430,7 +278,7 @@ function CaregiverHome() {
             ].map((g) => (
               <div
                 key={g.icon}
-                onClick={() => launchTherapy("session")}
+                onClick={() => navigate({ to: "/app/exercises" })}
                 className="rounded-3xl border-4 border-purple-950 bg-white p-5 flex items-center gap-4 shadow-[6px_6px_0px_#2e1065] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1"
               >
                 <div className="grid h-16 w-16 place-items-center rounded-2xl border-3 border-purple-950 bg-yellow-400 text-3xl shrink-0">

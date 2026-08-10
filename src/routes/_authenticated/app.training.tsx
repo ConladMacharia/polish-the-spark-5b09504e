@@ -49,16 +49,8 @@ function TrainingPage() {
     const userId = data.session?.user.id ?? "";
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
     const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-    const params = new URLSearchParams({
-      patient: patient.id,
-      caregiver: userId,
-      token,
-      url: supabaseUrl,
-      apikey,
-      exercise: slug,
-      lang,
-    });
-    window.location.href = `/neuro-bridge/index.html#${params.toString()}`;
+    setLaunching(slug);
+    navigate({ to: "/app/exercises" });
   }
 
   const categories = useMemo(
