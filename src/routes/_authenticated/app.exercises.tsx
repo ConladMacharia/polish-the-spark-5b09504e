@@ -52,7 +52,6 @@ function LiveSessionPage() {
   });
 
   async function launch(slug: string) {
-    if (!patient) return;
     setLaunching(slug);
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token ?? "";
@@ -60,7 +59,7 @@ function LiveSessionPage() {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
     const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
     const params = new URLSearchParams({
-      patient: patient.id,
+      patient: patient?.id ?? "",
       caregiver: userId,
       token,
       url: supabaseUrl,
@@ -231,7 +230,7 @@ function LiveSessionPage() {
                           key={`${sub.id}-${ex.slug}`}
                           type="button"
                           onClick={() => launch(ex.slug)}
-                          disabled={!patient || launching === ex.slug}
+                          disabled={launching === ex.slug}
                           className="flex flex-col overflow-hidden rounded-2xl border-3 border-slate-950 bg-card text-left shadow-[4px_4px_0px_#0f172a] transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-60"
                         >
                           <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-indigo-100 to-blue-200 text-4xl">

@@ -1701,15 +1701,10 @@
     renderExerciseGrid();
     applyTranslations();
     renderVideoSlots();
-    if (
-      authCtx &&
-      authCtx.exercise &&
-      catalog.some(function (e) {
-        return e.id === authCtx.exercise;
-      })
-    ) {
+    var requested = authCtx && authCtx.exercise ? resolveExerciseId(authCtx.exercise) : null;
+    if (requested) {
       setTimeout(function () {
-        selectExercise(authCtx.exercise);
+        selectExercise(requested);
       }, 0);
     } else if (authCtx && authCtx.nav) {
       setTimeout(function () {
@@ -1717,6 +1712,7 @@
         if (authCtx.autocam) startCamera();
       }, 0);
     }
+
     document.addEventListener("click", function (event) {
       var go = event.target.closest("[data-go]");
       if (go) showScreen(go.dataset.go);
@@ -1827,10 +1823,51 @@
       .join("");
   }
 
+  var EXERCISE_ALIASES = {
+    "wall-pushup": "arm",
+    "arm-circles": "arm",
+    "wall-slide": "arm",
+    "band-pull": "arm",
+    "side-bend": "trunk",
+    "lunge-reach": "squat",
+    "star-jump": "march",
+    "single-leg": "balance",
+    "backward-walk": "gait",
+    "heel-toe": "gait",
+    "hip-abduction": "leg",
+    "toe-taps": "ankle",
+    "knee-extension": "leg",
+    "pelvic-tilt": "bridge",
+    zipper: "buttons",
+    stacking: "beads",
+    spoon: "feed",
+    "page-turn": "grip",
+    pegboard: "beads",
+    tracing: "draw",
+    shapes: "draw",
+    carry: "grip",
+    "finger-tap": "pinch",
+    "ball-roll": "catch",
+  };
+
+  function resolveExerciseId(id) {
+    if (!id) return null;
+    var known = function (x) {
+      return catalog.some(function (e) {
+        return e.id === x;
+      });
+    };
+    if (known(id)) return id;
+    var alias = EXERCISE_ALIASES[id];
+    if (alias && known(alias)) return alias;
+    return "arm";
+  }
+
   function selectExercise(type) {
-    currentExercise = type;
-    var entry = catalogEntry(type);
+    currentExercise = resolveExerciseId(type);
+    var entry = catalogEntry(currentExercise);
     byId("setupExerciseLabel").textContent = t(entry.nameKey);
+
     byId("setupInstruction").textContent =
       t(entry.id + "Setup") || t(entry.track + "Setup") || t("guidedSetup") || "";
     showScreen("setupScreen");
