@@ -1,10 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { PlayCircle, ArrowLeft } from "lucide-react";
+import { PlayCircle, ArrowLeft, Loader2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
@@ -34,9 +33,6 @@ function LiveSessionPage() {
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [launching, setLaunching] = useState<string | null>(null);
-  const [stage, setStage] = useState<"categories" | "subcats" | "exercises">("categories");
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [activeSubcat, setActiveSubcat] = useState<string | null>(null);
 
   const { data: patient } = useQuery({
     queryKey: ["my-patient"],
