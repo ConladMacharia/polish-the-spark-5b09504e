@@ -1701,15 +1701,10 @@
     renderExerciseGrid();
     applyTranslations();
     renderVideoSlots();
-    if (
-      authCtx &&
-      authCtx.exercise &&
-      catalog.some(function (e) {
-        return e.id === authCtx.exercise;
-      })
-    ) {
+    var requested = authCtx && authCtx.exercise ? resolveExerciseId(authCtx.exercise) : null;
+    if (requested) {
       setTimeout(function () {
-        selectExercise(authCtx.exercise);
+        selectExercise(requested);
       }, 0);
     } else if (authCtx && authCtx.nav) {
       setTimeout(function () {
@@ -1717,6 +1712,7 @@
         if (authCtx.autocam) startCamera();
       }, 0);
     }
+
     document.addEventListener("click", function (event) {
       var go = event.target.closest("[data-go]");
       if (go) showScreen(go.dataset.go);
