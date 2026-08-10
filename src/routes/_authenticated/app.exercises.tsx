@@ -1,266 +1,321 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { ArrowLeft, PlayCircle, Search, Sparkles, Loader2, Video, X } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo, useRef, useState, useEffect } from "react";
+import { PlayCircle, ArrowLeft } from "lucide-react";
 
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { EXERCISES, type Exercise, type ExerciseCategory } from "@/lib/exercise-catalog";
+import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
+import { LanguageSettings } from "@/components/LanguageSettings";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 export const Route = createFileRoute("/_authenticated/app/exercises")({
   head: () => ({
     meta: [
-      { title: "Exercise library — Neuro-Bridge" },
+      { title: "Live session — Neuro-Bridge" },
       {
         name: "description",
         content:
-          "Full 50-exercise catalog of physiotherapy and occupational therapy for cerebral palsy.",
+          "Start an AI tracked cerebral palsy therapy session, grouped by upper and lower body.",
       },
+      { property: "og:title", content: "Live session — Neuro-Bridge" },
+      {
+        property: "og:description",
+        content: "AI tracked therapy exercises grouped by body region.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: ExercisesPage,
+  component: LiveSessionPage,
 });
 
-function ExercisesPage() {
+function LiveSessionPage() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<"all" | ExerciseCategory>("all");
-  const [q, setQ] = useState("");
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const [launching, setLaunching] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
-  const { data: patient } = useQuery({
-    queryKey: ["my-patient"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
-      if (!uid) return null;
-      const { data } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("claimed_by_caregiver_id", uid)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
+  useEffect(() => {
+    if (!selectedExercise) return;
 
-  const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    return EXERCISES.filter((e) => {
-      if (filter !== "all" && e.category !== filter) return false;
-      if (!term) return true;
-      return (
-        e.name.toLowerCase().includes(term) ||
-        e.focus.toLowerCase().includes(term) ||
-        e.description.toLowerCase().includes(term) ||
-        e.benefits.toLowerCase().includes(term)
-      );
+    let cancelled = false;
+    let localStream: MediaStream | null = null;
+
+    async function startCamera() {
+      setCameraError(null);
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false,
+        });
+        if (cancelled) {
+          localStream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        if (videoRef.current) {
+          videoRef.current.srcObject = localStream;
+          await videoRef.current.play();
+        }
+        setStream(localStream);
+      } catch (error) {
+        setCameraError("Camera access failed. Please allow camera permission.");
+      }
+    }
+
+    startCamera();
+
+    return () => {
+      cancelled = true;
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
+      }
+      setStream(null);
+    };
+  }, [selectedExercise]);
+
+  function closeCamera() {
+    setSelectedExercise(null);
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+  }
+
+  const categories = useMemo(
+    () => [
+      {
+        id: "upper",
+        label: "Upper body",
+        icon: "💪",
+        track: "arm",
+        subcats: [
+          {
+            id: "shoulder",
+            label: "Shoulder",
+            icon: "🦾",
+            items: [
+              { slug: "arm", name: "Forward reach", focus: "Flexion" },
+              { slug: "arm-circles", name: "Arm lowering", focus: "Extension" },
+              { slug: "side-bend", name: "Side reach", focus: "Abduction" },
+              { slug: "midline", name: "Cross body reach", focus: "Adduction" },
+              { slug: "wall-slide", name: "Rotation", focus: "Internal and external rotation" },
+            ],
+          },
+          {
+            id: "elbow",
+            label: "Elbow",
+            icon: "💪",
+            items: [
+              { slug: "reach", name: "Bend and straighten", focus: "Flexion and extension" },
+              { slug: "shoulder", name: "Palm up, palm down", focus: "Supination and pronation" },
+            ],
+          },
+          {
+            id: "wrist",
+            label: "Wrist",
+            icon: "🖐️",
+            items: [
+              { slug: "draw", name: "Wrist bend up", focus: "Extension" },
+              { slug: "tracing", name: "Wrist bend down", focus: "Flexion" },
+              {
+                slug: "page-turn",
+                name: "Side to side wrist tilt",
+                focus: "Radial and ulnar deviation",
+              },
+            ],
+          },
+          {
+            id: "hand",
+            label: "Hand & Fingers",
+            icon: "🤲",
+            keywords: ["hand", "finger", "grasp", "pincer", "thumb"],
+          },
+        ],
+      },
+      {
+        id: "lower",
+        label: "Lower body",
+        icon: "🦵",
+        track: "leg",
+        subcats: [
+          { id: "hip", label: "Hip", icon: "🦿", keywords: ["hip"] },
+          { id: "knee", label: "Knee", icon: "🦵", keywords: ["knee"] },
+          { id: "ankle", label: "Ankle", icon: "👟", keywords: ["ankle", "foot"] },
+          { id: "balance", label: "Balance", icon: "⚖️", keywords: ["balance"] },
+        ],
+      },
+    ],
+    [],
+  );
+
+  function findCategory(id: string) {
+    return categories.find((c) => c.id === id) ?? null;
+  }
+
+  function exercisesForSubcat(catId: string, subId: string) {
+    const cat = findCategory(catId);
+    if (!cat) return [] as Exercise[];
+    const sub: any = cat.subcats.find((s: any) => s.id === subId);
+    const track = cat.track;
+    const base = EXERCISES.filter((e) =>
+      track === "leg" ? e.track === "leg" || e.track === "balance" : e.track === track,
+    );
+    if (!sub) return base;
+    if (sub.items) {
+      return sub.items.map((it: any) => {
+        const found = EXERCISES.find((e) => e.slug === it.slug);
+        return {
+          ...(found ?? ({} as Exercise)),
+          slug: it.slug,
+          name: it.name,
+          focus: it.focus,
+          icon: found?.icon ?? "",
+        } as Exercise;
+      });
+    }
+    const keywords: string[] = sub.keywords ?? [];
+    const matches = base.filter((e) => {
+      const hay = `${e.name} ${e.focus} ${e.description} ${e.slug}`.toLowerCase();
+      return keywords.some((k) => hay.includes(k));
     });
-  }, [filter, q]);
-
-  const physioCount = useMemo(() => EXERCISES.filter((e) => e.category === "pt").length, []);
-  const otCount = useMemo(() => EXERCISES.filter((e) => e.category === "ot").length, []);
-
-  async function launch(slug: string) {
-    if (!patient) return;
-    setLaunching(slug);
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token ?? "";
-    const userId = data.session?.user.id ?? "";
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-    const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-    const params = new URLSearchParams({
-      patient: patient.id,
-      caregiver: userId,
-      token,
-      url: supabaseUrl,
-      apikey,
-      exercise: slug,
-    });
-    window.location.href = `/neuro-bridge/index.html#${params.toString()}`;
+    return matches.length ? matches : base;
   }
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-12">
       <header className="border-b border-border bg-card/60 backdrop-blur sticky top-0 z-40">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/app/caregiver">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Home
-              </Link>
-            </Button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate({ to: "/app/caregiver" })}
+              aria-label="Back to dashboard"
+              className="rounded-full bg-white/90 hover:bg-white p-2 shadow-sm"
+            >
+              <ArrowLeft className="h-4 w-4 text-slate-900" />
+            </button>
             <div>
-              <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground font-semibold">
-                <Sparkles className="h-3.5 w-3.5 text-primary" /> Library
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+                {t("exerciseLibrary")}
               </p>
-              <p className="font-display text-lg leading-none font-bold">Exercise library</p>
+              <p className="font-display text-lg font-bold text-slate-900">{t("yourToolkit")}</p>
             </div>
           </div>
+          <LanguageSettings />
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-bold">Exercise library</h1>
-          <p className="mt-1 text-sm text-muted-foreground font-medium">
-            Full 50-exercise CP reference catalog ({physioCount} Physiotherapy + {otCount}{" "}
-            Occupational therapy).
-          </p>
-        </div>
+      <main className="mx-auto max-w-5xl px-6 py-8 space-y-10">
+        {categories.map((cat) => (
+          <section key={cat.id}>
+            <div className="mb-4 flex items-center gap-3 border-b-3 border-dashed border-slate-900 pb-2">
+              <span className="text-3xl">{cat.icon}</span>
+              <h2 className="font-display text-2xl font-bold uppercase tracking-wide text-slate-900">
+                {cat.label}
+              </h2>
+              <span className="ml-auto rounded-full bg-slate-900 px-3 py-1 text-xs font-extrabold text-white">
+                {cat.subcats.reduce(
+                  (n: number, s: any) => n + exercisesForSubcat(cat.id, s.id).length,
+                  0,
+                )}
+              </span>
+            </div>
 
-        {/* Filter and Search Bar */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="inline-flex rounded-full border-2 border-slate-900 bg-amber-50 p-1 text-xs font-bold shadow-[2px_2px_0px_#0f172a]">
-            {(["all", "pt", "ot"] as const).map((k) => (
+            <div className="space-y-6">
+              {cat.subcats.map((sub: any) => {
+                const items = exercisesForSubcat(cat.id, sub.id);
+                if (!items.length) return null;
+                return (
+                  <div key={sub.id}>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="text-xl">{sub.icon}</span>
+                      <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-600">
+                        {sub.label}
+                      </h3>
+                      <span className="text-xs font-bold text-slate-400">· {items.length}</span>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {items.map((ex: Exercise) => (
+                        <button
+                          key={`${sub.id}-${ex.slug}`}
+                          type="button"
+                        onClick={() => setSelectedExercise(ex)}
+                        className="flex flex-col overflow-hidden rounded-2xl border-3 border-slate-950 bg-card text-left shadow-[4px_4px_0px_#0f172a] transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+                        >
+                          <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-indigo-100 to-blue-200 text-4xl">
+                            <span className="absolute left-2 top-2 rounded-md border border-slate-950 bg-lime-400 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-950">
+                              {t("aiTracked")}
+                            </span>
+                            {ex.icon}
+                            <div className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-slate-900/80">
+                              <PlayCircle className="h-4 w-4 fill-white text-slate-900" />
+                            </div>
+                          </div>
+                          <div className="flex flex-1 flex-col justify-between p-4">
+                            <div>
+                              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                                {ex.focus}
+                              </p>
+                              <h4 className="mt-1 font-display text-lg font-bold leading-tight text-slate-900">
+                                {ex.name}
+                              </h4>
+                            </div>
+                            <span className="mt-4 border-t border-border pt-3 text-xs font-bold text-blue-600">
+                              ai tracked exercise
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </main>
+
+      {selectedExercise ? (
+        <div className="fixed inset-0 z-50 bg-slate-950/95 text-white px-4 py-5 sm:px-6">
+          <div className="mx-auto flex max-w-5xl flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">Live tracking</p>
+                <h2 className="text-2xl font-bold">{selectedExercise.name}</h2>
+                <p className="text-sm text-slate-300">{selectedExercise.focus}</p>
+              </div>
               <button
-                key={k}
                 type="button"
-                onClick={() => setFilter(k)}
-                className={`rounded-full px-4 py-1.5 transition ${
-                  filter === k
-                    ? "bg-blue-600 text-white shadow"
-                    : "text-slate-700 hover:text-slate-900"
-                }`}
+                onClick={closeCamera}
+                className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
               >
-                {k === "all"
-                  ? `All (${EXERCISES.length})`
-                  : k === "pt"
-                    ? `Physiotherapy (${physioCount})`
-                    : `Occupational (${otCount})`}
+                Close
               </button>
-            ))}
-          </div>
-          <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search 50 exercises…"
-              className="pl-9 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl font-medium"
-            />
-          </div>
-        </div>
-
-        <div className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          {filter === "all"
-            ? `All Exercises (${filtered.length})`
-            : filter === "pt"
-              ? `Physiotherapy (${filtered.length})`
-              : `Occupational (${filtered.length})`}
-        </div>
-
-        {/* 2-Column Exercise Cards Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((e) => (
-            <article
-              key={e.slug}
-              onClick={() => setSelectedExercise(e)}
-              className="flex flex-col rounded-2xl border-3 border-slate-950 bg-card shadow-[4px_4px_0px_#0f172a] cursor-pointer transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 overflow-hidden"
-            >
-              <div className="relative h-24 bg-gradient-to-br from-indigo-100 to-blue-200 flex items-center justify-center text-4xl">
-                <span className="absolute top-2 left-2 text-[10px] font-extrabold bg-lime-400 border border-slate-950 px-1.5 py-0.5 rounded-md text-slate-950">
-                  AI tracked
-                </span>
-                {e.icon}
-                <div className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-slate-900/80 text-white grid place-items-center text-xs">
-                  <PlayCircle className="h-4 w-4 fill-white text-slate-900" />
+            </div>
+            <div className="relative overflow-hidden rounded-[2rem] bg-black shadow-2xl">
+              <video
+                ref={videoRef}
+                className="h-[70vh] w-full object-cover"
+                muted
+                playsInline
+                autoPlay
+              />
+              {!stream && !cameraError ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 text-sm text-slate-200">
+                  Requesting camera access…
                 </div>
-              </div>
-              <div className="p-4 flex-1 flex flex-col justify-between">
-                <div>
-                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
-                    {e.category === "pt" ? "Physiotherapy" : "Occupational"} · {e.focus}
-                  </p>
-                  <h3 className="mt-1 font-display text-lg font-bold leading-tight">{e.name}</h3>
-                  <p className="mt-1.5 text-xs text-muted-foreground font-semibold line-clamp-2">
-                    {e.benefits}
-                  </p>
+              ) : null}
+              {cameraError ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 px-4 text-center text-sm text-red-300">
+                  <p>{cameraError}</p>
+                  <p className="mt-2">Please allow camera access in your browser.</p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs font-bold text-blue-600">
-                  <span>Tap to view details</span>
-                  <span className="text-slate-900">▶</span>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {filtered.length === 0 && (
-          <div className="rounded-2xl border-2 border-dashed border-border p-12 text-center text-sm text-muted-foreground font-medium">
-            No exercises match your search criteria.
-          </div>
-        )}
-
-        {/* Video Bottom-Sheet Modal */}
-        {selectedExercise && (
-          <div
-            className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
-            onClick={() => setSelectedExercise(null)}
-          >
-            <div
-              className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl border-3 border-slate-950 bg-card p-6 shadow-2xl animate-in slide-in-from-bottom duration-200"
-              onClick={(evt) => evt.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-extrabold uppercase text-muted-foreground">
-                  {selectedExercise.category === "pt" ? "Physiotherapy" : "Occupational"} ·{" "}
-                  {selectedExercise.focus}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedExercise(null)}
-                  className="rounded-full p-1 hover:bg-accent text-slate-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Video Stage Placeholder */}
-              <div className="rounded-2xl bg-slate-950 text-white h-48 flex flex-col items-center justify-center p-6 text-center mb-4">
-                <Video className="h-10 w-10 text-slate-400 mb-2 opacity-80" />
-                <p className="font-display text-lg font-bold text-white">Footage not yet added</p>
-                <p className="mt-1 text-xs text-slate-400 font-medium max-w-xs">
-                  This slot is ready — upload or record the demo video for this move.
-                </p>
-              </div>
-
-              <h2 className="font-display text-2xl font-bold">{selectedExercise.name}</h2>
-              <p className="mt-1 text-sm font-semibold text-slate-700">
-                {selectedExercise.description}
-              </p>
-              <p className="mt-2 text-xs text-slate-500 font-medium leading-relaxed">
-                <strong className="text-slate-900">Clinical Benefit: </strong>
-                {selectedExercise.benefits}
-              </p>
-
-              <div className="mt-6 flex gap-3">
-                <Button
-                  className="flex-1 rounded-xl font-display font-bold border-2 border-slate-950 shadow-[2px_2px_0px_#0f172a]"
-                  disabled={!patient || launching === selectedExercise.slug}
-                  onClick={() => launch(selectedExercise.slug)}
-                >
-                  {launching === selectedExercise.slug ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <PlayCircle className="mr-2 h-4 w-4" />
-                  )}
-                  Start therapy game
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedExercise(null)}
-                  className="rounded-xl font-display font-bold border-2 border-slate-950"
-                >
-                  Close
-                </Button>
-              </div>
+              ) : null}
             </div>
           </div>
-        )}
-      </main>
+        </div>
+      ) : null}
     </div>
   );
 }
+

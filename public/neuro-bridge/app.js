@@ -1583,6 +1583,8 @@
           apikey: p.get("apikey"),
           nav: p.get("nav"),
           exercise: p.get("exercise"),
+          lang: p.get("lang"),
+          autocam: (p.get("autocam") === "1" || p.get("autocam") === "true") || false,
         };
         if (ctx.token) sessionStorage.setItem("nbAuth", JSON.stringify(ctx));
         // Scrub hash so tokens don't linger in URL bar
@@ -1647,29 +1649,70 @@
     } catch (_) {}
   }
 
+  // Language chosen in the React dashboard wins, and is remembered here too.
+  if (authCtx && authCtx.lang) {
+    var handedLang = languages.some(function (l) {
+      return l.code === authCtx.lang;
+    })
+      ? authCtx.lang
+      : null;
+    if (handedLang) {
+      currentLang = handedLang;
+      try {
+        localStorage.setItem("neuroBridgeLanguage", currentLang);
+      } catch (_) {}
+    }
+  }
+
+  // Generated translations for the 40 machine-translated Kenyan languages live in
+  // /neuro-bridge/locales/<code>.json and are merged into `tx` on demand.
+  var localeLoads = {};
+  function loadLocale(code, done) {
+    if (!code || tx[code] || code === "en") return done && done();
+    if (localeLoads[code]) {
+      localeLoads[code].then(function () {
+        done && done();
+      });
+      return;
+    }
+    localeLoads[code] = fetch("locales/" + code + ".json")
+      .then(function (r) {
+        return r.ok ? r.json() : null;
+      })
+      .then(function (data) {
+        if (data) tx[code] = data;
+      })
+      .catch(function () {});
+    localeLoads[code].then(function () {
+      done && done();
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", init);
   if (document.readyState !== "loading") init();
 
   function init() {
+    loadLocale(currentLang, function () {
+      applyTranslations();
+      renderExerciseGrid();
+      renderVideoSlots();
+    });
     renderLanguageGrid();
     renderExerciseGrid();
     applyTranslations();
     renderVideoSlots();
-    if (
-      authCtx &&
-      authCtx.exercise &&
-      catalog.some(function (e) {
-        return e.id === authCtx.exercise;
-      })
-    ) {
+    var requested = authCtx && authCtx.exercise ? resolveExerciseId(authCtx.exercise) : null;
+    if (requested) {
       setTimeout(function () {
-        selectExercise(authCtx.exercise);
+        selectExercise(requested);
       }, 0);
     } else if (authCtx && authCtx.nav) {
       setTimeout(function () {
         showScreen(authCtx.nav);
+        if (authCtx.autocam) startCamera();
       }, 0);
     }
+
     document.addEventListener("click", function (event) {
       var go = event.target.closest("[data-go]");
       if (go) showScreen(go.dataset.go);
@@ -1679,9 +1722,11 @@
       if (lang) {
         currentLang = lang.dataset.lang;
         localStorage.setItem("neuroBridgeLanguage", currentLang);
-        applyTranslations();
-        renderVideoSlots();
-        renderExerciseGrid();
+        loadLocale(currentLang, function () {
+          applyTranslations();
+          renderVideoSlots();
+          renderExerciseGrid();
+        });
         showScreen("homeScreen");
       }
       var cat = event.target.closest("[data-cat]");
@@ -1778,10 +1823,51 @@
       .join("");
   }
 
+  var EXERCISE_ALIASES = {
+    "wall-pushup": "arm",
+    "arm-circles": "arm",
+    "wall-slide": "arm",
+    "band-pull": "arm",
+    "side-bend": "trunk",
+    "lunge-reach": "squat",
+    "star-jump": "march",
+    "single-leg": "balance",
+    "backward-walk": "gait",
+    "heel-toe": "gait",
+    "hip-abduction": "leg",
+    "toe-taps": "ankle",
+    "knee-extension": "leg",
+    "pelvic-tilt": "bridge",
+    zipper: "buttons",
+    stacking: "beads",
+    spoon: "feed",
+    "page-turn": "grip",
+    pegboard: "beads",
+    tracing: "draw",
+    shapes: "draw",
+    carry: "grip",
+    "finger-tap": "pinch",
+    "ball-roll": "catch",
+  };
+
+  function resolveExerciseId(id) {
+    if (!id) return null;
+    var known = function (x) {
+      return catalog.some(function (e) {
+        return e.id === x;
+      });
+    };
+    if (known(id)) return id;
+    var alias = EXERCISE_ALIASES[id];
+    if (alias && known(alias)) return alias;
+    return "arm";
+  }
+
   function selectExercise(type) {
-    currentExercise = type;
-    var entry = catalogEntry(type);
+    currentExercise = resolveExerciseId(type);
+    var entry = catalogEntry(currentExercise);
     byId("setupExerciseLabel").textContent = t(entry.nameKey);
+
     byId("setupInstruction").textContent =
       t(entry.id + "Setup") || t(entry.track + "Setup") || t("guidedSetup") || "";
     showScreen("setupScreen");
