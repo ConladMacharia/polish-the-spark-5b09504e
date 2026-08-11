@@ -103,12 +103,14 @@ function LiveSessionPage() {
   }, []);
 
 
-  // Real-time detection & skeleton drawing loop
+  // Real-time detection & skeleton drawing loop (rAF, one frame at a time)
   useEffect(() => {
     if (!selectedExercise || !stream || !poseLandmarker) return;
 
     let lastVideoTime = -1;
     let active = true;
+    let busy = false;
+    let drawingUtils: DrawingUtils | null = null;
 
     function renderLoop() {
       if (!active) return;
@@ -116,36 +118,45 @@ function LiveSessionPage() {
       const video = videoRef.current;
       const canvas = canvasRef.current;
 
-      if (video && canvas && poseLandmarker && video.readyState >= 2) {
+      if (video && canvas && video.readyState >= 2 && !busy) {
         const ctx = canvas.getContext("2d");
+        const vw = video.videoWidth || 640;
+        const vh = video.videoHeight || 480;
+        const cw = canvas.clientWidth || vw;
+        const ch = canvas.clientHeight || vh;
 
         if (ctx) {
-          if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-            canvas.width = video.videoWidth || 640;
-            canvas.height = video.videoHeight || 480;
+          if (canvas.width !== cw || canvas.height !== ch) {
+            canvas.width = cw;
+            canvas.height = ch;
+            drawingUtils = null;
           }
+          if (!drawingUtils) drawingUtils = new DrawingUtils(ctx);
 
           if (video.currentTime !== lastVideoTime) {
             lastVideoTime = video.currentTime;
-
-            const startTimeMs = performance.now();
+            busy = true;
             try {
-              const results = poseLandmarker.detectForVideo(video, startTimeMs);
+              const results = poseLandmarker.detectForVideo(video, performance.now());
 
-              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              ctx.clearRect(0, 0, cw, ch);
 
               if (results.landmarks && results.landmarks.length > 0) {
                 setPoseDetected(true);
-                const drawingUtils = new DrawingUtils(ctx);
+
+                // Match the video's object-cover crop so dots land on the body
+                const scale = Math.max(cw / vw, ch / vh);
+                const drawnW = vw * scale;
+                const drawnH = vh * scale;
+                ctx.save();
+                ctx.translate((cw - drawnW) / 2, (ch - drawnH) / 2);
+                ctx.scale(drawnW / cw, drawnH / ch);
 
                 for (const landmarks of results.landmarks) {
-                  // Draw skeleton connection lines (vibrant lime green)
                   drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
                     color: "#22C55E",
                     lineWidth: 4,
                   });
-
-                  // Draw key body landmark nodes (gold dots with red core)
                   drawingUtils.drawLandmarks(landmarks, {
                     color: "#FACC15",
                     fillColor: "#EF4444",
@@ -153,11 +164,14 @@ function LiveSessionPage() {
                     radius: (data: any) => DrawingUtils.lerp(data.from?.z ?? 0, -0.15, 0.1, 7, 3),
                   });
                 }
+                ctx.restore();
               } else {
                 setPoseDetected(false);
               }
             } catch (detectionErr) {
               console.warn("Pose detection frame skipped:", detectionErr);
+            } finally {
+              busy = false;
             }
           }
         }
@@ -175,6 +189,7 @@ function LiveSessionPage() {
       }
     };
   }, [selectedExercise, stream, poseLandmarker]);
+
 
   function closeCamera() {
     setSelectedExercise(null);
