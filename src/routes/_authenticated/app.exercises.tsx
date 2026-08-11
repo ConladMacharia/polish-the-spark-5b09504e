@@ -106,6 +106,8 @@ function LiveSessionPage() {
   // Real-time detection & skeleton drawing loop (rAF, one frame at a time)
   useEffect(() => {
     if (!selectedExercise || !stream || !poseLandmarker) return;
+    const landmarker = poseLandmarker;
+
 
     let lastVideoTime = -1;
     let active = true;
