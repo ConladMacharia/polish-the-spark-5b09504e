@@ -216,6 +216,22 @@ function CaregiverHome() {
                 </p>
               </button>
 
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/app/training" })}
+                className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
+              >
+                <div className="grid h-16 w-16 place-items-center rounded-xl border-2 border-slate-950 bg-sky-300 text-3xl">
+                  🎬
+                </div>
+                <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
+                  Training videos
+                </h4>
+                <p className="mt-0.5 text-xs text-slate-600 font-semibold">
+                  Short guided demos for every exercise
+                </p>
+              </button>
+
               <div className="sm:col-span-2 flex items-center gap-4 rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 shadow-[4px_4px_0px_#0f172a]">
                 <div className="flex items-center gap-1.5 font-display text-3xl font-bold text-pink-600">
                   <Flame className="h-7 w-7 text-pink-500 fill-pink-500" /> 5
