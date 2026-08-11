@@ -1,11 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useRef, useState, useEffect } from "react";
 import { PlayCircle, ArrowLeft } from "lucide-react";
-import { FilesetResolver, PoseLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
+import { PoseLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
 
+import { getPoseLandmarker } from "@/lib/pose-landmarker";
 import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+
 
 export const Route = createFileRoute("/_authenticated/app/exercises")({
   head: () => ({
