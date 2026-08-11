@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useRef, useState, useEffect } from "react";
 import { PlayCircle, ArrowLeft } from "lucide-react";
+import { FilesetResolver, PoseLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
 
 import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
@@ -33,8 +34,15 @@ function LiveSessionPage() {
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const animFrameRef = useRef<number | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
+  const [poseLandmarker, setPoseLandmarker] = useState<PoseLandmarker | null>(null);
+  const [isPoseLoading, setIsPoseLoading] = useState(false);
+  const [poseDetected, setPoseDetected] = useState(false);
+
+  // Initialize camera stream
   useEffect(() => {
     if (!selectedExercise) return;
 
@@ -45,7 +53,7 @@ function LiveSessionPage() {
       setCameraError(null);
       try {
         localStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
+          video: { facingMode: "user" },
           audio: false,
         });
         if (cancelled) {
@@ -73,8 +81,130 @@ function LiveSessionPage() {
     };
   }, [selectedExercise]);
 
+  // Initialize MediaPipe PoseLandmarker
+  useEffect(() => {
+    if (!selectedExercise) return;
+
+    let cancelled = false;
+    let landmarkerInstance: PoseLandmarker | null = null;
+
+    async function initMediaPipe() {
+      setIsPoseLoading(true);
+      try {
+        const vision = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm",
+        );
+        if (cancelled) return;
+
+        landmarkerInstance = await PoseLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath:
+              "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+            delegate: "GPU",
+          },
+          runningMode: "VIDEO",
+          numPoses: 1,
+        });
+
+        if (!cancelled) {
+          setPoseLandmarker(landmarkerInstance);
+        } else {
+          landmarkerInstance.close();
+        }
+      } catch (err) {
+        console.error("MediaPipe Pose initialization failed:", err);
+      } finally {
+        if (!cancelled) setIsPoseLoading(false);
+      }
+    }
+
+    initMediaPipe();
+
+    return () => {
+      cancelled = true;
+      if (landmarkerInstance) {
+        landmarkerInstance.close();
+      }
+      setPoseLandmarker(null);
+    };
+  }, [selectedExercise]);
+
+  // Real-time detection & skeleton drawing loop
+  useEffect(() => {
+    if (!selectedExercise || !stream || !poseLandmarker) return;
+
+    let lastVideoTime = -1;
+    let active = true;
+
+    function renderLoop() {
+      if (!active) return;
+
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+
+      if (video && canvas && poseLandmarker && video.readyState >= 2) {
+        const ctx = canvas.getContext("2d");
+
+        if (ctx) {
+          if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+          }
+
+          if (video.currentTime !== lastVideoTime) {
+            lastVideoTime = video.currentTime;
+
+            const startTimeMs = performance.now();
+            try {
+              const results = poseLandmarker.detectForVideo(video, startTimeMs);
+
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+              if (results.landmarks && results.landmarks.length > 0) {
+                setPoseDetected(true);
+                const drawingUtils = new DrawingUtils(ctx);
+
+                for (const landmarks of results.landmarks) {
+                  // Draw skeleton connection lines (vibrant lime green)
+                  drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
+                    color: "#22C55E",
+                    lineWidth: 4,
+                  });
+
+                  // Draw key body landmark nodes (gold dots with red core)
+                  drawingUtils.drawLandmarks(landmarks, {
+                    color: "#FACC15",
+                    fillColor: "#EF4444",
+                    lineWidth: 2,
+                    radius: (data: any) => DrawingUtils.lerp(data.from?.z ?? 0, -0.15, 0.1, 7, 3),
+                  });
+                }
+              } else {
+                setPoseDetected(false);
+              }
+            } catch (detectionErr) {
+              console.warn("Pose detection frame skipped:", detectionErr);
+            }
+          }
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(renderLoop);
+    }
+
+    animFrameRef.current = requestAnimationFrame(renderLoop);
+
+    return () => {
+      active = false;
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+      }
+    };
+  }, [selectedExercise, stream, poseLandmarker]);
+
   function closeCamera() {
     setSelectedExercise(null);
+    setPoseDetected(false);
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
@@ -239,8 +369,8 @@ function LiveSessionPage() {
                         <button
                           key={`${sub.id}-${ex.slug}`}
                           type="button"
-                        onClick={() => setSelectedExercise(ex)}
-                        className="flex flex-col overflow-hidden rounded-2xl border-3 border-slate-950 bg-card text-left shadow-[4px_4px_0px_#0f172a] transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+                          onClick={() => setSelectedExercise(ex)}
+                          className="flex flex-col overflow-hidden rounded-2xl border-3 border-slate-950 bg-card text-left shadow-[4px_4px_0px_#0f172a] transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
                         >
                           <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-indigo-100 to-blue-200 text-4xl">
                             <span className="absolute left-2 top-2 rounded-md border border-slate-950 bg-lime-400 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-950">
@@ -292,7 +422,7 @@ function LiveSessionPage() {
                 Close
               </button>
             </div>
-            <div className="relative overflow-hidden rounded-[2rem] bg-black shadow-2xl">
+            <div className="relative overflow-hidden rounded-[2rem] bg-black shadow-2xl flex items-center justify-center min-h-[400px]">
               <video
                 ref={videoRef}
                 className="h-[70vh] w-full object-cover"
@@ -300,15 +430,53 @@ function LiveSessionPage() {
                 playsInline
                 autoPlay
               />
+              <canvas
+                ref={canvasRef}
+                className="absolute inset-0 h-full w-full object-cover pointer-events-none z-10"
+              />
+
+              {/* Pose tracking status badges */}
+              <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-20">
+                {stream && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/80 px-3 py-1 text-xs font-semibold text-white backdrop-blur border border-white/10">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Camera active
+                  </span>
+                )}
+                {isPoseLoading && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/80 px-3 py-1 text-xs font-semibold text-slate-950 backdrop-blur">
+                    Loading MediaPipe Pose…
+                  </span>
+                )}
+                {poseLandmarker && (
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold backdrop-blur ${
+                      poseDetected
+                        ? "bg-emerald-500/90 text-white shadow-lg"
+                        : "bg-slate-900/80 text-slate-300 border border-white/10"
+                    }`}
+                  >
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        poseDetected ? "bg-white animate-ping" : "bg-amber-400"
+                      }`}
+                    />
+                    {poseDetected ? "Body skeleton tracked" : "Searching for person…"}
+                  </span>
+                )}
+              </div>
+
               {!stream && !cameraError ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 text-sm text-slate-200">
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 text-sm text-slate-200 z-30">
                   Requesting camera access…
                 </div>
               ) : null}
               {cameraError ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 px-4 text-center text-sm text-red-300">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 px-4 text-center text-sm text-red-300 z-30">
                   <p>{cameraError}</p>
-                  <p className="mt-2">Please allow camera access in your browser.</p>
+                  <p className="mt-2 text-xs text-slate-400">
+                    Please allow camera access in your browser settings.
+                  </p>
                 </div>
               ) : null}
             </div>
@@ -318,4 +486,3 @@ function LiveSessionPage() {
     </div>
   );
 }
-
