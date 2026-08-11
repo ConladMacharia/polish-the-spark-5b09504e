@@ -139,7 +139,7 @@ function LiveSessionPage() {
             lastVideoTime = video.currentTime;
             busy = true;
             try {
-              const results = poseLandmarker.detectForVideo(video, performance.now());
+              const results = landmarker.detectForVideo(video, performance.now());
 
               ctx.clearRect(0, 0, cw, ch);
 
