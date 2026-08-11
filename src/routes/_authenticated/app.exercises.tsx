@@ -83,53 +83,25 @@ function LiveSessionPage() {
     };
   }, [selectedExercise]);
 
-  // Initialize MediaPipe PoseLandmarker
+  // Load the pose model ONCE on mount so it's ready before any camera opens
   useEffect(() => {
-    if (!selectedExercise) return;
-
     let cancelled = false;
-    let landmarkerInstance: PoseLandmarker | null = null;
-
-    async function initMediaPipe() {
-      setIsPoseLoading(true);
-      try {
-        const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm",
-        );
-        if (cancelled) return;
-
-        landmarkerInstance = await PoseLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath:
-              "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-            delegate: "GPU",
-          },
-          runningMode: "VIDEO",
-          numPoses: 1,
-        });
-
-        if (!cancelled) {
-          setPoseLandmarker(landmarkerInstance);
-        } else {
-          landmarkerInstance.close();
-        }
-      } catch (err) {
+    setIsPoseLoading(true);
+    getPoseLandmarker()
+      .then((instance) => {
+        if (!cancelled) setPoseLandmarker(instance);
+      })
+      .catch((err) => {
         console.error("MediaPipe Pose initialization failed:", err);
-      } finally {
+      })
+      .finally(() => {
         if (!cancelled) setIsPoseLoading(false);
-      }
-    }
-
-    initMediaPipe();
-
+      });
     return () => {
       cancelled = true;
-      if (landmarkerInstance) {
-        landmarkerInstance.close();
-      }
-      setPoseLandmarker(null);
     };
-  }, [selectedExercise]);
+  }, []);
+
 
   // Real-time detection & skeleton drawing loop
   useEffect(() => {
