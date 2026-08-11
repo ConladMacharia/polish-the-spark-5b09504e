@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { PlayCircle, ArrowLeft } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
@@ -20,9 +19,6 @@ function TrainingPage() {
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [launching, setLaunching] = useState<string | null>(null);
-  const [stage, setStage] = useState<"categories" | "subcats" | "exercises">("categories");
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [activeSubcat, setActiveSubcat] = useState<string | null>(null);
 
   const { data: patient } = useQuery({
     queryKey: ["my-patient"],
@@ -159,107 +155,76 @@ function TrainingPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        {stage === "categories" && (
-          <div className="grid gap-6 md:grid-cols-2">
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => {
-                  setActiveCategory(c.id);
-                  setStage("subcats");
-                }}
-                className="rounded-2xl border-3 border-slate-900 bg-gradient-to-br from-white to-slate-50 p-6 text-left shadow hover:shadow-lg transform hover:-translate-y-1 transition"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="text-4xl">{c.icon}</div>
-                  <div>
-                    <h3 className="font-display text-xl font-bold text-slate-900">{c.label}</h3>
-                    <p className="text-sm text-slate-600 mt-1">Tap to explore</p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {stage === "subcats" && activeCategory && (
-          <div>
-            <div className="mb-4 flex items-center gap-3">
-              <button
-                onClick={() => {
-                  setStage("categories");
-                  setActiveCategory(null);
-                }}
-                className="rounded-full bg-white p-2 shadow-sm hover:bg-white/90"
-                aria-label="Back to categories"
-              >
-                <ArrowLeft className="h-4 w-4 text-slate-900" />
-              </button>
-              <h2 className="font-display text-2xl font-bold text-slate-900">{findCategory(activeCategory)!.label}</h2>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-              {findCategory(activeCategory)!.subcats.map((s: any) => (
-                  <button
-                    key={s.id}
-                    onClick={() => {
-                      setActiveSubcat(s.id);
-                      setStage("exercises");
-                    }}
-                    className="rounded-2xl border-2 border-slate-900 bg-white p-4 text-left shadow hover:shadow-lg hover:bg-slate-50 transition flex items-center gap-3"
-                  >
-                    <div className="text-2xl">{s.icon}</div>
-                    <div className="font-bold text-slate-900">{s.label}</div>
-                  </button>
-                ))}
-            </div>
-          </div>
-        )}
-
-        {stage === "exercises" && activeCategory && activeSubcat && (
-          <div>
-            <div className="mb-4 flex items-center gap-3">
-              <button
-                onClick={() => setStage("subcats")}
-                className="rounded-full bg-white p-2 shadow-sm hover:bg-white/90"
-                aria-label="Back to subcategories"
-              >
-                <ArrowLeft className="h-4 w-4 text-slate-900" />
-              </button>
-              <h2 className="font-display text-2xl font-bold text-slate-900">
-                {findCategory(activeCategory)!.label} — {findCategory(activeCategory)!.subcats.find((s: any) => s.id === activeSubcat)!.label}
+      <main className="mx-auto max-w-5xl px-6 py-8 space-y-10">
+        {categories.map((cat) => (
+          <section key={cat.id}>
+            <div className="mb-4 flex items-center gap-3 border-b-3 border-dashed border-slate-900 pb-2">
+              <span className="text-3xl">{cat.icon}</span>
+              <h2 className="font-display text-2xl font-bold uppercase tracking-wide text-slate-900">
+                {cat.label}
               </h2>
+              <span className="ml-auto rounded-full bg-slate-900 px-3 py-1 text-xs font-extrabold text-white">
+                {cat.subcats.reduce(
+                  (n: number, s: any) => n + exercisesForSubcat(cat.id, s.id).length,
+                  0,
+                )}
+              </span>
             </div>
 
-            <div className="space-y-3">
-              {exercisesForSubcat(activeCategory, activeSubcat).map((ex: Exercise) => (
-                <div key={ex.slug} className="flex items-center justify-between rounded-lg border border-border p-3 bg-white shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl">{ex.icon}</div>
-                    <div>
-                      <div className="font-semibold text-slate-900">{ex.name}</div>
-                      <div className="text-xs text-slate-600">{ex.focus}</div>
+            <div className="space-y-6">
+              {cat.subcats.map((sub: any) => {
+                const items = exercisesForSubcat(cat.id, sub.id);
+                if (!items.length) return null;
+                return (
+                  <div key={sub.id}>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="text-xl">{sub.icon}</span>
+                      <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-600">
+                        {sub.label}
+                      </h3>
+                      <span className="text-xs font-bold text-slate-400">· {items.length}</span>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {items.map((ex: Exercise) => (
+                        <button
+                          key={`${sub.id}-${ex.slug}`}
+                          type="button"
+                          onClick={() => launch(ex.slug)}
+                          disabled={launching === ex.slug}
+                          className="flex flex-col overflow-hidden rounded-2xl border-3 border-slate-950 bg-card text-left shadow-[4px_4px_0px_#0f172a] transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+                        >
+                          <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-sky-100 to-cyan-200 text-4xl">
+                            <span className="absolute left-2 top-2 rounded-md border border-slate-950 bg-yellow-300 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-950">
+                              Video
+                            </span>
+                            {ex.icon}
+                            <div className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-slate-900/80">
+                              <PlayCircle className="h-4 w-4 fill-white text-slate-900" />
+                            </div>
+                          </div>
+                          <div className="flex flex-1 flex-col justify-between p-4">
+                            <div>
+                              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                                {ex.focus}
+                              </p>
+                              <h4 className="mt-1 font-display text-lg font-bold leading-tight text-slate-900">
+                                {ex.name}
+                              </h4>
+                            </div>
+                            <span className="mt-4 border-t border-border pt-3 text-xs font-bold text-blue-600">
+                              watch short video
+                            </span>
+                          </div>
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <Button onClick={() => launch(ex.slug)} disabled={launching === ex.slug} className="bg-blue-600 text-white">
-                      <PlayCircle className="mr-2 h-4 w-4" />
-                    </Button>
-                    <button
-                      type="button"
-                      onClick={() => launch(ex.slug)}
-                      className="text-xs text-blue-600 font-medium hover:underline"
-                      aria-label={`Watch short video for ${ex.name}`}
-                    >
-                      watch short video
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </div>
-        )}
+          </section>
+        ))}
       </main>
     </div>
   );
