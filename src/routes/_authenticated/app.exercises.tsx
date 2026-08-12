@@ -241,6 +241,9 @@ function LiveSessionPage() {
     setSelectedExercise(null);
     setPoseDetected(false);
     smoothersRef.current.clear();
+    recorderRef.current.reset();
+    setLiveAngle(null);
+    setMaxAngle(null);
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
