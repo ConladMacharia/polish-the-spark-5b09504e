@@ -4,7 +4,13 @@ import { PlayCircle, ArrowLeft } from "lucide-react";
 import { PoseLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
 
 import { getPoseLandmarker } from "@/lib/pose/poseLandmarker";
-import { LandmarkSmoother } from "@/lib/pose/angleUtils";
+import {
+  LandmarkSmoother,
+  AngleRecorder,
+  getElbowAngle,
+  getShoulderFlexionAngle,
+  type Side,
+} from "@/lib/pose/angleUtils";
 import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
@@ -41,6 +47,15 @@ function LiveSessionPage() {
   const animFrameRef = useRef<number | null>(null);
   const smoothersRef = useRef<Map<number, LandmarkSmoother>>(new Map());
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const recorderRef = useRef(new AngleRecorder());
+  const [liveAngle, setLiveAngle] = useState<number | null>(null);
+  const [maxAngle, setMaxAngle] = useState<number | null>(null);
+  const trackedSide: Side = "right";
+
+  // Which joint angle to report for the selected exercise
+  const ELBOW_SLUGS = new Set(["reach", "shoulder", "draw", "tracing", "page-turn"]);
+  const trackedMovement: "elbow" | "shoulderFlexion" =
+    selectedExercise && ELBOW_SLUGS.has(selectedExercise.slug) ? "elbow" : "shoulderFlexion";
 
   const [poseLandmarker, setPoseLandmarker] = useState<PoseLandmarker | null>(null);
   const [isPoseLoading, setIsPoseLoading] = useState(false);
@@ -49,6 +64,10 @@ function LiveSessionPage() {
   // Initialize camera stream
   useEffect(() => {
     if (!selectedExercise) return;
+
+    recorderRef.current.reset();
+    setLiveAngle(null);
+    setMaxAngle(null);
 
     let cancelled = false;
     let localStream: MediaStream | null = null;
@@ -182,6 +201,20 @@ function LiveSessionPage() {
                     DrawingUtils.lerp(data.from?.z ?? 0, -0.15, 0.1, 7, 3),
                 });
                 ctx.restore();
+
+                // Joint angle from smoothed points, scaled to pixels so the
+                // aspect ratio doesn't skew the measurement
+                const pts = smoothedLandmarks.map((p) => ({ x: p.x * vw, y: p.y * vh }));
+                const angle =
+                  trackedMovement === "elbow"
+                    ? getElbowAngle(pts, trackedSide)
+                    : getShoulderFlexionAngle(pts, trackedSide);
+                if (Number.isFinite(angle) && angle > 0) {
+                  setLiveAngle(Math.round(angle));
+                  recorderRef.current.record(angle);
+                  const max = recorderRef.current.getMax();
+                  setMaxAngle(max !== null ? Math.round(max) : null);
+                }
               } else {
                 setPoseDetected(false);
               }
@@ -205,13 +238,16 @@ function LiveSessionPage() {
         cancelAnimationFrame(animFrameRef.current);
       }
     };
-  }, [selectedExercise, stream, poseLandmarker]);
+  }, [selectedExercise, stream, poseLandmarker, trackedMovement, trackedSide]);
 
 
   function closeCamera() {
     setSelectedExercise(null);
     setPoseDetected(false);
     smoothersRef.current.clear();
+    recorderRef.current.reset();
+    setLiveAngle(null);
+    setMaxAngle(null);
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
@@ -486,6 +522,23 @@ function LiveSessionPage() {
                   </p>
                 </div>
               ) : null}
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  {trackedMovement === "elbow" ? "Elbow angle" : "Shoulder angle"} ({trackedSide})
+                </p>
+                <p className="text-4xl font-bold tabular-nums">
+                  {liveAngle !== null ? `${liveAngle}°` : "—"}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs uppercase tracking-wide text-slate-400">Best this session</p>
+                <p className="text-2xl font-semibold tabular-nums text-emerald-300">
+                  {maxAngle !== null ? `${maxAngle}°` : "Not yet recorded"}
+                </p>
+              </div>
             </div>
           </div>
         </div>
