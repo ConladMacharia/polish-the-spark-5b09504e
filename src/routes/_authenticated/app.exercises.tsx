@@ -234,7 +234,7 @@ function LiveSessionPage() {
         cancelAnimationFrame(animFrameRef.current);
       }
     };
-  }, [selectedExercise, stream, poseLandmarker]);
+  }, [selectedExercise, stream, poseLandmarker, trackedMovement, trackedSide]);
 
 
   function closeCamera() {
