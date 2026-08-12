@@ -523,6 +523,23 @@ function LiveSessionPage() {
                 </div>
               ) : null}
             </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  {trackedMovement === "elbow" ? "Elbow angle" : "Shoulder angle"} ({trackedSide})
+                </p>
+                <p className="text-4xl font-bold tabular-nums">
+                  {liveAngle !== null ? `${liveAngle}°` : "—"}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs uppercase tracking-wide text-slate-400">Best this session</p>
+                <p className="text-2xl font-semibold tabular-nums text-emerald-300">
+                  {maxAngle !== null ? `${maxAngle}°` : "Not yet recorded"}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
