@@ -197,6 +197,20 @@ function LiveSessionPage() {
                     DrawingUtils.lerp(data.from?.z ?? 0, -0.15, 0.1, 7, 3),
                 });
                 ctx.restore();
+
+                // Joint angle from smoothed points, scaled to pixels so the
+                // aspect ratio doesn't skew the measurement
+                const pts = smoothedLandmarks.map((p) => ({ x: p.x * vw, y: p.y * vh }));
+                const angle =
+                  trackedMovement === "elbow"
+                    ? getElbowAngle(pts, trackedSide)
+                    : getShoulderFlexionAngle(pts, trackedSide);
+                if (Number.isFinite(angle) && angle > 0) {
+                  setLiveAngle(Math.round(angle));
+                  recorderRef.current.record(angle);
+                  const max = recorderRef.current.getMax();
+                  setMaxAngle(max !== null ? Math.round(max) : null);
+                }
               } else {
                 setPoseDetected(false);
               }
