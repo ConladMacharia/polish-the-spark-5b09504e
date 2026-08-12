@@ -4,7 +4,13 @@ import { PlayCircle, ArrowLeft } from "lucide-react";
 import { PoseLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
 
 import { getPoseLandmarker } from "@/lib/pose/poseLandmarker";
-import { LandmarkSmoother } from "@/lib/pose/angleUtils";
+import {
+  LandmarkSmoother,
+  AngleRecorder,
+  getElbowAngle,
+  getShoulderFlexionAngle,
+  type Side,
+} from "@/lib/pose/angleUtils";
 import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
