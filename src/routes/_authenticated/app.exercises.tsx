@@ -3,7 +3,8 @@ import { useMemo, useRef, useState, useEffect } from "react";
 import { PlayCircle, ArrowLeft } from "lucide-react";
 import { PoseLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
 
-import { getPoseLandmarker } from "@/lib/pose-landmarker";
+import { getPoseLandmarker } from "@/lib/pose/poseLandmarker";
+import { LandmarkSmoother } from "@/lib/pose/angleUtils";
 import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
@@ -38,6 +39,7 @@ function LiveSessionPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
+  const smoothersRef = useRef<Map<number, LandmarkSmoother>>(new Map());
   const [stream, setStream] = useState<MediaStream | null>(null);
 
   const [poseLandmarker, setPoseLandmarker] = useState<PoseLandmarker | null>(null);
@@ -83,7 +85,7 @@ function LiveSessionPage() {
     };
   }, [selectedExercise]);
 
-  // Load the pose model ONCE on mount so it's ready before any camera opens
+  // Model is warmed up from root layout; resolve the shared instance for this page
   useEffect(() => {
     let cancelled = false;
     setIsPoseLoading(true);
@@ -146,6 +148,20 @@ function LiveSessionPage() {
               if (results.landmarks && results.landmarks.length > 0) {
                 setPoseDetected(true);
 
+                const rawLandmarks = results.landmarks[0];
+                const smoothedLandmarks = rawLandmarks.map((lm, i) => {
+                  if (!smoothersRef.current.has(i)) {
+                    smoothersRef.current.set(i, new LandmarkSmoother(0.3));
+                  }
+                  const smoothed = smoothersRef.current.get(i)!.update({ x: lm.x, y: lm.y });
+                  return {
+                    x: smoothed.x,
+                    y: smoothed.y,
+                    z: lm.z,
+                    visibility: lm.visibility ?? 1,
+                  };
+                });
+
                 // Match the video's object-cover crop so dots land on the body
                 const scale = Math.max(cw / vw, ch / vh);
                 const drawnW = vw * scale;
@@ -154,18 +170,17 @@ function LiveSessionPage() {
                 ctx.translate((cw - drawnW) / 2, (ch - drawnH) / 2);
                 ctx.scale(drawnW / cw, drawnH / ch);
 
-                for (const landmarks of results.landmarks) {
-                  drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
-                    color: "#22C55E",
-                    lineWidth: 4,
-                  });
-                  drawingUtils.drawLandmarks(landmarks, {
-                    color: "#FACC15",
-                    fillColor: "#EF4444",
-                    lineWidth: 2,
-                    radius: (data: any) => DrawingUtils.lerp(data.from?.z ?? 0, -0.15, 0.1, 7, 3),
-                  });
-                }
+                drawingUtils.drawConnectors(smoothedLandmarks, PoseLandmarker.POSE_CONNECTIONS, {
+                  color: "#22C55E",
+                  lineWidth: 4,
+                });
+                drawingUtils.drawLandmarks(smoothedLandmarks, {
+                  color: "#FACC15",
+                  fillColor: "#EF4444",
+                  lineWidth: 2,
+                  radius: (data: { from?: { z?: number } }) =>
+                    DrawingUtils.lerp(data.from?.z ?? 0, -0.15, 0.1, 7, 3),
+                });
                 ctx.restore();
               } else {
                 setPoseDetected(false);
@@ -196,6 +211,7 @@ function LiveSessionPage() {
   function closeCamera() {
     setSelectedExercise(null);
     setPoseDetected(false);
+    smoothersRef.current.clear();
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
