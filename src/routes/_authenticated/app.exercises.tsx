@@ -65,6 +65,10 @@ function LiveSessionPage() {
   useEffect(() => {
     if (!selectedExercise) return;
 
+    recorderRef.current.reset();
+    setLiveAngle(null);
+    setMaxAngle(null);
+
     let cancelled = false;
     let localStream: MediaStream | null = null;
 
