@@ -47,6 +47,15 @@ function LiveSessionPage() {
   const animFrameRef = useRef<number | null>(null);
   const smoothersRef = useRef<Map<number, LandmarkSmoother>>(new Map());
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const recorderRef = useRef(new AngleRecorder());
+  const [liveAngle, setLiveAngle] = useState<number | null>(null);
+  const [maxAngle, setMaxAngle] = useState<number | null>(null);
+  const trackedSide: Side = "right";
+
+  // Which joint angle to report for the selected exercise
+  const ELBOW_SLUGS = new Set(["reach", "shoulder", "draw", "tracing", "page-turn"]);
+  const trackedMovement: "elbow" | "shoulderFlexion" =
+    selectedExercise && ELBOW_SLUGS.has(selectedExercise.slug) ? "elbow" : "shoulderFlexion";
 
   const [poseLandmarker, setPoseLandmarker] = useState<PoseLandmarker | null>(null);
   const [isPoseLoading, setIsPoseLoading] = useState(false);
