@@ -143,28 +143,35 @@ export function TherapistTargetEditor({
     return <div>Unknown exercise: {exerciseSlug}</div>;
   }
 
+  const config = defaultConfig;
+
   async function handleSave() {
     setSaving(true);
     const override: ChildExerciseTargetOverride = {
       childId,
       exerciseSlug,
       customAngleTargets:
-        defaultConfig.targetType === "angle"
+        config.targetType === "angle"
           ? {
               primary: primary ? Number(primary) : undefined,
               secondary: secondary ? Number(secondary) : undefined,
             }
           : undefined,
       customDurationTargetSeconds:
-        defaultConfig.targetType === "duration" && duration ? Number(duration) : undefined,
-      customRepsTarget: defaultConfig.targetType === "reps" && reps ? Number(reps) : undefined,
+        config.targetType === "duration" && duration ? Number(duration) : undefined,
+      customRepsTarget: config.targetType === "reps" && reps ? Number(reps) : undefined,
       setBy: therapistName,
       updatedAt: new Date().toISOString(),
       note: note || undefined,
     };
-    await onSave(override);
-    setSaving(false);
+    try {
+      if (onSave) await onSave(override);
+      else await saveChildExerciseTarget(override);
+    } finally {
+      setSaving(false);
+    }
   }
+
 
   return (
     <div style={{ maxWidth: 400, padding: 16 }}>
