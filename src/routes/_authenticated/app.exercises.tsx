@@ -438,7 +438,7 @@ function LiveSessionPage() {
                         <button
                           key={`${sub.id}-${ex.slug}`}
                           type="button"
-                          onClick={() => setSelectedExercise(ex)}
+                          onClick={() => setPendingExercise(ex)}
                           className="flex flex-col overflow-hidden rounded-2xl border-3 border-slate-950 bg-card text-left shadow-[4px_4px_0px_#0f172a] transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
                         >
                           <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-indigo-100 to-blue-200 text-4xl">
