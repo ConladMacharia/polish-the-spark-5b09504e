@@ -613,7 +613,7 @@ function LiveSessionPage() {
                     onClick={changeSide}
                     className="ml-2 rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-white transition hover:bg-white/20"
                   >
-                    Change arm
+                    Change side
                   </button>
                 </p>
                 <p className="text-4xl font-bold tabular-nums">
