@@ -499,22 +499,22 @@ function LiveSessionPage() {
             <p className="text-xs uppercase tracking-wide text-slate-400">Before we start</p>
             <h2 className="mt-1 text-2xl font-bold">{pendingExercise.name}</h2>
             <p className="mt-2 text-sm text-slate-300">
-              Which side are you exercising today? Tracking will measure that side only.
+              Which {pendingLimb} is being exercised? Tracking will measure that side only.
             </p>
             <div className="mt-6 grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => startWithSide("left")}
-                className="rounded-2xl bg-emerald-500 px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-emerald-400"
+                className="rounded-2xl bg-emerald-500 px-4 py-4 text-base font-semibold capitalize text-slate-950 transition hover:bg-emerald-400"
               >
-                Left arm
+                {limbLabel("left", pendingLimb)}
               </button>
               <button
                 type="button"
                 onClick={() => startWithSide("right")}
-                className="rounded-2xl bg-sky-400 px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-sky-300"
+                className="rounded-2xl bg-sky-400 px-4 py-4 text-base font-semibold capitalize text-slate-950 transition hover:bg-sky-300"
               >
-                Right arm
+                {limbLabel("right", pendingLimb)}
               </button>
             </div>
             <button
