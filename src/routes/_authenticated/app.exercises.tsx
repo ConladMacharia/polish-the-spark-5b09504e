@@ -474,6 +474,41 @@ function LiveSessionPage() {
         ))}
       </main>
 
+      {pendingExercise ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 px-4 text-white">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-6 text-center">
+            <p className="text-xs uppercase tracking-wide text-slate-400">Before we start</p>
+            <h2 className="mt-1 text-2xl font-bold">{pendingExercise.name}</h2>
+            <p className="mt-2 text-sm text-slate-300">
+              Which side are you exercising today? Tracking will measure that side only.
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => startWithSide("left")}
+                className="rounded-2xl bg-emerald-500 px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-emerald-400"
+              >
+                Left arm
+              </button>
+              <button
+                type="button"
+                onClick={() => startWithSide("right")}
+                className="rounded-2xl bg-sky-400 px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-sky-300"
+              >
+                Right arm
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPendingExercise(null)}
+              className="mt-4 text-sm font-semibold text-slate-400 underline"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {selectedExercise ? (
         <div className="fixed inset-0 z-50 bg-slate-950/95 text-white px-4 py-5 sm:px-6">
           <div className="mx-auto flex max-w-5xl flex-col gap-4">
