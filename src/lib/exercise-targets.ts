@@ -349,3 +349,31 @@ export function getEffectiveTarget(
 export function getDefaultConfig(slug: string): ExerciseTargetDefault | undefined {
   return EXERCISE_TARGET_DEFAULTS.find((e) => e.slug === slug);
 }
+
+/**
+ * Maps the exercise slugs used by the app's exercise catalog / live session
+ * to the canonical target slugs above.
+ */
+export const TARGET_SLUG_ALIASES: Record<string, string> = {
+  arm: "forward-reach",
+  "arm-raise": "forward-reach",
+  "arm-circles": "arm-lowering",
+  "side-bend": "side-reach",
+  midline: "cross-body-reach",
+  "wall-slide": "rotation",
+  reach: "bend-and-straighten",
+  shoulder: "palm-up-palm-down",
+  draw: "wrist-bend-up",
+  tracing: "wrist-bend-down",
+  "page-turn": "side-to-side-wrist-tilt",
+  leg: "leg-kick",
+  "leg-kick": "leg-kick",
+  march: "high-march",
+  squat: "mini-squat",
+  balance: "standing-balance",
+  "single-leg": "single-leg-stand",
+};
+
+export function resolveTargetSlug(slug: string): string {
+  return TARGET_SLUG_ALIASES[slug] ?? slug;
+}
