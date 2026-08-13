@@ -13,6 +13,8 @@ import {
 } from "@/lib/pose/angleUtils";
 import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
+import { TargetBadge } from "@/components/ExerciseTargetDisplay";
+
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 
@@ -524,7 +526,7 @@ function LiveSessionPage() {
               ) : null}
             </div>
 
-            <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
               <div>
                 <p className="text-xs uppercase tracking-wide text-slate-400">
                   {trackedMovement === "elbow" ? "Elbow angle" : "Shoulder angle"} ({trackedSide})
@@ -533,6 +535,15 @@ function LiveSessionPage() {
                   {liveAngle !== null ? `${liveAngle}°` : "—"}
                 </p>
               </div>
+              <div className="text-slate-300">
+                <TargetBadge
+                  liveAngle={liveAngle}
+                  exerciseSlug={selectedExercise.slug}
+                  childId=""
+                  overrides={[]}
+                  side={trackedSide}
+                />
+              </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-wide text-slate-400">Best this session</p>
                 <p className="text-2xl font-semibold tabular-nums text-emerald-300">
@@ -540,6 +551,7 @@ function LiveSessionPage() {
                 </p>
               </div>
             </div>
+
           </div>
         </div>
       ) : null}

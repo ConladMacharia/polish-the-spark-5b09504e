@@ -102,6 +102,59 @@ export type Database = {
           },
         ]
       }
+      child_exercise_targets: {
+        Row: {
+          created_at: string
+          exercise_slug: string
+          id: string
+          note: string | null
+          patient_id: string
+          set_by: string
+          side: string | null
+          target_angle_primary: number | null
+          target_angle_secondary: number | null
+          target_duration_seconds: number | null
+          target_reps: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_slug: string
+          id?: string
+          note?: string | null
+          patient_id: string
+          set_by?: string
+          side?: string | null
+          target_angle_primary?: number | null
+          target_angle_secondary?: number | null
+          target_duration_seconds?: number | null
+          target_reps?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          exercise_slug?: string
+          id?: string
+          note?: string | null
+          patient_id?: string
+          set_by?: string
+          side?: string | null
+          target_angle_primary?: number | null
+          target_angle_secondary?: number | null
+          target_duration_seconds?: number | null
+          target_reps?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_exercise_targets_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_prescriptions: {
         Row: {
           active: boolean
