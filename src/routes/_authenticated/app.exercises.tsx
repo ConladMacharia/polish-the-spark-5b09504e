@@ -553,7 +553,15 @@ function LiveSessionPage() {
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
               <div>
                 <p className="text-xs uppercase tracking-wide text-slate-400">
-                  {trackedMovement === "elbow" ? "Elbow angle" : "Shoulder angle"} ({trackedSide})
+                  {trackedMovement === "elbow" ? "Elbow angle" : "Shoulder angle"} —{" "}
+                  {trackedSide === "left" ? "Left arm" : "Right arm"}
+                  <button
+                    type="button"
+                    onClick={changeSide}
+                    className="ml-2 rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-white transition hover:bg-white/20"
+                  >
+                    Change arm
+                  </button>
                 </p>
                 <p className="text-4xl font-bold tabular-nums">
                   {liveAngle !== null ? `${liveAngle}°` : "—"}
