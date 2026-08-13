@@ -43,6 +43,7 @@ function LiveSessionPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [pendingExercise, setPendingExercise] = useState<Exercise | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -52,7 +53,7 @@ function LiveSessionPage() {
   const recorderRef = useRef(new AngleRecorder());
   const [liveAngle, setLiveAngle] = useState<number | null>(null);
   const [maxAngle, setMaxAngle] = useState<number | null>(null);
-  const trackedSide: Side = "right";
+  const [trackedSide, setTrackedSide] = useState<Side>("right");
 
   // Which joint angle to report for the selected exercise
   const ELBOW_SLUGS = new Set(["reach", "shoulder", "draw", "tracing", "page-turn"]);
@@ -245,6 +246,7 @@ function LiveSessionPage() {
 
   function closeCamera() {
     setSelectedExercise(null);
+    setPendingExercise(null);
     setPoseDetected(false);
     smoothersRef.current.clear();
     recorderRef.current.reset();
@@ -254,6 +256,28 @@ function LiveSessionPage() {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
+  }
+
+  // Stop the camera and return to the arm picker for the same exercise
+  function changeSide() {
+    const current = selectedExercise;
+    setSelectedExercise(null);
+    setPoseDetected(false);
+    smoothersRef.current.clear();
+    recorderRef.current.reset();
+    setLiveAngle(null);
+    setMaxAngle(null);
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    setPendingExercise(current);
+  }
+
+  function startWithSide(side: Side) {
+    setTrackedSide(side);
+    setSelectedExercise(pendingExercise);
+    setPendingExercise(null);
   }
 
   const categories = useMemo(
@@ -414,7 +438,7 @@ function LiveSessionPage() {
                         <button
                           key={`${sub.id}-${ex.slug}`}
                           type="button"
-                          onClick={() => setSelectedExercise(ex)}
+                          onClick={() => setPendingExercise(ex)}
                           className="flex flex-col overflow-hidden rounded-2xl border-3 border-slate-950 bg-card text-left shadow-[4px_4px_0px_#0f172a] transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
                         >
                           <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-indigo-100 to-blue-200 text-4xl">
@@ -449,6 +473,41 @@ function LiveSessionPage() {
           </section>
         ))}
       </main>
+
+      {pendingExercise ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 px-4 text-white">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-6 text-center">
+            <p className="text-xs uppercase tracking-wide text-slate-400">Before we start</p>
+            <h2 className="mt-1 text-2xl font-bold">{pendingExercise.name}</h2>
+            <p className="mt-2 text-sm text-slate-300">
+              Which side are you exercising today? Tracking will measure that side only.
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => startWithSide("left")}
+                className="rounded-2xl bg-emerald-500 px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-emerald-400"
+              >
+                Left arm
+              </button>
+              <button
+                type="button"
+                onClick={() => startWithSide("right")}
+                className="rounded-2xl bg-sky-400 px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-sky-300"
+              >
+                Right arm
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPendingExercise(null)}
+              className="mt-4 text-sm font-semibold text-slate-400 underline"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {selectedExercise ? (
         <div className="fixed inset-0 z-50 bg-slate-950/95 text-white px-4 py-5 sm:px-6">
@@ -529,7 +588,15 @@ function LiveSessionPage() {
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
               <div>
                 <p className="text-xs uppercase tracking-wide text-slate-400">
-                  {trackedMovement === "elbow" ? "Elbow angle" : "Shoulder angle"} ({trackedSide})
+                  {trackedMovement === "elbow" ? "Elbow angle" : "Shoulder angle"} —{" "}
+                  {trackedSide === "left" ? "Left arm" : "Right arm"}
+                  <button
+                    type="button"
+                    onClick={changeSide}
+                    className="ml-2 rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-white transition hover:bg-white/20"
+                  >
+                    Change arm
+                  </button>
                 </p>
                 <p className="text-4xl font-bold tabular-nums">
                   {liveAngle !== null ? `${liveAngle}°` : "—"}
