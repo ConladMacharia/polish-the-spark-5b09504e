@@ -1,19 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { PlayCircle, ArrowLeft } from "lucide-react";
-import { PoseLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
 
-import { getPoseLandmarker } from "@/lib/pose/poseLandmarker";
-import {
-  LandmarkSmoother,
-  AngleRecorder,
-  getElbowAngle,
-  getShoulderFlexionAngle,
-  type Side,
-} from "@/lib/pose/angleUtils";
 import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
-import { TargetBadge } from "@/components/ExerciseTargetDisplay";
+import { SidedExerciseSession } from "@/components/SidedExerciseSession";
 
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
@@ -43,217 +34,14 @@ function LiveSessionPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const animFrameRef = useRef<number | null>(null);
-  const smoothersRef = useRef<Map<number, LandmarkSmoother>>(new Map());
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const recorderRef = useRef(new AngleRecorder());
-  const [liveAngle, setLiveAngle] = useState<number | null>(null);
-  const [maxAngle, setMaxAngle] = useState<number | null>(null);
-  const trackedSide: Side = "right";
 
   // Which joint angle to report for the selected exercise
   const ELBOW_SLUGS = new Set(["reach", "shoulder", "draw", "tracing", "page-turn"]);
   const trackedMovement: "elbow" | "shoulderFlexion" =
     selectedExercise && ELBOW_SLUGS.has(selectedExercise.slug) ? "elbow" : "shoulderFlexion";
 
-  const [poseLandmarker, setPoseLandmarker] = useState<PoseLandmarker | null>(null);
-  const [isPoseLoading, setIsPoseLoading] = useState(false);
-  const [poseDetected, setPoseDetected] = useState(false);
-
-  // Initialize camera stream
-  useEffect(() => {
-    if (!selectedExercise) return;
-
-    recorderRef.current.reset();
-    setLiveAngle(null);
-    setMaxAngle(null);
-
-    let cancelled = false;
-    let localStream: MediaStream | null = null;
-
-    async function startCamera() {
-      setCameraError(null);
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user" },
-          audio: false,
-        });
-        if (cancelled) {
-          localStream.getTracks().forEach((track) => track.stop());
-          return;
-        }
-        if (videoRef.current) {
-          videoRef.current.srcObject = localStream;
-          await videoRef.current.play();
-        }
-        setStream(localStream);
-      } catch (error) {
-        setCameraError("Camera access failed. Please allow camera permission.");
-      }
-    }
-
-    startCamera();
-
-    return () => {
-      cancelled = true;
-      if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop());
-      }
-      setStream(null);
-    };
-  }, [selectedExercise]);
-
-  // Model is warmed up from root layout; resolve the shared instance for this page
-  useEffect(() => {
-    let cancelled = false;
-    setIsPoseLoading(true);
-    getPoseLandmarker()
-      .then((instance) => {
-        if (!cancelled) setPoseLandmarker(instance);
-      })
-      .catch((err) => {
-        console.error("MediaPipe Pose initialization failed:", err);
-      })
-      .finally(() => {
-        if (!cancelled) setIsPoseLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-
-  // Real-time detection & skeleton drawing loop (rAF, one frame at a time)
-  useEffect(() => {
-    if (!selectedExercise || !stream || !poseLandmarker) return;
-    const landmarker = poseLandmarker;
-
-
-    let lastVideoTime = -1;
-    let active = true;
-    let busy = false;
-    let drawingUtils: DrawingUtils | null = null;
-
-    function renderLoop() {
-      if (!active) return;
-
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-
-      if (video && canvas && video.readyState >= 2 && !busy) {
-        const ctx = canvas.getContext("2d");
-        const vw = video.videoWidth || 640;
-        const vh = video.videoHeight || 480;
-        const cw = canvas.clientWidth || vw;
-        const ch = canvas.clientHeight || vh;
-
-        if (ctx) {
-          if (canvas.width !== cw || canvas.height !== ch) {
-            canvas.width = cw;
-            canvas.height = ch;
-            drawingUtils = null;
-          }
-          if (!drawingUtils) drawingUtils = new DrawingUtils(ctx);
-
-          if (video.currentTime !== lastVideoTime) {
-            lastVideoTime = video.currentTime;
-            busy = true;
-            try {
-              const results = landmarker.detectForVideo(video, performance.now());
-
-              ctx.clearRect(0, 0, cw, ch);
-
-              if (results.landmarks && results.landmarks.length > 0) {
-                setPoseDetected(true);
-
-                const rawLandmarks = results.landmarks[0];
-                const smoothedLandmarks = rawLandmarks.map((lm, i) => {
-                  if (!smoothersRef.current.has(i)) {
-                    smoothersRef.current.set(i, new LandmarkSmoother(0.3));
-                  }
-                  const smoothed = smoothersRef.current.get(i)!.update({ x: lm.x, y: lm.y });
-                  return {
-                    x: smoothed.x,
-                    y: smoothed.y,
-                    z: lm.z,
-                    visibility: lm.visibility ?? 1,
-                  };
-                });
-
-                // Match the video's object-cover crop so dots land on the body
-                const scale = Math.max(cw / vw, ch / vh);
-                const drawnW = vw * scale;
-                const drawnH = vh * scale;
-                ctx.save();
-                ctx.translate((cw - drawnW) / 2, (ch - drawnH) / 2);
-                ctx.scale(drawnW / cw, drawnH / ch);
-
-                drawingUtils.drawConnectors(smoothedLandmarks, PoseLandmarker.POSE_CONNECTIONS, {
-                  color: "#22C55E",
-                  lineWidth: 4,
-                });
-                drawingUtils.drawLandmarks(smoothedLandmarks, {
-                  color: "#FACC15",
-                  fillColor: "#EF4444",
-                  lineWidth: 2,
-                  radius: (data: { from?: { z?: number } }) =>
-                    DrawingUtils.lerp(data.from?.z ?? 0, -0.15, 0.1, 7, 3),
-                });
-                ctx.restore();
-
-                // Joint angle from smoothed points, scaled to pixels so the
-                // aspect ratio doesn't skew the measurement
-                const pts = smoothedLandmarks.map((p) => ({ x: p.x * vw, y: p.y * vh }));
-                const angle =
-                  trackedMovement === "elbow"
-                    ? getElbowAngle(pts, trackedSide)
-                    : getShoulderFlexionAngle(pts, trackedSide);
-                if (Number.isFinite(angle) && angle > 0) {
-                  setLiveAngle(Math.round(angle));
-                  recorderRef.current.record(angle);
-                  const max = recorderRef.current.getMax();
-                  setMaxAngle(max !== null ? Math.round(max) : null);
-                }
-              } else {
-                setPoseDetected(false);
-              }
-            } catch (detectionErr) {
-              console.warn("Pose detection frame skipped:", detectionErr);
-            } finally {
-              busy = false;
-            }
-          }
-        }
-      }
-
-      animFrameRef.current = requestAnimationFrame(renderLoop);
-    }
-
-    animFrameRef.current = requestAnimationFrame(renderLoop);
-
-    return () => {
-      active = false;
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
-    };
-  }, [selectedExercise, stream, poseLandmarker, trackedMovement, trackedSide]);
-
-
   function closeCamera() {
     setSelectedExercise(null);
-    setPoseDetected(false);
-    smoothersRef.current.clear();
-    recorderRef.current.reset();
-    setLiveAngle(null);
-    setMaxAngle(null);
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-    }
   }
 
   const categories = useMemo(
@@ -467,91 +255,11 @@ function LiveSessionPage() {
                 Close
               </button>
             </div>
-            <div className="relative overflow-hidden rounded-[2rem] bg-black shadow-2xl flex items-center justify-center min-h-[400px]">
-              <video
-                ref={videoRef}
-                className="h-[70vh] w-full object-cover"
-                muted
-                playsInline
-                autoPlay
-              />
-              <canvas
-                ref={canvasRef}
-                className="absolute inset-0 h-full w-full object-cover pointer-events-none z-10"
-              />
 
-              {/* Pose tracking status badges */}
-              <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-20">
-                {stream && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/80 px-3 py-1 text-xs font-semibold text-white backdrop-blur border border-white/10">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Camera active
-                  </span>
-                )}
-                {isPoseLoading && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/80 px-3 py-1 text-xs font-semibold text-slate-950 backdrop-blur">
-                    Loading MediaPipe Pose…
-                  </span>
-                )}
-                {poseLandmarker && (
-                  <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold backdrop-blur ${
-                      poseDetected
-                        ? "bg-emerald-500/90 text-white shadow-lg"
-                        : "bg-slate-900/80 text-slate-300 border border-white/10"
-                    }`}
-                  >
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        poseDetected ? "bg-white animate-ping" : "bg-amber-400"
-                      }`}
-                    />
-                    {poseDetected ? "Body skeleton tracked" : "Searching for person…"}
-                  </span>
-                )}
-              </div>
-
-              {!stream && !cameraError ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 text-sm text-slate-200 z-30">
-                  Requesting camera access…
-                </div>
-              ) : null}
-              {cameraError ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 px-4 text-center text-sm text-red-300 z-30">
-                  <p>{cameraError}</p>
-                  <p className="mt-2 text-xs text-slate-400">
-                    Please allow camera access in your browser settings.
-                  </p>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-slate-400">
-                  {trackedMovement === "elbow" ? "Elbow angle" : "Shoulder angle"} ({trackedSide})
-                </p>
-                <p className="text-4xl font-bold tabular-nums">
-                  {liveAngle !== null ? `${liveAngle}°` : "—"}
-                </p>
-              </div>
-              <div className="text-slate-300">
-                <TargetBadge
-                  liveAngle={liveAngle}
-                  exerciseSlug={selectedExercise.slug}
-                  childId=""
-                  overrides={[]}
-                  side={trackedSide}
-                />
-              </div>
-              <div className="text-right">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Best this session</p>
-                <p className="text-2xl font-semibold tabular-nums text-emerald-300">
-                  {maxAngle !== null ? `${maxAngle}°` : "Not yet recorded"}
-                </p>
-              </div>
-            </div>
-
+            <SidedExerciseSession
+              movement={trackedMovement}
+              exerciseName={selectedExercise.name}
+            />
           </div>
         </div>
       ) : null}
