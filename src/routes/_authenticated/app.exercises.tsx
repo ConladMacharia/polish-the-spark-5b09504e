@@ -54,6 +54,9 @@ function LiveSessionPage() {
   const [liveAngle, setLiveAngle] = useState<number | null>(null);
   const [maxAngle, setMaxAngle] = useState<number | null>(null);
   const [trackedSide, setTrackedSide] = useState<Side>("right");
+  // Which limb/joint the picked exercise targets, e.g. "shoulder", "elbow", "hip"
+  const [pendingLimb, setPendingLimb] = useState<string>("arm");
+  const [trackedLimb, setTrackedLimb] = useState<string>("arm");
 
   // Which joint angle to report for the selected exercise
   const ELBOW_SLUGS = new Set(["reach", "shoulder", "draw", "tracing", "page-turn"]);
@@ -271,13 +274,19 @@ function LiveSessionPage() {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
+    setPendingLimb(trackedLimb);
     setPendingExercise(current);
   }
 
   function startWithSide(side: Side) {
     setTrackedSide(side);
+    setTrackedLimb(pendingLimb);
     setSelectedExercise(pendingExercise);
     setPendingExercise(null);
+  }
+
+  function limbLabel(side: Side, limb: string) {
+    return `${side === "left" ? "Left" : "Right"} ${limb}`;
   }
 
   const categories = useMemo(
@@ -438,7 +447,17 @@ function LiveSessionPage() {
                         <button
                           key={`${sub.id}-${ex.slug}`}
                           type="button"
-                          onClick={() => setPendingExercise(ex)}
+                          onClick={() => {
+                            const label = String(sub.label).toLowerCase();
+                            setPendingLimb(
+                              label.includes("hand") || label.includes("finger")
+                                ? "hand"
+                                : label.includes("balance")
+                                  ? "side"
+                                  : label,
+                            );
+                            setPendingExercise(ex);
+                          }}
                           className="flex flex-col overflow-hidden rounded-2xl border-3 border-slate-950 bg-card text-left shadow-[4px_4px_0px_#0f172a] transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
                         >
                           <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-indigo-100 to-blue-200 text-4xl">
@@ -480,22 +499,22 @@ function LiveSessionPage() {
             <p className="text-xs uppercase tracking-wide text-slate-400">Before we start</p>
             <h2 className="mt-1 text-2xl font-bold">{pendingExercise.name}</h2>
             <p className="mt-2 text-sm text-slate-300">
-              Which side are you exercising today? Tracking will measure that side only.
+              Which {pendingLimb} is being exercised? Tracking will measure that side only.
             </p>
             <div className="mt-6 grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => startWithSide("left")}
-                className="rounded-2xl bg-emerald-500 px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-emerald-400"
+                className="rounded-2xl bg-emerald-500 px-4 py-4 text-base font-semibold capitalize text-slate-950 transition hover:bg-emerald-400"
               >
-                Left arm
+                {limbLabel("left", pendingLimb)}
               </button>
               <button
                 type="button"
                 onClick={() => startWithSide("right")}
-                className="rounded-2xl bg-sky-400 px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-sky-300"
+                className="rounded-2xl bg-sky-400 px-4 py-4 text-base font-semibold capitalize text-slate-950 transition hover:bg-sky-300"
               >
-                Right arm
+                {limbLabel("right", pendingLimb)}
               </button>
             </div>
             <button
@@ -588,14 +607,13 @@ function LiveSessionPage() {
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
               <div>
                 <p className="text-xs uppercase tracking-wide text-slate-400">
-                  {trackedMovement === "elbow" ? "Elbow angle" : "Shoulder angle"} —{" "}
-                  {trackedSide === "left" ? "Left arm" : "Right arm"}
+                  Tracking: {limbLabel(trackedSide, trackedLimb)}
                   <button
                     type="button"
                     onClick={changeSide}
                     className="ml-2 rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-white transition hover:bg-white/20"
                   >
-                    Change arm
+                    Change side
                   </button>
                 </p>
                 <p className="text-4xl font-bold tabular-nums">
