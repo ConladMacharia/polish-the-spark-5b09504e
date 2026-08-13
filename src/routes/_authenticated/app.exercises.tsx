@@ -54,6 +54,9 @@ function LiveSessionPage() {
   const [liveAngle, setLiveAngle] = useState<number | null>(null);
   const [maxAngle, setMaxAngle] = useState<number | null>(null);
   const [trackedSide, setTrackedSide] = useState<Side>("right");
+  // Which limb/joint the picked exercise targets, e.g. "shoulder", "elbow", "hip"
+  const [pendingLimb, setPendingLimb] = useState<string>("arm");
+  const [trackedLimb, setTrackedLimb] = useState<string>("arm");
 
   // Which joint angle to report for the selected exercise
   const ELBOW_SLUGS = new Set(["reach", "shoulder", "draw", "tracing", "page-turn"]);
