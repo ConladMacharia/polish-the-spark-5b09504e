@@ -347,7 +347,7 @@ export function getEffectiveTarget(
  * show the clinical default as a placeholder/reference value.
  */
 export function getDefaultConfig(slug: string): ExerciseTargetDefault | undefined {
-  return EXERCISE_TARGET_DEFAULTS.find((e) => e.slug === slug);
+  return EXERCISE_TARGET_DEFAULTS.find((e) => e.slug === resolveTargetSlug(slug));
 }
 
 /**
