@@ -296,15 +296,17 @@ export function getEffectiveTarget(
   reps?: number;
   note?: string;
 } | null {
-  const defaultConfig = EXERCISE_TARGET_DEFAULTS.find((e) => e.slug === exerciseSlug);
+  const canonical = resolveTargetSlug(exerciseSlug);
+  const defaultConfig = EXERCISE_TARGET_DEFAULTS.find((e) => e.slug === canonical);
   if (!defaultConfig) return null;
 
   const override = overrides.find(
     (o) =>
       o.childId === childId &&
-      o.exerciseSlug === exerciseSlug &&
+      resolveTargetSlug(o.exerciseSlug) === canonical &&
       (o.side === side || (!o.side && !side))
   );
+
 
   if (override) {
     return {
