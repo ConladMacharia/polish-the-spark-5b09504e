@@ -13,6 +13,7 @@ import {
   getDefaultConfig,
   type ChildExerciseTargetOverride,
 } from "@/lib/exercise-targets";
+import { saveChildExerciseTarget } from "@/lib/exercise-targets.data";
 
 // ---------- Hook for live tracking screens ----------
 
@@ -104,7 +105,8 @@ interface TherapistTargetEditorProps {
   exerciseSlug: string;
   therapistName: string;
   existingOverride?: ChildExerciseTargetOverride;
-  onSave: (override: ChildExerciseTargetOverride) => Promise<void> | void;
+  /** Optional. Defaults to saving into the backend targets table. */
+  onSave?: (override: ChildExerciseTargetOverride) => Promise<void> | void;
 }
 
 export function TherapistTargetEditor({
