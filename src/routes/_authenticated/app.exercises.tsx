@@ -43,6 +43,7 @@ function LiveSessionPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [pendingExercise, setPendingExercise] = useState<Exercise | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -52,7 +53,7 @@ function LiveSessionPage() {
   const recorderRef = useRef(new AngleRecorder());
   const [liveAngle, setLiveAngle] = useState<number | null>(null);
   const [maxAngle, setMaxAngle] = useState<number | null>(null);
-  const trackedSide: Side = "right";
+  const [trackedSide, setTrackedSide] = useState<Side>("right");
 
   // Which joint angle to report for the selected exercise
   const ELBOW_SLUGS = new Set(["reach", "shoulder", "draw", "tracing", "page-turn"]);
