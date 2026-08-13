@@ -246,6 +246,7 @@ function LiveSessionPage() {
 
   function closeCamera() {
     setSelectedExercise(null);
+    setPendingExercise(null);
     setPoseDetected(false);
     smoothersRef.current.clear();
     recorderRef.current.reset();
@@ -255,6 +256,28 @@ function LiveSessionPage() {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
+  }
+
+  // Stop the camera and return to the arm picker for the same exercise
+  function changeSide() {
+    const current = selectedExercise;
+    setSelectedExercise(null);
+    setPoseDetected(false);
+    smoothersRef.current.clear();
+    recorderRef.current.reset();
+    setLiveAngle(null);
+    setMaxAngle(null);
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+    setPendingExercise(current);
+  }
+
+  function startWithSide(side: Side) {
+    setTrackedSide(side);
+    setSelectedExercise(pendingExercise);
+    setPendingExercise(null);
   }
 
   const categories = useMemo(
