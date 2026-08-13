@@ -274,13 +274,19 @@ function LiveSessionPage() {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
+    setPendingLimb(trackedLimb);
     setPendingExercise(current);
   }
 
   function startWithSide(side: Side) {
     setTrackedSide(side);
+    setTrackedLimb(pendingLimb);
     setSelectedExercise(pendingExercise);
     setPendingExercise(null);
+  }
+
+  function limbLabel(side: Side, limb: string) {
+    return `${side === "left" ? "Left" : "Right"} ${limb}`;
   }
 
   const categories = useMemo(
