@@ -13,6 +13,8 @@ import {
 } from "@/lib/pose/angleUtils";
 import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
+import { TargetBadge } from "@/components/ExerciseTargetDisplay";
+
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 
