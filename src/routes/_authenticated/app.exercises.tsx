@@ -607,8 +607,7 @@ function LiveSessionPage() {
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
               <div>
                 <p className="text-xs uppercase tracking-wide text-slate-400">
-                  {trackedMovement === "elbow" ? "Elbow angle" : "Shoulder angle"} —{" "}
-                  {trackedSide === "left" ? "Left arm" : "Right arm"}
+                  Tracking: {limbLabel(trackedSide, trackedLimb)}
                   <button
                     type="button"
                     onClick={changeSide}
