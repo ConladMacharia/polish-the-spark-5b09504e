@@ -51,26 +51,15 @@ export async function saveChildExerciseTarget(
     updated_at: new Date().toISOString(),
   };
 
-  const existing = await supabase
+  let query = supabase
     .from("child_exercise_targets")
     .select("id")
     .eq("patient_id", row.patient_id)
-    .eq("exercise_slug", row.exercise_slug)
-    .is("side", row.side === null ? null : undefined as never)
-    .maybeSingle();
+    .eq("exercise_slug", row.exercise_slug);
+  query = row.side === null ? query.is("side", null) : query.eq("side", row.side);
+  const { data: existing } = await query.maybeSingle();
+  const existingId: string | null = existing?.id ?? null;
 
-  // `.is` above only applies when side is null; handle the sided case explicitly.
-  let existingId: string | null = existing.data?.id ?? null;
-  if (row.side !== null) {
-    const sided = await supabase
-      .from("child_exercise_targets")
-      .select("id")
-      .eq("patient_id", row.patient_id)
-      .eq("exercise_slug", row.exercise_slug)
-      .eq("side", row.side)
-      .maybeSingle();
-    existingId = sided.data?.id ?? null;
-  }
 
   if (existingId) {
     const { error } = await supabase
