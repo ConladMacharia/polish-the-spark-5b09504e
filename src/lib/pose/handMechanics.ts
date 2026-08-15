@@ -218,3 +218,81 @@ export class PointSmoother {
     this.current = null;
   }
 }
+
+/* ── STRICTNESS HELPERS — a game may only complete on its own movement ──── */
+
+/** Fingertip distance to palm center, normalized. Low = curled, high = extended. */
+export function fingerExtension(hand: Hand, finger: 0 | 1 | 2 | 3): number {
+  return dist(hand[FINGER_TIPS[finger]], palmCenter(hand)) / handSpan(hand);
+}
+
+/** True when the hand is flat/open — used to reject fists on cursor-only games. */
+export function isHandOpen(hand: Hand, maxClosePercent = 35): boolean {
+  return fistClosePercent(hand) <= maxClosePercent;
+}
+
+/**
+ * Mechanic E strictness: the prompted finger touches the thumb while the OTHER
+ * fingers stay clearly away, so a whole-hand fist can never satisfy a step.
+ */
+export function otherFingersClear(hand: Hand, finger: 0 | 1 | 2 | 3, tolerance: number): boolean {
+  return ([0, 1, 2, 3] as const)
+    .filter((f) => f !== finger)
+    .every((f) => thumbToFingerDistance(hand, f) > tolerance * 1.8);
+}
+
+/** Rising-edge latch for one prompted finger that also enforces isolation. */
+export class IsolatedSequenceLatch {
+  private touching = false;
+  update(hand: Hand, finger: 0 | 1 | 2 | 3, tolerance: number): boolean {
+    const d = thumbToFingerDistance(hand, finger);
+    const clean = otherFingersClear(hand, finger, tolerance);
+    if (!this.touching && d < tolerance && clean) {
+      this.touching = true;
+      return true;
+    }
+    if (this.touching && d > tolerance * 1.7) this.touching = false;
+    return false;
+  }
+  reset() {
+    this.touching = false;
+  }
+}
+
+/**
+ * Mechanic C strictness: one success needs a full open → squeeze → hold cycle,
+ * so a hand that simply arrives closed (or a pinch) can never score.
+ */
+export class FistCycle {
+  private opened = false;
+  private held = 0;
+  private scored = false;
+  /** returns true on the frame a genuine open→closed squeeze hold completes */
+  update(hand: Hand, neededPercent: number, holdFrames = 8): boolean {
+    const pct = fistClosePercent(hand);
+    if (pct < neededPercent * 0.4) {
+      this.opened = true;
+      this.held = 0;
+      this.scored = false;
+      return false;
+    }
+    if (!this.opened || this.scored) return false;
+    if (pct >= neededPercent) {
+      this.held += 1;
+      if (this.held >= holdFrames) {
+        this.scored = true;
+        this.opened = false;
+        this.held = 0;
+        return true;
+      }
+    } else {
+      this.held = 0;
+    }
+    return false;
+  }
+  reset() {
+    this.opened = false;
+    this.held = 0;
+    this.scored = false;
+  }
+}
