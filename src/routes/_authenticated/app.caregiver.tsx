@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { RafikiIsland } from "@/components/child/RafikiIsland";
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
   head: () => ({
