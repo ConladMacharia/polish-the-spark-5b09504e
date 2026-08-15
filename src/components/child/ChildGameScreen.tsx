@@ -57,10 +57,11 @@ export function ChildGameScreen({
 
   // one latch per mechanic — never shared between games
   const pinchLatch = useRef(new PinchLatch());
-  const seqLatch = useRef(new SequenceLatch());
+  const seqLatch = useRef(new IsolatedSequenceLatch());
   const scissorCycle = useRef(new ScissorCycle());
+  const fistCycle = useRef(new FistCycle());
   const dwellRef = useRef(0);
-  const squeezeHoldRef = useRef(0);
+
   const steadyRef = useRef(0);
   const crossRef = useRef(false);
   const carriedRef = useRef<Target | null>(null);
