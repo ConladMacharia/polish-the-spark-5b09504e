@@ -524,9 +524,10 @@ function RewardOverlay({
 function spawn(game: ChildGame, seed: number): Target[] {
   const count =
     game.mechanic === "cursor" ? 3 : game.mechanic === "fist" ? 0 : game.mechanic === "pinch" ? 2 : 1;
+  const crossSide = Math.random() < 0.5 ? 0.16 : 0.84;
   return Array.from({ length: count }).map((_, i) => ({
     id: Date.now() + i + Math.floor(seed * 1000),
-    x: 0.2 + Math.random() * 0.6,
+    x: game.mechanic === "crossMidline" ? crossSide : 0.2 + Math.random() * 0.6,
     y: 0.22 + Math.random() * 0.42,
     drifting: false,
   }));
