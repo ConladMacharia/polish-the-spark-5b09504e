@@ -4,19 +4,22 @@ import { X } from "lucide-react";
 import { getHandLandmarker } from "@/lib/pose/handLandmarker";
 import {
   FINGER_NAMES,
+  FistCycle,
   fistClosePercent,
   hasCrossedMidline,
+  isHandOpen,
   isSpreadInRange,
+  IsolatedSequenceLatch,
   palmCenter,
   PinchLatch,
   PointSmoother,
   ScissorCycle,
-  SequenceLatch,
   wristMidpoint,
   wristSpread,
   type Hand,
   type Handedness,
 } from "@/lib/pose/handMechanics";
+
 import { Staircase, type ChildGame, type Eligibility } from "@/lib/child-games";
 import { Rafiki } from "@/components/child/Rafiki";
 
