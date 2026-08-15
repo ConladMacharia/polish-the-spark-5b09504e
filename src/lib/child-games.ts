@@ -1,6 +1,26 @@
 // Rafiki's Island — game catalog, MACS gating and in-range difficulty staircase.
 
-export type Mechanic = "pinch" | "cursor" | "fist" | "crossMidline" | "thumbSequence" | "twoWrist";
+/**
+ * One mechanic per game family — no two games share a detection path unless
+ * they are explicitly the same engine (shape sorter / peg pop = pinchDrag).
+ *  pinch         → Mechanic A alone (Firefly Catch, Zip the Tent)
+ *  pinchDrag     → Mechanic A + B  (Shape Sorter, Peg Pop)
+ *  cursor        → Mechanic B alone (Bubble Pop)
+ *  fist          → Mechanic C alone (Squeeze the Cloud)
+ *  crossMidline  → Mechanic D alone (Star Reach)
+ *  thumbSequence → Mechanic E alone (Piano Keys)
+ *  twoWrist      → Mechanic F alone (Carry the Basket)
+ *  scissor       → special case + B (Snip the Ribbon)
+ */
+export type Mechanic =
+  | "pinch"
+  | "pinchDrag"
+  | "cursor"
+  | "fist"
+  | "crossMidline"
+  | "thumbSequence"
+  | "twoWrist"
+  | "scissor";
 
 export type MacsLevel = 1 | 2 | 3 | 4 | 5;
 
