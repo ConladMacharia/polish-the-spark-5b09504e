@@ -37,7 +37,7 @@ export function isPinching(hand: Hand, tolerance: number): boolean {
 
 /** Mechanic B — hand as cursor: palm center in normalized coords. */
 export function palmCenter(hand: Hand): Point {
-  const ids = [LM.WRIST, LM.INDEX_MCP, LM.MIDDLE_MCP, LM.RING_MCP, LM.PINKY_MCP];
+  const ids: number[] = [LM.WRIST, LM.INDEX_MCP, LM.MIDDLE_MCP, LM.RING_MCP, LM.PINKY_MCP];
   const x = ids.reduce((s, i) => s + hand[i].x, 0) / ids.length;
   const y = ids.reduce((s, i) => s + hand[i].y, 0) / ids.length;
   return { x, y };
