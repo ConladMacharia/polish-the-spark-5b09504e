@@ -177,38 +177,37 @@ export function ChildGameScreen({
     const hand = hands[0];
     const tol = staircase.current.value;
 
-    // Mechanic B is only computed for the games that actually use a cursor.
+    // Hand position is always known, but the ring is only shown for the
+    // mechanics where aiming is part of the movement being practised.
+    const raw = palmCenter(hand);
+    const pos = smoother.current.push({ x: 1 - raw.x, y: raw.y }); // mirror for selfie view
     const usesCursor =
-      game.mechanic === "cursor" || game.mechanic === "pinchDrag" || game.mechanic === "scissor";
-    let pos = { x: 0.5, y: 0.5 };
-    if (usesCursor) {
-      const raw = palmCenter(hand);
-      pos = smoother.current.push({ x: 1 - raw.x, y: raw.y }); // mirror for selfie view
-      setCursor(pos);
-    } else if (cursor) {
-      setCursor(null);
-    }
+      game.mechanic === "cursor" ||
+      game.mechanic === "pinchDrag" ||
+      game.mechanic === "scissor" ||
+      game.mechanic === "pinch";
+    if (usesCursor) setCursor(pos);
+    else if (cursor) setCursor(null);
 
     switch (game.mechanic) {
-      /* ── C — fist close only. A pinch must never move this game. ───────── */
+      /* ── C — a real open → squeeze → hold cycle. A pinch cannot pass. ───── */
       case "fist": {
         const pct = fistClosePercent(hand);
         setSqueeze(pct);
         const needed = variant === "simplified" ? 55 : 75;
-        if (pct >= needed) {
-          squeezeHoldRef.current += 1;
-          if (squeezeHoldRef.current === 8) succeed(0.5, 0.4);
-        } else if (pct < needed * 0.5) {
-          squeezeHoldRef.current = 0;
+        if (fistCycle.current.update(hand, needed, variant === "simplified" ? 6 : 10)) {
+          succeed(0.5, 0.4);
         }
         break;
       }
 
-      /* ── A — pinch event only. A closing fist must never count. ────────── */
+      /* ── A — pinch, and it must land on the firefly. A fist never counts. ─ */
       case "pinch": {
         if (pinchLatch.current.update(hand, tol)) {
-          const near = targets.find((t) => !t.drifting);
-          if (near) succeed(near.x, near.y);
+          const near = nearestTarget(targets, pos);
+          const reach = tol * 0.2 + 0.16;
+          if (near && distance(near, pos) < reach) succeed(near.x, near.y);
+          else if (near) drift(near.id);
         }
         break;
       }
@@ -242,12 +241,13 @@ export function ChildGameScreen({
         break;
       }
 
-      /* ── B — pure position dwell. No gesture at all. ───────────────────── */
+      /* ── B — open hand held over the bubble. A closed fist does nothing. ── */
       case "cursor": {
         const near = nearestTarget(targets, pos);
-        if (near && distance(near, pos) < tol + 0.05) {
+        const open = isHandOpen(hand, variant === "simplified" ? 45 : 35);
+        if (open && near && distance(near, pos) < tol * 0.2 + 0.1) {
           dwellRef.current += 1;
-          if (dwellRef.current > 5) {
+          if (dwellRef.current > (variant === "simplified" ? 8 : 14)) {
             dwellRef.current = 0;
             succeed(near.x, near.y);
           }
@@ -257,18 +257,23 @@ export function ChildGameScreen({
         break;
       }
 
-      /* ── D — wrist crossing the body midline, with handedness. ─────────── */
+      /* ── D — the wrist must cross the midline AND reach the star. ───────── */
       case "crossMidline": {
-        const crossed = hasCrossedMidline(hand, sides[0] ?? "Right", 0.5, 0.05);
+        const crossed = hasCrossedMidline(hand, sides[0] ?? "Right", 0.5, 0.08);
+        const near = nearestTarget(targets, pos);
         if (crossed && !crossRef.current) {
           crossRef.current = true;
-          const near = targets.find((t) => !t.drifting);
-          succeed(near?.x, near?.y);
+          if (near && distance(near, pos) < (variant === "simplified" ? 0.32 : 0.24)) {
+            succeed(near.x, near.y);
+          } else if (near) {
+            encourage();
+          }
         } else if (!crossed) {
           crossRef.current = false;
         }
         break;
       }
+
 
       /* ── E — only the prompted finger counts, in order. ────────────────── */
       case "thumbSequence": {
