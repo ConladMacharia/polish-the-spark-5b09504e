@@ -3,15 +3,19 @@ import { X } from "lucide-react";
 
 import { getHandLandmarker } from "@/lib/pose/handLandmarker";
 import {
-  crossesMidline,
-  fistClosure,
-  isPinching,
+  FINGER_NAMES,
+  fistClosePercent,
+  hasCrossedMidline,
+  isSpreadInRange,
   palmCenter,
+  PinchLatch,
   PointSmoother,
-  scissorAmount,
-  thumbTouchIndex,
-  twoWristSymmetry,
+  ScissorCycle,
+  SequenceLatch,
+  wristMidpoint,
+  wristSpread,
   type Hand,
+  type Handedness,
 } from "@/lib/pose/handMechanics";
 import { Staircase, type ChildGame, type Eligibility } from "@/lib/child-games";
 import { Rafiki } from "@/components/child/Rafiki";
@@ -20,6 +24,18 @@ type Target = { id: number; x: number; y: number; drifting: boolean };
 
 const CHEERS = ["Yaaay!", "Nice one!", "Wow!", "Rafiki loves it!", "Beautiful!", "Again!"];
 const NUDGES = ["Almost!", "Keep going!", "You can do it!", "Try with me!"];
+
+/** Child-friendly nudge for the one movement this game listens to. */
+const HINTS: Record<ChildGame["mechanic"], string> = {
+  fist: "Squeeze your hand shut",
+  pinch: "Pinch your thumb and finger",
+  pinchDrag: "Pinch it, carry it, let go",
+  cursor: "Move your hand over it",
+  crossMidline: "Reach right across your body",
+  thumbSequence: "Touch the finger Rafiki shows",
+  twoWrist: "Hold with both hands, keep them apart",
+  scissor: "Open and close two fingers, snip!",
+};
 
 export function ChildGameScreen({
   game,
@@ -35,8 +51,16 @@ export function ChildGameScreen({
   const streamRef = useRef<MediaStream | null>(null);
   const smoother = useRef(new PointSmoother(0.4));
   const staircase = useRef(new Staircase(game.range, variant === "simplified"));
-  const holdRef = useRef<{ id: number | null; frames: number }>({ id: null, frames: 0 });
-  const seqRef = useRef(0);
+
+  // one latch per mechanic — never shared between games
+  const pinchLatch = useRef(new PinchLatch());
+  const seqLatch = useRef(new SequenceLatch());
+  const scissorCycle = useRef(new ScissorCycle());
+  const dwellRef = useRef(0);
+  const squeezeHoldRef = useRef(0);
+  const steadyRef = useRef(0);
+  const crossRef = useRef(false);
+  const carriedRef = useRef<Target | null>(null);
   const lastMissRef = useRef(0);
 
   const [ready, setReady] = useState(false);
@@ -47,6 +71,11 @@ export function ChildGameScreen({
   const [mascotMood, setMascotMood] = useState<"idle" | "cheer" | "encourage">("idle");
   const [rewardOpen, setRewardOpen] = useState(false);
   const [sparkles, setSparkles] = useState<{ id: number; x: number; y: number }[]>([]);
+  // mechanic-specific display state
+  const [squeeze, setSqueeze] = useState(0); // C: 0..100
+  const [nextFinger, setNextFinger] = useState<0 | 1 | 2 | 3>(0); // E
+  const [carrying, setCarrying] = useState(false); // A+B
+  const [bothHands, setBothHands] = useState(false); // F
 
   // ---- camera + hand tracking ----------------------------------------------
   useEffect(() => {
@@ -78,7 +107,10 @@ export function ChildGameScreen({
           if (v.readyState >= 2) {
             const res = landmarker.detectForVideo(v, performance.now());
             const hands = (res.landmarks ?? []) as Hand[];
-            if (hands.length > 0) handleFrame(hands);
+            const sides = (res.handedness ?? []).map(
+              (h) => (h?.[0]?.categoryName ?? "Right") as Handedness
+            );
+            if (hands.length > 0) handleFrame(hands, sides);
           }
           rafRef.current = requestAnimationFrame(loop);
         };
@@ -137,90 +169,152 @@ export function ChildGameScreen({
     setTimeout(() => setTargets(() => spawn(game, Math.random())), 700);
   }
 
-  function handleFrame(hands: Hand[]) {
+  function handleFrame(hands: Hand[], sides: Handedness[]) {
     const hand = hands[0];
     const tol = staircase.current.value;
 
-    // Mechanic B / cursor position — used by nearly every game for aiming.
-    const raw = palmCenter(hand);
-    const pos = smoother.current.push({ x: 1 - raw.x, y: raw.y }); // mirror for selfie view
-    setCursor(pos);
+    // Mechanic B is only computed for the games that actually use a cursor.
+    const usesCursor =
+      game.mechanic === "cursor" || game.mechanic === "pinchDrag" || game.mechanic === "scissor";
+    let pos = { x: 0.5, y: 0.5 };
+    if (usesCursor) {
+      const raw = palmCenter(hand);
+      pos = smoother.current.push({ x: 1 - raw.x, y: raw.y }); // mirror for selfie view
+      setCursor(pos);
+    } else if (cursor) {
+      setCursor(null);
+    }
 
     switch (game.mechanic) {
+      /* ── C — fist close only. A pinch must never move this game. ───────── */
       case "fist": {
-        const closure = fistClosure(hand);
-        if (closure < tol) {
-          if (holdRef.current.id !== -1) {
-            holdRef.current = { id: -1, frames: 0 };
-            succeed(pos.x, pos.y);
-          }
-        } else if (closure > tol + 0.25) {
-          holdRef.current = { id: null, frames: 0 };
+        const pct = fistClosePercent(hand);
+        setSqueeze(pct);
+        const needed = variant === "simplified" ? 55 : 75;
+        if (pct >= needed) {
+          squeezeHoldRef.current += 1;
+          if (squeezeHoldRef.current === 8) succeed(0.5, 0.4);
+        } else if (pct < needed * 0.5) {
+          squeezeHoldRef.current = 0;
         }
         break;
       }
+
+      /* ── A — pinch event only. A closing fist must never count. ────────── */
       case "pinch": {
-        const pinching = isPinching(hand, tol);
-        const near = nearestTarget(targets, pos);
-        if (pinching && near && distance(near, pos) < 0.16) {
-          succeed(near.x, near.y);
-        } else if (pinching && near) {
-          drift(near.id);
+        if (pinchLatch.current.update(hand, tol)) {
+          const near = targets.find((t) => !t.drifting);
+          if (near) succeed(near.x, near.y);
         }
         break;
       }
+
+      /* ── A + B — cursor position to grab, release over the home spot. ─── */
+      case "pinchDrag": {
+        const grabbed = pinchLatch.current.update(hand, tol);
+        const held = pinchLatch.current.isHeld;
+        if (grabbed && !carriedRef.current) {
+          const near = nearestTarget(targets, pos);
+          if (near && distance(near, pos) < 0.18) {
+            carriedRef.current = near;
+            setCarrying(true);
+          }
+        }
+        if (carriedRef.current) {
+          if (held) {
+            setTargets((ts) =>
+              ts.map((t) => (t.id === carriedRef.current?.id ? { ...t, x: pos.x, y: pos.y } : t))
+            );
+          } else {
+            const home = { x: 0.5, y: 0.82 };
+            const ok = distance(home, pos) < 0.18;
+            const id = carriedRef.current.id;
+            carriedRef.current = null;
+            setCarrying(false);
+            if (ok) succeed(home.x, home.y);
+            else drift(id);
+          }
+        }
+        break;
+      }
+
+      /* ── B — pure position dwell. No gesture at all. ───────────────────── */
       case "cursor": {
-        const reach = game.id === "snip-ribbon" ? scissorAmount(hand) : 0;
         const near = nearestTarget(targets, pos);
-        if (!near) break;
-        const hit = distance(near, pos) < tol + 0.05;
-        const snipOk = game.id !== "snip-ribbon" || reach < 0.9;
-        if (hit && snipOk) {
-          holdRef.current.frames += 1;
-          if (holdRef.current.frames > 4) {
-            holdRef.current.frames = 0;
+        if (near && distance(near, pos) < tol + 0.05) {
+          dwellRef.current += 1;
+          if (dwellRef.current > 5) {
+            dwellRef.current = 0;
             succeed(near.x, near.y);
           }
         } else {
-          holdRef.current.frames = 0;
+          dwellRef.current = 0;
         }
         break;
       }
+
+      /* ── D — wrist crossing the body midline, with handedness. ─────────── */
       case "crossMidline": {
-        const near = nearestTarget(targets, pos);
-        if (!near) break;
-        const side = raw.x < 0.5 ? "left" : "right";
-        if (crossesMidline(hand, 0.5, side) && distance(near, pos) < tol * 0.3 + 0.12) {
-          succeed(near.x, near.y);
+        const crossed = hasCrossedMidline(hand, sides[0] ?? "Right", 0.5, 0.05);
+        if (crossed && !crossRef.current) {
+          crossRef.current = true;
+          const near = targets.find((t) => !t.drifting);
+          succeed(near?.x, near?.y);
+        } else if (!crossed) {
+          crossRef.current = false;
         }
         break;
       }
+
+      /* ── E — only the prompted finger counts, in order. ────────────────── */
       case "thumbSequence": {
-        const touched = thumbTouchIndex(hand, tol);
-        if (touched === null) break;
-        if (touched === seqRef.current) {
-          seqRef.current += 1;
-          cheer(pos.x, pos.y);
-          if (seqRef.current >= (variant === "simplified" ? 2 : 4)) {
-            seqRef.current = 0;
-            succeed(pos.x, pos.y);
+        if (seqLatch.current.update(hand, nextFinger, tol)) {
+          const steps = variant === "simplified" ? 2 : 4;
+          const done = nextFinger + 1 >= steps;
+          if (done) {
+            setNextFinger(0);
+            succeed();
+          } else {
+            setNextFinger((f) => ((f + 1) as 0 | 1 | 2 | 3));
+            cheer();
           }
         }
         break;
       }
+
+      /* ── F — both wrists held a steady distance apart, moving together. ─ */
       case "twoWrist": {
         if (hands.length < 2) {
-          if (variant === "simplified") {
-            const near = nearestTarget(targets, pos);
-            if (near && distance(near, pos) < 0.14) succeed(near.x, near.y);
-          }
+          setBothHands(false);
+          steadyRef.current = 0;
           break;
         }
-        const sym = twoWristSymmetry(hands[0], hands[1], 0.35, tol + 0.08);
-        const center = { x: 1 - sym.center.x, y: sym.center.y };
+        setBothHands(true);
+        const spread = wristSpread(hands[0], hands[1]);
+        const mid = wristMidpoint(hands[0], hands[1]);
+        const center = { x: 1 - mid.x, y: mid.y };
         setCursor(center);
-        const near = nearestTarget(targets, center);
-        if (sym.steady && near && distance(near, center) < 0.16) succeed(near.x, near.y);
+        const steady = isSpreadInRange(spread, 0.35, tol + 0.08);
+        if (steady) {
+          steadyRef.current += 1;
+          const near = nearestTarget(targets, center);
+          if (steadyRef.current > 10 && near && distance(near, center) < 0.2) {
+            steadyRef.current = 0;
+            succeed(near.x, near.y);
+          }
+        } else {
+          steadyRef.current = 0;
+        }
+        break;
+      }
+
+      /* ── special — scissor snip at the cursor position along the ribbon. ─ */
+      case "scissor": {
+        if (scissorCycle.current.update(hand, tol * 0.6)) {
+          const near = nearestTarget(targets, pos);
+          if (near && distance(near, pos) < 0.22) succeed(near.x, near.y);
+          else if (near) drift(near.id);
+        }
         break;
       }
     }
@@ -249,20 +343,72 @@ export function ChildGameScreen({
         <p className="font-display text-2xl text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.35)]">
           {game.region}
         </p>
+        <p className="mt-1 text-xs font-bold uppercase tracking-widest text-white/80">
+          {HINTS[game.mechanic]}
+        </p>
       </div>
 
-      {/* targets */}
-      {targets.map((t) => (
+      {/* Mechanic D — a soft midline ribbon so the reach has somewhere to go */}
+      {game.mechanic === "crossMidline" && (
+        <div className="pointer-events-none absolute inset-y-0 left-1/2 z-10 w-1 -translate-x-1/2 bg-white/40" />
+      )}
+
+      {/* Mechanic C — the cloud squishes proportionally, no thresholds shown */}
+      {game.mechanic === "fist" ? (
         <div
-          key={t.id}
-          className={`absolute z-10 select-none text-6xl transition-all duration-700 ${
-            t.drifting ? "-translate-y-24 opacity-0" : "animate-pulse opacity-100"
-          }`}
-          style={{ left: `${t.x * 100}%`, top: `${t.y * 100}%`, transform: "translate(-50%, -50%)" }}
+          className="pointer-events-none absolute left-1/2 top-2/5 z-10 select-none text-[8rem] transition-transform duration-100"
+          style={{
+            transform: `translate(-50%,-50%) scale(${1 - (squeeze / 100) * 0.55}, ${
+              1 - (squeeze / 100) * 0.3
+            })`,
+          }}
         >
-          {game.emoji}
+          ☁️
         </div>
-      ))}
+      ) : (
+        targets.map((t) => (
+          <div
+            key={t.id}
+            className={`absolute z-10 select-none text-6xl transition-all duration-300 ${
+              t.drifting ? "-translate-y-24 opacity-0" : "opacity-100"
+            }`}
+            style={{
+              left: `${t.x * 100}%`,
+              top: `${t.y * 100}%`,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            {game.emoji}
+          </div>
+        ))
+      )}
+
+      {/* Mechanic A+B — the home spot to release into */}
+      {game.mechanic === "pinchDrag" && (
+        <div
+          className={`pointer-events-none absolute bottom-[12%] left-1/2 z-10 h-24 w-24 -translate-x-1/2 rounded-3xl border-4 border-dashed ${
+            carrying ? "border-white bg-white/30" : "border-white/60"
+          }`}
+        />
+      )}
+
+      {/* Mechanic E — which finger to touch next */}
+      {game.mechanic === "thumbSequence" && (
+        <div className="pointer-events-none absolute inset-x-0 top-24 z-20 text-center">
+          <span className="rounded-full bg-white/90 px-5 py-2 font-display text-2xl text-emerald-900">
+            Thumb ➜ {FINGER_NAMES[nextFinger]}
+          </span>
+        </div>
+      )}
+
+      {/* Mechanic F — gentle reminder both hands are needed */}
+      {game.mechanic === "twoWrist" && !bothHands && (
+        <div className="pointer-events-none absolute inset-x-0 top-24 z-20 text-center">
+          <span className="rounded-full bg-white/90 px-5 py-2 font-display text-xl text-amber-900">
+            Show Rafiki both hands 🙌
+          </span>
+        </div>
+      )}
 
       {/* sparkles for warm feedback */}
       {sparkles.map((s) => (
@@ -275,7 +421,7 @@ export function ChildGameScreen({
         </div>
       ))}
 
-      {/* hand cursor */}
+      {/* hand cursor — only for the mechanics that are positional */}
       {cursor && (
         <div
           className="pointer-events-none absolute z-20 h-16 w-16 rounded-full border-4 border-white/80 bg-white/25 backdrop-blur-sm"
@@ -302,6 +448,7 @@ export function ChildGameScreen({
           onDone={() => {
             setRewardOpen(false);
             setCollected(0);
+            setNextFinger(0);
             setTargets(spawn(game, Math.random()));
           }}
           onLeave={onExit}
@@ -366,7 +513,8 @@ function RewardOverlay({
 }
 
 function spawn(game: ChildGame, seed: number): Target[] {
-  const count = game.mechanic === "cursor" ? 3 : game.mechanic === "fist" ? 1 : 2;
+  const count =
+    game.mechanic === "cursor" ? 3 : game.mechanic === "fist" ? 0 : game.mechanic === "pinch" ? 2 : 1;
   return Array.from({ length: count }).map((_, i) => ({
     id: Date.now() + i + Math.floor(seed * 1000),
     x: 0.2 + Math.random() * 0.6,
