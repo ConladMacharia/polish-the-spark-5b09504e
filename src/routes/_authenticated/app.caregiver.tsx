@@ -266,49 +266,8 @@ function CaregiverHome() {
           </main>
         </div>
       ) : (
-        /* CHILD UX MODE */
-        <div className="pb-12">
-          <div className="bg-gradient-to-br from-purple-600 to-indigo-700 text-white px-6 py-10 rounded-b-[40px] text-center shadow-lg relative overflow-hidden">
-            <div className="absolute right-3 top-3">
-              <LanguageSettings />
-            </div>
-            <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-yellow-400 border-4 border-white text-4xl shadow-md mb-3">
-              🦁
-            </div>
-            <h1 className="font-display text-4xl tracking-wider">
-              {t("childWorldTitle", { name: childName })} 🚀
-            </h1>
-            <p className="text-sm font-semibold opacity-90 mt-1">{t("childWorldSub")}</p>
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-5 py-2 font-display text-lg text-yellow-300 shadow">
-              <Star className="h-5 w-5 fill-yellow-300 text-yellow-300" /> {t("starsEarned")}
-            </div>
-          </div>
-
-          <main className="mx-auto max-w-xl px-6 py-8 space-y-4">
-            {[
-              { icon: "🎈", title: t("gamePopBalloons"), sub: t("gamePopBalloonsSub") },
-              { icon: "⭐", title: t("gameKickStar"), sub: t("gameKickStarSub") },
-              { icon: "💎", title: t("gameStatue"), sub: t("gameStatueSub") },
-            ].map((g) => (
-              <div
-                key={g.icon}
-                onClick={() => navigate({ to: "/app/exercises" })}
-                className="rounded-3xl border-4 border-purple-950 bg-white p-5 flex items-center gap-4 shadow-[6px_6px_0px_#2e1065] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1"
-              >
-                <div className="grid h-16 w-16 place-items-center rounded-2xl border-3 border-purple-950 bg-yellow-400 text-3xl shrink-0">
-                  {g.icon}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-display text-2xl text-purple-950 font-bold">{g.title}</h3>
-                  <p className="text-xs font-extrabold text-purple-700">{g.sub}</p>
-                </div>
-                <span className="rounded-xl border-2 border-purple-950 bg-orange-500 px-4 py-2 font-display text-lg text-white">
-                  {t("play")}
-                </span>
-              </div>
-            ))}
-          </main>
-        </div>
+        /* CHILD UX MODE — Rafiki's Island */
+        <RafikiIsland childName={childName} />
       )}
     </div>
   );
