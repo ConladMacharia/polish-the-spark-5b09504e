@@ -139,15 +139,22 @@ function CaregiverHome() {
           <header className="border-b border-border bg-card/60 backdrop-blur">
             <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 rounded-full border-2 border-slate-900 bg-amber-100 px-3 py-1 shadow-[2px_2px_0px_#0f172a]">
+                <button
+                  type="button"
+                  onClick={() => setProfileOpen(true)}
+                  aria-label="Open child profile"
+                  className="flex items-center gap-2 rounded-full border-2 border-slate-900 bg-amber-100 px-3 py-1 shadow-[2px_2px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
+                >
                   <span className="grid h-7 w-7 place-items-center rounded-full bg-pink-500 text-white font-bold text-xs">
                     {childName.charAt(0)}
                   </span>
                   <span className="text-xs font-extrabold text-slate-900">
-                    {childName}, {t("ageLabel")} ▾
+                    {childName}
+                    {patient?.age_years ? `, ${patient.age_years}` : `, ${t("ageLabel")}`} ▾
                   </span>
-                </div>
+                </button>
               </div>
+
               <div className="flex items-center gap-1">
                 <LanguageSettings />
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
