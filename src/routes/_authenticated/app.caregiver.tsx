@@ -276,49 +276,8 @@ function CaregiverHome() {
               </div>
             </div>
 
-            {/* Child details */}
-            <section className="mt-6 rounded-3xl border-4 border-slate-950 bg-card p-6 shadow-[6px_6px_0px_#0f172a]">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-12 w-12 place-items-center rounded-2xl border-2 border-slate-950 bg-lime-300 text-slate-900">
-                    <Baby className="h-6 w-6" />
-                  </span>
-                  <div>
-                    <h3 className="font-display text-2xl font-bold text-slate-900">{childName}</h3>
-                    <p className="text-xs font-semibold text-slate-500">
-                      {patient?.age_years ? `${patient.age_years} years old` : "Age not set"} ·{" "}
-                      {patient?.cp_type ?? "CP type not set"}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setProfileOpen(true)}
-                  className="rounded-xl border-2 border-slate-950 font-extrabold shadow-[2px_2px_0px_#0f172a]"
-                >
-                  <Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
-                </Button>
-              </div>
-              <dl className="mt-5 grid gap-3 sm:grid-cols-3">
-                {[
-                  { k: "Side affected", v: patient?.affected_side ?? "—" },
-                  { k: "MACS (hands)", v: patient?.macs_level ? `Level ${patient.macs_level}` : "—" },
-                  { k: "Mobility", v: patient?.mobility ?? "—" },
-                ].map((row) => (
-                  <div
-                    key={row.k}
-                    className="rounded-2xl border-2 border-slate-950 bg-amber-50 p-3 shadow-[2px_2px_0px_#0f172a]"
-                  >
-                    <dt className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
-                      {row.k}
-                    </dt>
-                    <dd className="mt-0.5 font-display text-sm font-bold capitalize text-slate-900">
-                      {row.v}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+            {/* Child details moved to landing page profile icon */}
+
               {patient?.condition_notes && (
                 <p className="mt-4 rounded-2xl border-2 border-dashed border-slate-400 bg-amber-50 p-3 text-xs font-semibold text-slate-700">
                   {patient.condition_notes}
