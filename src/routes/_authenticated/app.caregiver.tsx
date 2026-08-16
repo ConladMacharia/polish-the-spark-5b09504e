@@ -35,6 +35,8 @@ function CaregiverHome() {
   const qc = useQueryClient();
   const { t } = useLanguage();
   const [uxMode, setUxMode] = useState<"caregiver" | "child">("caregiver");
+  const [profileOpen, setProfileOpen] = useState(false);
+
 
   const { data: profile } = useQuery({
     queryKey: ["me-profile"],
