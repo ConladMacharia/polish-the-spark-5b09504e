@@ -28,6 +28,25 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const { data: patient } = useQuery({
+    queryKey: ["landing-patient"],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) return null;
+      const { data } = await supabase
+        .from("patients")
+        .select("*")
+        .eq("claimed_by_caregiver_id", uid)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
@@ -40,13 +59,31 @@ function Landing() {
             Neuro-Bridge <span className="flag" role="img" aria-label="Kenyan flag">🇰🇪</span>
           </span>
         </Link>
-        <Link
-          to="/app"
-          className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-        >
-          Open app
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setProfileOpen(true)}
+            aria-label="Open child profile"
+            title="Child profile"
+            className="grid h-10 w-10 place-items-center rounded-full border border-input bg-card text-foreground shadow-sm transition-colors hover:bg-accent"
+          >
+            <Baby className="h-5 w-5" />
+          </button>
+          <Link
+            to="/app"
+            className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+          >
+            Open app
+          </Link>
+        </div>
       </header>
+
+      <ChildProfileSheet
+        open={profileOpen}
+        onOpenChange={setProfileOpen}
+        patient={patient as never}
+      />
+
 
       {/* Hero */}
       <section className="relative overflow-hidden">
