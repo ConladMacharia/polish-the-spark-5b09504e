@@ -1,5 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Activity, HeartHandshake, Languages, ShieldCheck, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Activity, HeartHandshake, Languages, ShieldCheck, Sparkles, Baby } from "lucide-react";
+
+import { supabase } from "@/integrations/supabase/client";
+import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
