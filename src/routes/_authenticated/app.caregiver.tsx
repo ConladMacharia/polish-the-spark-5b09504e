@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, PlayCircle, Flame, ShieldAlert, Rocket } from "lucide-react";
+import { LogOut, PlayCircle, Flame, ShieldAlert, Rocket, Baby, Pencil } from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { RafikiIsland } from "@/components/child/RafikiIsland";
+import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
+
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
   head: () => ({
