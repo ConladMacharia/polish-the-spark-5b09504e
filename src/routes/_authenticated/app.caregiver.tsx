@@ -276,14 +276,8 @@ function CaregiverHome() {
               </div>
             </div>
 
-            {/* Child details moved to landing page profile icon */}
+            {/* Child details moved to the landing page profile icon */}
 
-              {patient?.condition_notes && (
-                <p className="mt-4 rounded-2xl border-2 border-dashed border-slate-400 bg-amber-50 p-3 text-xs font-semibold text-slate-700">
-                  {patient.condition_notes}
-                </p>
-              )}
-            </section>
 
           </main>
         </div>
