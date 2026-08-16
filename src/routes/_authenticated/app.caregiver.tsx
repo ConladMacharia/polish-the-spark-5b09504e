@@ -277,6 +277,13 @@ function CaregiverHome() {
         /* CHILD UX MODE — Rafiki's Island */
         <RafikiIsland childName={childName} />
       )}
+
+      <ChildProfileSheet
+        open={profileOpen}
+        onOpenChange={setProfileOpen}
+        patient={patient as never}
+      />
+
     </div>
   );
 }
