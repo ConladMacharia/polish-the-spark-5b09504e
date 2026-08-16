@@ -257,17 +257,21 @@ export type Database = {
         Row: {
           active: boolean
           affected_side: Database["public"]["Enums"]["affected_side"]
+          age_years: number | null
           child_name: string
           claim_code: string
           claimed_at: string | null
           claimed_by_caregiver_id: string | null
           condition_notes: string | null
           contraindications: string | null
+          cp_type: string | null
           created_at: string
           date_of_birth: string | null
           gmfcs_level: Database["public"]["Enums"]["gmfcs_level"] | null
           goals: string[]
           id: string
+          macs_level: string | null
+          mobility: string | null
           next_followup_at: string | null
           preferred_language: Database["public"]["Enums"]["preferred_language"]
           therapist_id: string | null
@@ -277,17 +281,21 @@ export type Database = {
         Insert: {
           active?: boolean
           affected_side?: Database["public"]["Enums"]["affected_side"]
+          age_years?: number | null
           child_name: string
           claim_code: string
           claimed_at?: string | null
           claimed_by_caregiver_id?: string | null
           condition_notes?: string | null
           contraindications?: string | null
+          cp_type?: string | null
           created_at?: string
           date_of_birth?: string | null
           gmfcs_level?: Database["public"]["Enums"]["gmfcs_level"] | null
           goals?: string[]
           id?: string
+          macs_level?: string | null
+          mobility?: string | null
           next_followup_at?: string | null
           preferred_language?: Database["public"]["Enums"]["preferred_language"]
           therapist_id?: string | null
@@ -297,17 +305,21 @@ export type Database = {
         Update: {
           active?: boolean
           affected_side?: Database["public"]["Enums"]["affected_side"]
+          age_years?: number | null
           child_name?: string
           claim_code?: string
           claimed_at?: string | null
           claimed_by_caregiver_id?: string | null
           condition_notes?: string | null
           contraindications?: string | null
+          cp_type?: string | null
           created_at?: string
           date_of_birth?: string | null
           gmfcs_level?: Database["public"]["Enums"]["gmfcs_level"] | null
           goals?: string[]
           id?: string
+          macs_level?: string | null
+          mobility?: string | null
           next_followup_at?: string | null
           preferred_language?: Database["public"]["Enums"]["preferred_language"]
           therapist_id?: string | null
