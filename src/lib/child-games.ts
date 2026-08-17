@@ -20,7 +20,9 @@ export type Mechanic =
   | "crossMidline"
   | "thumbSequence"
   | "twoWrist"
-  | "scissor";
+  | "scissor"
+  | "reachTarget"
+  | "shipFly";
 
 export type MacsLevel = 1 | 2 | 3 | 4 | 5;
 
@@ -46,7 +48,20 @@ export type ChildGame = {
   simplifiedUpTo?: MacsLevel;
   /** number of successful rounds that completes a play session */
   roundsToReward: number;
-  reward: "jar" | "constellation" | "tune" | "confetti" | "campsite" | "picture" | "pop" | "ribbon" | "basket" | "giggle";
+  reward:
+    | "jar"
+    | "constellation"
+    | "tune"
+    | "confetti"
+    | "campsite"
+    | "picture"
+    | "pop"
+    | "ribbon"
+    | "basket"
+    | "giggle"
+    | "flower"
+    | "ship"
+    | "balloon";
   /** target size / tolerance range, meaning depends on mechanic */
   range: DifficultyRange;
   gradient: string;
@@ -197,6 +212,51 @@ export const CHILD_GAMES: ChildGame[] = [
     reward: "basket",
     range: { floor: 0.16, ceiling: 0.07 },
     gradient: "from-yellow-400 to-amber-600",
+  },
+  {
+    id: "magic-garden",
+    region: "Magic garden",
+    title: "Magic garden",
+    invite: "Reach out and make the flowers bloom",
+    emoji: "🌸",
+    mechanic: "reachTarget",
+    skill: "Multi-direction reach",
+    fullUpTo: 4,
+    simplifiedUpTo: 5,
+    roundsToReward: 6,
+    reward: "flower",
+    range: { floor: 0.22, ceiling: 0.1 },
+    gradient: "from-pink-300 to-emerald-400",
+  },
+  {
+    id: "space-explorer",
+    region: "Star harbour",
+    title: "Space explorer",
+    invite: "Fly the rocket up, down and across",
+    emoji: "🪐",
+    mechanic: "shipFly",
+    skill: "Whole-arm range of motion",
+    fullUpTo: 4,
+    simplifiedUpTo: 5,
+    roundsToReward: 6,
+    reward: "ship",
+    range: { floor: 0.24, ceiling: 0.1 },
+    gradient: "from-slate-800 to-indigo-900",
+  },
+  {
+    id: "balloon-pop",
+    region: "Balloon fair",
+    title: "Balloon pop",
+    invite: "Reach up and pop the balloons",
+    emoji: "🎈",
+    mechanic: "reachTarget",
+    skill: "Overhead & cross-body reach",
+    fullUpTo: 4,
+    simplifiedUpTo: 5,
+    roundsToReward: 8,
+    reward: "balloon",
+    range: { floor: 0.22, ceiling: 0.09 },
+    gradient: "from-orange-300 to-red-500",
   },
 ];
 
