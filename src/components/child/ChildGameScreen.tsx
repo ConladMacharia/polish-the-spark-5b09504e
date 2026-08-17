@@ -38,6 +38,8 @@ const HINTS: Record<ChildGame["mechanic"], string> = {
   thumbSequence: "Touch the finger Rafiki shows",
   twoWrist: "Hold with both hands, keep them apart",
   scissor: "Open and close two fingers, snip!",
+  reachTarget: "Reach out and touch it",
+  shipFly: "Move your arm to fly the rocket",
 };
 
 export function ChildGameScreen({
@@ -80,6 +82,7 @@ export function ChildGameScreen({
   const [nextFinger, setNextFinger] = useState<0 | 1 | 2 | 3>(0); // E
   const [carrying, setCarrying] = useState(false); // A+B
   const [bothHands, setBothHands] = useState(false); // F
+  const [ship, setShip] = useState({ x: 0.5, y: 0.5 }); // Space explorer
 
   // ---- camera + hand tracking ----------------------------------------------
   useEffect(() => {
@@ -185,7 +188,8 @@ export function ChildGameScreen({
       game.mechanic === "cursor" ||
       game.mechanic === "pinchDrag" ||
       game.mechanic === "scissor" ||
-      game.mechanic === "pinch";
+      game.mechanic === "pinch" ||
+      game.mechanic === "reachTarget";
     if (usesCursor) setCursor(pos);
     else if (cursor) setCursor(null);
 
@@ -317,6 +321,31 @@ export function ChildGameScreen({
         break;
       }
 
+      /* ── Magic garden / Balloon pop — reach the target zone with the hand. ─ */
+      case "reachTarget": {
+        const near = nearestTarget(targets, pos);
+        const zone = tol + (variant === "simplified" ? 0.06 : 0);
+        if (near && distance(near, pos) < zone) {
+          dwellRef.current += 1;
+          if (dwellRef.current > (variant === "simplified" ? 3 : 6)) {
+            dwellRef.current = 0;
+            succeed(near.x, near.y);
+          }
+        } else {
+          dwellRef.current = 0;
+        }
+        break;
+      }
+
+      /* ── Space explorer — arm movement flies the rocket onto the planets. ─ */
+      case "shipFly": {
+        setShip(pos);
+        const near = nearestTarget(targets, pos);
+        const zone = tol + (variant === "simplified" ? 0.06 : 0);
+        if (near && distance(near, pos) < zone) succeed(near.x, near.y);
+        break;
+      }
+
       /* ── special — scissor snip at the cursor position along the ribbon. ─ */
       case "scissor": {
         if (scissorCycle.current.update(hand, tol * 0.6)) {
@@ -419,6 +448,20 @@ export function ChildGameScreen({
         </div>
       )}
 
+      {/* Space explorer — the rocket follows the arm */}
+      {game.mechanic === "shipFly" && (
+        <div
+          className="pointer-events-none absolute z-20 select-none text-6xl transition-all duration-75"
+          style={{
+            left: `${ship.x * 100}%`,
+            top: `${ship.y * 100}%`,
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          🚀
+        </div>
+      )}
+
       {/* sparkles for warm feedback */}
       {sparkles.map((s) => (
         <div
@@ -494,6 +537,9 @@ function RewardOverlay({
     ribbon: "🎀🎊",
     basket: "🧺🌻",
     giggle: "☁️😄",
+    flower: "🌸🌼",
+    ship: "🚀🪐",
+    balloon: "🎈🎉",
   };
   return (
     <div className="absolute inset-0 z-40 grid place-items-center bg-purple-950/70 backdrop-blur-sm">
@@ -523,14 +569,35 @@ function RewardOverlay({
 
 function spawn(game: ChildGame, seed: number): Target[] {
   const count =
-    game.mechanic === "cursor" ? 3 : game.mechanic === "fist" ? 0 : game.mechanic === "pinch" ? 2 : 1;
+    game.mechanic === "cursor"
+      ? 3
+      : game.mechanic === "fist"
+        ? 0
+        : game.mechanic === "pinch" || game.mechanic === "shipFly"
+          ? 2
+          : 1;
   const crossSide = Math.random() < 0.5 ? 0.16 : 0.84;
-  return Array.from({ length: count }).map((_, i) => ({
-    id: Date.now() + i + Math.floor(seed * 1000),
-    x: game.mechanic === "crossMidline" ? crossSide : 0.2 + Math.random() * 0.6,
-    y: 0.22 + Math.random() * 0.42,
-    drifting: false,
-  }));
+  // Reach games rotate through left / right / high / low / forward so the child
+  // practises every reaching direction instead of one comfortable spot.
+  const spots: { x: number; y: number }[] = [
+    { x: 0.15, y: 0.5 },
+    { x: 0.85, y: 0.5 },
+    { x: 0.5, y: 0.14 },
+    { x: 0.5, y: 0.72 },
+    { x: 0.5, y: 0.42 },
+    { x: 0.18, y: 0.2 },
+    { x: 0.82, y: 0.2 },
+  ];
+  const reachy = game.mechanic === "reachTarget" || game.mechanic === "shipFly";
+  return Array.from({ length: count }).map((_, i) => {
+    const spot = spots[Math.floor(Math.random() * spots.length)];
+    return {
+      id: Date.now() + i + Math.floor(seed * 1000),
+      x: game.mechanic === "crossMidline" ? crossSide : reachy ? spot.x : 0.2 + Math.random() * 0.6,
+      y: reachy ? spot.y : 0.22 + Math.random() * 0.42,
+      drifting: false,
+    };
+  });
 }
 
 function distance(a: { x: number; y: number }, b: { x: number; y: number }) {
