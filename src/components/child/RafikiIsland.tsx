@@ -24,6 +24,7 @@ import {
 } from "@/lib/child-games";
 import { Rafiki } from "@/components/child/Rafiki";
 import { ChildGameScreen } from "@/components/child/ChildGameScreen";
+import { PianoGroveGame } from "@/components/PianoGroveGame";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "cloud-squeeze": Cloud,
@@ -106,6 +107,9 @@ export function RafikiIsland({ childName }: { childName?: string }) {
   const regions = buildRegions(macs);
 
   if (active) {
+    if (active.game.id === "piano-grove") {
+      return <PianoGroveGame onExit={() => setActive(null)} />;
+    }
     return (
       <ChildGameScreen
         game={active.game}
@@ -114,6 +118,7 @@ export function RafikiIsland({ childName }: { childName?: string }) {
       />
     );
   }
+
 
   return (
     <div className="min-h-screen bg-background">
