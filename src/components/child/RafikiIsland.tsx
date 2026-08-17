@@ -106,6 +106,9 @@ export function RafikiIsland({ childName }: { childName?: string }) {
   const regions = buildRegions(macs);
 
   if (active) {
+    if (active.game.id === "piano-grove") {
+      return <PianoGroveGame onExit={() => setActive(null)} />;
+    }
     return (
       <ChildGameScreen
         game={active.game}
@@ -114,6 +117,7 @@ export function RafikiIsland({ childName }: { childName?: string }) {
       />
     );
   }
+
 
   return (
     <div className="min-h-screen bg-background">
