@@ -119,7 +119,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   }
 
   function gameLoop(t: number) {
-    rocketYRef.current += (handYRef.current - rocketYRef.current) * 0.15;
+    rocketYRef.current += (handYRef.current - rocketYRef.current) * 0.5;
     setRocketY(rocketYRef.current);
 
     setDistance((d) => d + speedRef.current * 0.05);
