@@ -80,8 +80,8 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
         // cursor position = midpoint between thumb and index (natural pinch center)
         const cx = ((thumb.x + index.x) / 2) * STAGE_W;
         const cy = ((thumb.y + index.y) / 2) * STAGE_H;
-        cursorRef.current.x += (cx - cursorRef.current.x) * 0.3;
-        cursorRef.current.y += (cy - cursorRef.current.y) * 0.3;
+        cursorRef.current.x += (cx - cursorRef.current.x) * 0.7;
+        cursorRef.current.y += (cy - cursorRef.current.y) * 0.7;
 
         const pinchDist = Math.sqrt((thumb.x - index.x) ** 2 + (thumb.y - index.y) ** 2);
         isPinchedRef.current = pinchDist < PINCH_THRESHOLD;
