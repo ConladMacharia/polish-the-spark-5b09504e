@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
-import { getHandLandmarker } from "../lib/pose/handLandmarker";
+import { getHandLandmarker } from "@/lib/pose/handLandmarker";
 
 interface Obstacle {
   x: number;
