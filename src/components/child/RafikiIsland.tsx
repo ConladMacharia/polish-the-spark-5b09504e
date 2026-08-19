@@ -112,6 +112,20 @@ export function RafikiIsland({ childName }: { childName?: string }) {
     if (active.game.id === "piano-grove") {
       return <PianoGroveGame onExit={() => setActive(null)} />;
     }
+    if (active.game.id === "space-explorer") {
+      return (
+        <GameFrame title={active.game.title} onExit={() => setActive(null)}>
+          <SpaceExplorerGame />
+        </GameFrame>
+      );
+    }
+    if (active.game.id === "zip-tent") {
+      return (
+        <GameFrame title={active.game.title} onExit={() => setActive(null)}>
+          <CampZiplineGame />
+        </GameFrame>
+      );
+    }
     return (
       <ChildGameScreen
         game={active.game}
