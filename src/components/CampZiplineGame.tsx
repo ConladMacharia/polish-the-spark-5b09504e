@@ -223,7 +223,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
             style={{
               position: "absolute",
               left: "50%",
-              bottom: 60,
+              bottom: 70,
               width: 2,
               height: zipHeight,
               background: "rgba(255,255,255,0.6)",
@@ -234,7 +234,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
             style={{
               position: "absolute",
               left: "50%",
-              bottom: 60 + zipHeight,
+              bottom: 70 + zipHeight,
               width: 14,
               height: 20,
               fontSize: 16,
