@@ -124,7 +124,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
 
     setDistance((d) => d + speedRef.current * 0.05);
 
-    if (t - lastSpawnRef.current > 1600) {
+    if (t - lastSpawnRef.current > 1100) {
       const gapCenter = 60 + Math.random() * (STAGE_H - 120);
       obstaclesRef.current.push({ x: STAGE_W + 30, gapCenter, passed: false });
       lastSpawnRef.current = t;
