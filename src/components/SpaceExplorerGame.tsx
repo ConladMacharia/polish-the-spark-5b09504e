@@ -108,23 +108,28 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   function registerHit() {
     invulnerableRef.current = true;
     setIsHit(true);
-    const prevSpeed = speedRef.current;
-    speedRef.current = Math.max(1, speedRef.current * 0.5);
+    // Planets are penalties: they permanently shave speed off the run.
+    speedRef.current = Math.max(MIN_SPEED, speedRef.current - 0.8);
+    setSpeed(speedRef.current);
     setCloseCalls((c) => c + 1);
     setTimeout(() => {
       setIsHit(false);
-      speedRef.current = prevSpeed;
       invulnerableRef.current = false;
-    }, 900);
+    }, 700);
   }
 
   function gameLoop(t: number) {
+    if (startTimeRef.current === 0) startTimeRef.current = t;
+    const elapsed = (t - startTimeRef.current) / 1000;
+
     rocketYRef.current += (handYRef.current - rocketYRef.current) * 0.5;
     setRocketY(rocketYRef.current);
 
     setDistance((d) => d + speedRef.current * 0.05);
 
-    if (t - lastSpawnRef.current > 1100) {
+    // Planets start sparse and get denser as the run progresses.
+    const spawnGap = Math.max(900, 3000 - elapsed * 45);
+    if (t - lastSpawnRef.current > spawnGap) {
       const gapCenter = 60 + Math.random() * (STAGE_H - 120);
       obstaclesRef.current.push({ x: STAGE_W + 30, gapCenter, passed: false });
       lastSpawnRef.current = t;
@@ -160,6 +165,9 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
       if (overlap) {
         c.collected = true;
         setItems((i) => i + 1);
+        // Stars are the prize: each one speeds the rocket up a little.
+        speedRef.current = Math.min(MAX_SPEED, speedRef.current + 0.35);
+        setSpeed(speedRef.current);
       }
     });
     collectiblesRef.current = collectiblesRef.current.filter((c) => c.x > -30 && !c.collected);
@@ -167,6 +175,8 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
 
     requestAnimationFrame(gameLoop);
   }
+
+
 
   return (
     <div style={{ maxWidth: 460, margin: "0 auto" }}>
