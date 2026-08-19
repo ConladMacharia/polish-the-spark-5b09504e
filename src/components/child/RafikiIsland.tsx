@@ -25,6 +25,8 @@ import {
 import { Rafiki } from "@/components/child/Rafiki";
 import { ChildGameScreen } from "@/components/child/ChildGameScreen";
 import { PianoGroveGame } from "@/components/PianoGroveGame";
+import { SpaceExplorerGame } from "@/components/SpaceExplorerGame";
+import { CampZiplineGame } from "@/components/CampZiplineGame";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "cloud-squeeze": Cloud,
