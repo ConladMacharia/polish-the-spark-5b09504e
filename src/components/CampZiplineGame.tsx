@@ -12,12 +12,13 @@ interface CampZiplineGameProps {
   channelHalfWidth?: number; // wider = easier, in normalized 0-1 coords
 }
 
-const STAGE_W = 420;
-const STAGE_H = 460;
-const TENT_BASE_Y = STAGE_H - 60;
-const TENT_HEIGHT = 220; // full tent fabric height, base to peak
-const DOOR_HEIGHT = 170; // door opening goes from base up to this height, not the full peak
-const DOOR_BASE_WIDTH = 40; // half-width of the door opening at the base
+const STAGE_W = 460;
+const STAGE_H = 520;
+const TENT_BASE_Y = STAGE_H - 70;
+const TENT_HEIGHT = 300; // full tent fabric height, base to peak
+const DOOR_HEIGHT = 235; // door opening goes from base up to this height, not the full peak
+const DOOR_BASE_WIDTH = 52; // half-width of the door opening at the base
+const TENT_RENDER_W = 300; // on-screen tent width (viewBox stays 200 wide)
 const CENTER_X = STAGE_W / 2;
 const PINCH_THRESHOLD = 0.06; // normalized thumb-to-index distance
 
