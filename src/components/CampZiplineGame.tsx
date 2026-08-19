@@ -165,23 +165,57 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
           />
 
           {/* tent pegs */}
-          <div style={{ position: "absolute", bottom: 54, left: "calc(50% - 105px)", fontSize: 12, opacity: 0.7 }}>⛏️</div>
-          <div style={{ position: "absolute", bottom: 54, left: "calc(50% + 95px)", fontSize: 12, opacity: 0.7 }}>⛏️</div>
+          <div style={{ position: "absolute", bottom: 62, left: "calc(50% - 150px)", fontSize: 14, opacity: 0.7 }}>⛏️</div>
+          <div style={{ position: "absolute", bottom: 62, left: "calc(50% + 138px)", fontSize: 14, opacity: 0.7 }}>⛏️</div>
 
-          {/* real tent shape, two-tone panels with a ridge seam and guy lines */}
+          {/* bigger tent with shaded panels for a 3D look */}
           <svg
-            width={200}
+            width={TENT_RENDER_W}
             height={TENT_HEIGHT}
             viewBox={`0 0 200 ${TENT_HEIGHT}`}
-            style={{ position: "absolute", left: "50%", bottom: 60, transform: "translateX(-50%)" }}
+            preserveAspectRatio="none"
+            style={{
+              position: "absolute",
+              left: "50%",
+              bottom: 70,
+              transform: "translateX(-50%)",
+              filter: "drop-shadow(0 8px 12px rgba(0,0,0,0.35))",
+            }}
           >
-            <polygon points={`100,0 4,${TENT_HEIGHT} 100,${TENT_HEIGHT}`} fill="#C9793C" />
-            <polygon points={`100,0 196,${TENT_HEIGHT} 100,${TENT_HEIGHT}`} fill="#B06B33" />
-            <line x1="100" y1="0" x2="100" y2={TENT_HEIGHT} stroke="#7C4A22" strokeWidth={2} />
-            <line x1="4" y1={TENT_HEIGHT} x2="-30" y2={TENT_HEIGHT} stroke="#7C4A22" strokeWidth={2} />
-            <line x1="196" y1={TENT_HEIGHT} x2="230" y2={TENT_HEIGHT} stroke="#7C4A22" strokeWidth={2} />
+            <defs>
+              <linearGradient id="tentLeft" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#8A4E20" />
+                <stop offset="70%" stopColor="#C9793C" />
+                <stop offset="100%" stopColor="#E9A063" />
+              </linearGradient>
+              <linearGradient id="tentRight" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#C07437" />
+                <stop offset="45%" stopColor="#9C5A28" />
+                <stop offset="100%" stopColor="#6E3D18" />
+              </linearGradient>
+              <radialGradient id="doorGlow" cx="50%" cy="90%" r="80%">
+                <stop offset="0%" stopColor="#3A2410" />
+                <stop offset="100%" stopColor="#150C04" />
+              </radialGradient>
+            </defs>
+
+            {/* ground shadow ellipse grounds the tent in the scene */}
+            <ellipse cx="100" cy={TENT_HEIGHT - 2} rx="104" ry="9" fill="rgba(0,0,0,0.22)" />
+
+            <polygon points={`100,0 4,${TENT_HEIGHT} 100,${TENT_HEIGHT}`} fill="url(#tentLeft)" />
+            <polygon points={`100,0 196,${TENT_HEIGHT} 100,${TENT_HEIGHT}`} fill="url(#tentRight)" />
+
+            {/* fabric folds */}
+            <line x1="100" y1="0" x2="46" y2={TENT_HEIGHT} stroke="rgba(255,255,255,0.14)" strokeWidth={2} />
+            <line x1="100" y1="0" x2="150" y2={TENT_HEIGHT} stroke="rgba(0,0,0,0.14)" strokeWidth={2} />
+
+            <line x1="100" y1="0" x2="100" y2={TENT_HEIGHT} stroke="#7C4A22" strokeWidth={3} />
+            <line x1="4" y1={TENT_HEIGHT} x2="-34" y2={TENT_HEIGHT - 6} stroke="#7C4A22" strokeWidth={2} />
+            <line x1="196" y1={TENT_HEIGHT} x2="234" y2={TENT_HEIGHT - 6} stroke="#7C4A22" strokeWidth={2} />
+
             {/* door opening — shrinks to a point as the zip rises, apex fixed at the door's top */}
-            <polygon points={doorPoints} fill="#241608" />
+            <polygon points={doorPoints} fill="url(#doorGlow)" />
+            <polygon points={doorPoints} fill="none" stroke="rgba(255,235,200,0.35)" strokeWidth={1.5} />
           </svg>
 
           {/* zip seam line + pull tab, following the door's centerline */}
