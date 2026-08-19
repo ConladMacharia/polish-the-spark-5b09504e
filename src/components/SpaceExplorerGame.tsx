@@ -26,7 +26,7 @@ interface SpaceExplorerGameProps {
 const STAGE_W = 460;
 const STAGE_H = 420;
 
-export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 2.2 }: SpaceExplorerGameProps) {
+export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExplorerGameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const isDetectingRef = useRef(false);
