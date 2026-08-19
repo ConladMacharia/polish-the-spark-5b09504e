@@ -98,7 +98,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
       // avgY is normalized 0-1 (0 = top of frame); map to stage pixels
       const targetY = avgY * STAGE_H;
       // smooth toward target
-      handYRef.current += (targetY - handYRef.current) * 0.35;
+      handYRef.current += (targetY - handYRef.current) * 0.75;
     }
 
     isDetectingRef.current = false;
