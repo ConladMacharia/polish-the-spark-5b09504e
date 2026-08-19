@@ -63,6 +63,35 @@ const MECHANIC_CAPTION: Record<string, string> = {
 
 const ROMAN = ["", "I", "II", "III", "IV", "V"];
 
+/** Full-screen shell around a camera game, with a way back to the map. */
+function GameFrame({
+  title,
+  onExit,
+  children,
+}: {
+  title: string;
+  onExit: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-5 py-6">
+        <div className="flex w-full items-center justify-between">
+          <h1 className="font-display text-xl font-extrabold text-foreground">{title}</h1>
+          <button
+            type="button"
+            onClick={onExit}
+            className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted"
+          >
+            Back to island
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function macsLabel(games: ChildGame[]) {
   const full = Math.max(...games.map((g) => g.fullUpTo));
   const simplified = Math.max(...games.map((g) => g.simplifiedUpTo ?? 0));
