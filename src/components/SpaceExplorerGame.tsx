@@ -129,7 +129,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
       obstaclesRef.current.push({ x: STAGE_W + 30, gapCenter, passed: false });
       lastSpawnRef.current = t;
     }
-    if (t - lastItemSpawnRef.current > 1000) {
+    if (t - lastItemSpawnRef.current > 700) {
       collectiblesRef.current.push({
         x: STAGE_W + 30,
         y: 30 + Math.random() * (STAGE_H - 60),
