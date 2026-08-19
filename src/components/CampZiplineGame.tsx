@@ -12,12 +12,13 @@ interface CampZiplineGameProps {
   channelHalfWidth?: number; // wider = easier, in normalized 0-1 coords
 }
 
-const STAGE_W = 420;
-const STAGE_H = 460;
-const TENT_BASE_Y = STAGE_H - 60;
-const TENT_HEIGHT = 220; // full tent fabric height, base to peak
-const DOOR_HEIGHT = 170; // door opening goes from base up to this height, not the full peak
-const DOOR_BASE_WIDTH = 40; // half-width of the door opening at the base
+const STAGE_W = 460;
+const STAGE_H = 520;
+const TENT_BASE_Y = STAGE_H - 70;
+const TENT_HEIGHT = 300; // full tent fabric height, base to peak
+const DOOR_HEIGHT = 235; // door opening goes from base up to this height, not the full peak
+const DOOR_BASE_WIDTH = 52; // half-width of the door opening at the base
+const TENT_RENDER_W = 300; // on-screen tent width (viewBox stays 200 wide)
 const CENTER_X = STAGE_W / 2;
 const PINCH_THRESHOLD = 0.06; // normalized thumb-to-index distance
 
@@ -79,8 +80,8 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
         // cursor position = midpoint between thumb and index (natural pinch center)
         const cx = ((thumb.x + index.x) / 2) * STAGE_W;
         const cy = ((thumb.y + index.y) / 2) * STAGE_H;
-        cursorRef.current.x += (cx - cursorRef.current.x) * 0.3;
-        cursorRef.current.y += (cy - cursorRef.current.y) * 0.3;
+        cursorRef.current.x += (cx - cursorRef.current.x) * 0.7;
+        cursorRef.current.y += (cy - cursorRef.current.y) * 0.7;
 
         const pinchDist = Math.sqrt((thumb.x - index.x) ** 2 + (thumb.y - index.y) ** 2);
         isPinchedRef.current = pinchDist < PINCH_THRESHOLD;
@@ -100,7 +101,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
         Math.max(0, (TENT_BASE_Y - cursorRef.current.y) / DOOR_HEIGHT)
       );
       if (targetProgress > zipProgressRef.current) {
-        zipProgressRef.current = Math.min(targetProgress, zipProgressRef.current + 0.025);
+        zipProgressRef.current = Math.min(targetProgress, zipProgressRef.current + 0.09);
       }
       setStatusText("Zipping... keep going up!");
     } else if (isPinchedRef.current && !inChannel) {
@@ -164,23 +165,57 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
           />
 
           {/* tent pegs */}
-          <div style={{ position: "absolute", bottom: 54, left: "calc(50% - 105px)", fontSize: 12, opacity: 0.7 }}>⛏️</div>
-          <div style={{ position: "absolute", bottom: 54, left: "calc(50% + 95px)", fontSize: 12, opacity: 0.7 }}>⛏️</div>
+          <div style={{ position: "absolute", bottom: 62, left: "calc(50% - 150px)", fontSize: 14, opacity: 0.7 }}>⛏️</div>
+          <div style={{ position: "absolute", bottom: 62, left: "calc(50% + 138px)", fontSize: 14, opacity: 0.7 }}>⛏️</div>
 
-          {/* real tent shape, two-tone panels with a ridge seam and guy lines */}
+          {/* bigger tent with shaded panels for a 3D look */}
           <svg
-            width={200}
+            width={TENT_RENDER_W}
             height={TENT_HEIGHT}
             viewBox={`0 0 200 ${TENT_HEIGHT}`}
-            style={{ position: "absolute", left: "50%", bottom: 60, transform: "translateX(-50%)" }}
+            preserveAspectRatio="none"
+            style={{
+              position: "absolute",
+              left: "50%",
+              bottom: 70,
+              transform: "translateX(-50%)",
+              filter: "drop-shadow(0 8px 12px rgba(0,0,0,0.35))",
+            }}
           >
-            <polygon points={`100,0 4,${TENT_HEIGHT} 100,${TENT_HEIGHT}`} fill="#C9793C" />
-            <polygon points={`100,0 196,${TENT_HEIGHT} 100,${TENT_HEIGHT}`} fill="#B06B33" />
-            <line x1="100" y1="0" x2="100" y2={TENT_HEIGHT} stroke="#7C4A22" strokeWidth={2} />
-            <line x1="4" y1={TENT_HEIGHT} x2="-30" y2={TENT_HEIGHT} stroke="#7C4A22" strokeWidth={2} />
-            <line x1="196" y1={TENT_HEIGHT} x2="230" y2={TENT_HEIGHT} stroke="#7C4A22" strokeWidth={2} />
+            <defs>
+              <linearGradient id="tentLeft" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#8A4E20" />
+                <stop offset="70%" stopColor="#C9793C" />
+                <stop offset="100%" stopColor="#E9A063" />
+              </linearGradient>
+              <linearGradient id="tentRight" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#C07437" />
+                <stop offset="45%" stopColor="#9C5A28" />
+                <stop offset="100%" stopColor="#6E3D18" />
+              </linearGradient>
+              <radialGradient id="doorGlow" cx="50%" cy="90%" r="80%">
+                <stop offset="0%" stopColor="#3A2410" />
+                <stop offset="100%" stopColor="#150C04" />
+              </radialGradient>
+            </defs>
+
+            {/* ground shadow ellipse grounds the tent in the scene */}
+            <ellipse cx="100" cy={TENT_HEIGHT - 2} rx="104" ry="9" fill="rgba(0,0,0,0.22)" />
+
+            <polygon points={`100,0 4,${TENT_HEIGHT} 100,${TENT_HEIGHT}`} fill="url(#tentLeft)" />
+            <polygon points={`100,0 196,${TENT_HEIGHT} 100,${TENT_HEIGHT}`} fill="url(#tentRight)" />
+
+            {/* fabric folds */}
+            <line x1="100" y1="0" x2="46" y2={TENT_HEIGHT} stroke="rgba(255,255,255,0.14)" strokeWidth={2} />
+            <line x1="100" y1="0" x2="150" y2={TENT_HEIGHT} stroke="rgba(0,0,0,0.14)" strokeWidth={2} />
+
+            <line x1="100" y1="0" x2="100" y2={TENT_HEIGHT} stroke="#7C4A22" strokeWidth={3} />
+            <line x1="4" y1={TENT_HEIGHT} x2="-34" y2={TENT_HEIGHT - 6} stroke="#7C4A22" strokeWidth={2} />
+            <line x1="196" y1={TENT_HEIGHT} x2="234" y2={TENT_HEIGHT - 6} stroke="#7C4A22" strokeWidth={2} />
+
             {/* door opening — shrinks to a point as the zip rises, apex fixed at the door's top */}
-            <polygon points={doorPoints} fill="#241608" />
+            <polygon points={doorPoints} fill="url(#doorGlow)" />
+            <polygon points={doorPoints} fill="none" stroke="rgba(255,235,200,0.35)" strokeWidth={1.5} />
           </svg>
 
           {/* zip seam line + pull tab, following the door's centerline */}
@@ -188,7 +223,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
             style={{
               position: "absolute",
               left: "50%",
-              bottom: 60,
+              bottom: 70,
               width: 2,
               height: zipHeight,
               background: "rgba(255,255,255,0.6)",
@@ -199,7 +234,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
             style={{
               position: "absolute",
               left: "50%",
-              bottom: 60 + zipHeight,
+              bottom: 70 + zipHeight,
               width: 14,
               height: 20,
               fontSize: 16,

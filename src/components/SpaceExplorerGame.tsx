@@ -26,7 +26,7 @@ interface SpaceExplorerGameProps {
 const STAGE_W = 460;
 const STAGE_H = 420;
 
-export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 2.2 }: SpaceExplorerGameProps) {
+export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExplorerGameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const isDetectingRef = useRef(false);
@@ -98,7 +98,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 2.2 }: SpaceExp
       // avgY is normalized 0-1 (0 = top of frame); map to stage pixels
       const targetY = avgY * STAGE_H;
       // smooth toward target
-      handYRef.current += (targetY - handYRef.current) * 0.35;
+      handYRef.current += (targetY - handYRef.current) * 0.75;
     }
 
     isDetectingRef.current = false;
@@ -119,17 +119,17 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 2.2 }: SpaceExp
   }
 
   function gameLoop(t: number) {
-    rocketYRef.current += (handYRef.current - rocketYRef.current) * 0.15;
+    rocketYRef.current += (handYRef.current - rocketYRef.current) * 0.5;
     setRocketY(rocketYRef.current);
 
     setDistance((d) => d + speedRef.current * 0.05);
 
-    if (t - lastSpawnRef.current > 1600) {
+    if (t - lastSpawnRef.current > 1100) {
       const gapCenter = 60 + Math.random() * (STAGE_H - 120);
       obstaclesRef.current.push({ x: STAGE_W + 30, gapCenter, passed: false });
       lastSpawnRef.current = t;
     }
-    if (t - lastItemSpawnRef.current > 1000) {
+    if (t - lastItemSpawnRef.current > 700) {
       collectiblesRef.current.push({
         x: STAGE_W + 30,
         y: 30 + Math.random() * (STAGE_H - 60),
