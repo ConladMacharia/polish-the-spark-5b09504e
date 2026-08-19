@@ -101,7 +101,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
         Math.max(0, (TENT_BASE_Y - cursorRef.current.y) / DOOR_HEIGHT)
       );
       if (targetProgress > zipProgressRef.current) {
-        zipProgressRef.current = Math.min(targetProgress, zipProgressRef.current + 0.025);
+        zipProgressRef.current = Math.min(targetProgress, zipProgressRef.current + 0.09);
       }
       setStatusText("Zipping... keep going up!");
     } else if (isPinchedRef.current && !inChannel) {
