@@ -25,6 +25,8 @@ import {
 import { Rafiki } from "@/components/child/Rafiki";
 import { ChildGameScreen } from "@/components/child/ChildGameScreen";
 import { PianoGroveGame } from "@/components/PianoGroveGame";
+import { SpaceExplorerGame } from "@/components/SpaceExplorerGame";
+import { CampZiplineGame } from "@/components/CampZiplineGame";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "cloud-squeeze": Cloud,
@@ -60,6 +62,35 @@ const MECHANIC_CAPTION: Record<string, string> = {
 };
 
 const ROMAN = ["", "I", "II", "III", "IV", "V"];
+
+/** Full-screen shell around a camera game, with a way back to the map. */
+function GameFrame({
+  title,
+  onExit,
+  children,
+}: {
+  title: string;
+  onExit: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-5 py-6">
+        <div className="flex w-full items-center justify-between">
+          <h1 className="font-display text-xl font-extrabold text-foreground">{title}</h1>
+          <button
+            type="button"
+            onClick={onExit}
+            className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted"
+          >
+            Back to island
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 function macsLabel(games: ChildGame[]) {
   const full = Math.max(...games.map((g) => g.fullUpTo));
@@ -109,6 +140,20 @@ export function RafikiIsland({ childName }: { childName?: string }) {
   if (active) {
     if (active.game.id === "piano-grove") {
       return <PianoGroveGame onExit={() => setActive(null)} />;
+    }
+    if (active.game.id === "space-explorer") {
+      return (
+        <GameFrame title={active.game.title} onExit={() => setActive(null)}>
+          <SpaceExplorerGame />
+        </GameFrame>
+      );
+    }
+    if (active.game.id === "zip-tent") {
+      return (
+        <GameFrame title={active.game.title} onExit={() => setActive(null)}>
+          <CampZiplineGame />
+        </GameFrame>
+      );
     }
     return (
       <ChildGameScreen
