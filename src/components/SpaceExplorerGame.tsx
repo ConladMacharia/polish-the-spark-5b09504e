@@ -42,6 +42,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   const invulnerableRef = useRef(false);
   const lastSpawnRef = useRef(0);
   const lastItemSpawnRef = useRef(0);
+  const startTimeRef = useRef(0);
 
   const [isReady, setIsReady] = useState(false);
   const [rocketY, setRocketY] = useState(STAGE_H / 2);
