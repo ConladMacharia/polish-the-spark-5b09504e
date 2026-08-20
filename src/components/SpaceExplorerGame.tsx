@@ -101,8 +101,8 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
       const avgY = palmPoints.reduce((sum, p) => sum + p.y, 0) / palmPoints.length;
       // avgY is normalized 0-1 (0 = top of frame); map to stage pixels
       const targetY = avgY * STAGE_H;
-      // smooth toward target
-      handYRef.current += (targetY - handYRef.current) * 0.75;
+      // smooth toward target — high enough to feel instant, damped enough to kill jitter
+      handYRef.current += (targetY - handYRef.current) * 0.55;
     }
 
     isDetectingRef.current = false;
@@ -126,19 +126,22 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
     if (startTimeRef.current === 0) startTimeRef.current = t;
     const elapsed = (t - startTimeRef.current) / 1000;
 
-    rocketYRef.current += (handYRef.current - rocketYRef.current) * 0.5;
+    rocketYRef.current += (handYRef.current - rocketYRef.current) * 0.4;
     setRocketY(rocketYRef.current);
 
     setDistance((d) => d + speedRef.current * 0.05);
 
-    // Planets start sparse and get denser as the run progresses.
-    const spawnGap = Math.max(900, 3000 - elapsed * 45);
-    if (t - lastSpawnRef.current > spawnGap) {
+    // Planets start sparse and get denser as the run progresses, but never crowd
+    // the screen: a minimum on-screen horizontal spacing is enforced too.
+    const spawnGap = Math.max(1600, 3800 - elapsed * 35);
+    const lastObstacle = obstaclesRef.current[obstaclesRef.current.length - 1];
+    const hasRoom = !lastObstacle || lastObstacle.x < STAGE_W - 180;
+    if (t - lastSpawnRef.current > spawnGap && hasRoom) {
       const gapCenter = 60 + Math.random() * (STAGE_H - 120);
       obstaclesRef.current.push({ x: STAGE_W + 30, gapCenter, passed: false });
       lastSpawnRef.current = t;
     }
-    if (t - lastItemSpawnRef.current > 700) {
+    if (t - lastItemSpawnRef.current > 1100) {
       collectiblesRef.current.push({
         x: STAGE_W + 30,
         y: 30 + Math.random() * (STAGE_H - 60),
