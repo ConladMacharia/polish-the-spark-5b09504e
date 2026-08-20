@@ -25,6 +25,8 @@ interface SpaceExplorerGameProps {
 
 const STAGE_W = 460;
 const STAGE_H = 420;
+const MIN_SPEED = 2.2;
+const MAX_SPEED = 9;
 
 export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExplorerGameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
