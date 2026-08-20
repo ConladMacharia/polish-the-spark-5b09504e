@@ -194,6 +194,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
             <Stat label="Distance" value={Math.floor(distance)} />
             <Stat label="Items" value={items} />
             <Stat label="Close calls" value={closeCalls} />
+            <Stat label="Speed" value={Math.round(speed * 10) / 10} />
           </div>
 
           <div
