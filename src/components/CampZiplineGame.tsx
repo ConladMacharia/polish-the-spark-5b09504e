@@ -33,6 +33,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
 
   const cursorRef = useRef({ x: CENTER_X, y: TENT_BASE_Y });
   const isPinchedRef = useRef(false);
+  const lastPinchTimeRef = useRef(0);
   const zipProgressRef = useRef(0); // 0 = open, 1 = fully zipped
 
   const [isReady, setIsReady] = useState(false);
@@ -83,11 +84,18 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
         // cursor position = midpoint between thumb and index (natural pinch center)
         const cx = ((thumb.x + index.x) / 2) * STAGE_W;
         const cy = ((thumb.y + index.y) / 2) * STAGE_H;
-        cursorRef.current.x += (cx - cursorRef.current.x) * 0.7;
-        cursorRef.current.y += (cy - cursorRef.current.y) * 0.7;
+        cursorRef.current.x += (cx - cursorRef.current.x) * 0.55;
+        cursorRef.current.y += (cy - cursorRef.current.y) * 0.55;
 
         const pinchDist = Math.sqrt((thumb.x - index.x) ** 2 + (thumb.y - index.y) ** 2);
-        isPinchedRef.current = pinchDist < PINCH_THRESHOLD;
+        const threshold = isPinchedRef.current ? PINCH_RELEASE : PINCH_CLOSE;
+        const pinchedNow = pinchDist < threshold;
+        if (pinchedNow) {
+          lastPinchTimeRef.current = performance.now();
+          isPinchedRef.current = true;
+        } else if (performance.now() - lastPinchTimeRef.current > PINCH_GRACE_MS) {
+          isPinchedRef.current = false;
+        }
       }
       isDetectingRef.current = false;
     }
