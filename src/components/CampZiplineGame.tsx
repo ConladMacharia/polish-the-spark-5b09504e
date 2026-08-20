@@ -20,7 +20,10 @@ const DOOR_HEIGHT = 235; // door opening goes from base up to this height, not t
 const DOOR_BASE_WIDTH = 52; // half-width of the door opening at the base
 const TENT_RENDER_W = 300; // on-screen tent width (viewBox stays 200 wide)
 const CENTER_X = STAGE_W / 2;
-const PINCH_THRESHOLD = 0.06; // normalized thumb-to-index distance
+// Hysteresis: pinch engages when tighter than CLOSE, only drops past RELEASE.
+const PINCH_CLOSE = 0.065;
+const PINCH_RELEASE = 0.085;
+const PINCH_GRACE_MS = 140; // brief tracking dropouts don't pause the zip
 
 export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
