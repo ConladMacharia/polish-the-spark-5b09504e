@@ -15,11 +15,12 @@ const FINGER_COLOR: Record<FingerName, string> = {
   ring: "#6E9BD1",
   pinky: "#C87DAE",
 };
-const NOTE_FREQ: Record<FingerName, number> = {
-  index: 523.25,
-  middle: 587.33,
-  ring: 659.25,
-  pinky: 698.46,
+// Each finger gets its own short motif + timbre so taps sound clearly distinct.
+const NOTE_MOTIF: Record<FingerName, { freqs: number[]; type: OscillatorType }> = {
+  index: { freqs: [523.25, 659.25, 783.99], type: "sine" }, // C major arpeggio
+  middle: { freqs: [587.33, 698.46, 880.0], type: "triangle" }, // D minor-ish
+  ring: { freqs: [659.25, 783.99, 987.77], type: "square" }, // E
+  pinky: { freqs: [698.46, 880.0, 1046.5], type: "sawtooth" }, // F
 };
 
 const TRAVEL_MS = 2400;
@@ -100,16 +101,23 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
         (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     }
     const ctx = audioCtxRef.current;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.value = NOTE_FREQ[finger];
-    gain.gain.setValueAtTime(0.18, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.4);
+    if (ctx.state === "suspended") void ctx.resume();
+    const motif = NOTE_MOTIF[finger];
+    const step = 0.11;
+    motif.freqs.forEach((freq, i) => {
+      const start = ctx.currentTime + i * step;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = motif.type;
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.16, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.3);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.32);
+    });
   }
 
   function detectionLoop() {

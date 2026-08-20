@@ -25,6 +25,8 @@ interface SpaceExplorerGameProps {
 
 const STAGE_W = 460;
 const STAGE_H = 420;
+const MIN_SPEED = 2.2;
+const MAX_SPEED = 9;
 
 export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExplorerGameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -40,6 +42,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   const invulnerableRef = useRef(false);
   const lastSpawnRef = useRef(0);
   const lastItemSpawnRef = useRef(0);
+  const startTimeRef = useRef(0);
 
   const [isReady, setIsReady] = useState(false);
   const [rocketY, setRocketY] = useState(STAGE_H / 2);
@@ -49,6 +52,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   const [items, setItems] = useState(0);
   const [closeCalls, setCloseCalls] = useState(0);
   const [isHit, setIsHit] = useState(false);
+  const [speed, setSpeed] = useState(baseSpeed);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -190,6 +194,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
             <Stat label="Distance" value={Math.floor(distance)} />
             <Stat label="Items" value={items} />
             <Stat label="Close calls" value={closeCalls} />
+            <Stat label="Speed" value={Math.round(speed * 10) / 10} />
           </div>
 
           <div
