@@ -52,6 +52,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   const [items, setItems] = useState(0);
   const [closeCalls, setCloseCalls] = useState(0);
   const [isHit, setIsHit] = useState(false);
+  const [speed, setSpeed] = useState(baseSpeed);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
