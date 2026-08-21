@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   Bug,
+  Circle,
   Cloud,
   Droplet,
   Flower2,
@@ -37,7 +38,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "bubble-lagoon": Droplet,
   "zip-tent": Tent,
   "shape-sorter": Puzzle,
-  "peg-pop": Puzzle,
+  "peg-pop": Circle,
   "snip-ribbon": Scissors,
   "carry-basket": ShoppingBasket,
   "magic-garden": Flower2,
@@ -119,6 +120,13 @@ function buildRegions(macs: MacsLevel): Region[] {
     }
     byRegion.get(game.region)!.push(game);
   }
+  // Fixed opening run, then the remaining regions in catalogue order.
+  const preferred = ["Cloud meadow", "Camp zipline hill", "Balloon fair", "Star harbour", "Piano grove"];
+  order.sort((a, b) => {
+    const ia = preferred.indexOf(a);
+    const ib = preferred.indexOf(b);
+    return (ia === -1 ? preferred.length : ia) - (ib === -1 ? preferred.length : ib);
+  });
   return order.map((region) => {
     const games = byRegion.get(region)!;
     const openable = games
@@ -193,7 +201,6 @@ export function RafikiIsland({ childName }: { childName?: string }) {
 
         <ul className="mt-8 grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
           {regions.map(({ region, games, playable }) => {
-            const Icon = ICONS[games[0].id] ?? Sparkles;
             const chip = macsLabel(games);
             const title = games.map((g) => g.title).join(" + ");
             const caption = MECHANIC_CAPTION[games[0].id] ?? games[0].skill;
@@ -212,7 +219,12 @@ export function RafikiIsland({ childName }: { childName?: string }) {
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className="h-6 w-6 text-primary" />
+                    <span className="flex items-center gap-1.5">
+                      {games.map((g) => {
+                        const GameIcon = ICONS[g.id] ?? Sparkles;
+                        return <GameIcon key={g.id} className="h-6 w-6 text-primary" />;
+                      })}
+                    </span>
                     <h2 className="text-lg font-semibold text-muted-foreground group-hover:text-foreground">
                       {region}
                     </h2>
