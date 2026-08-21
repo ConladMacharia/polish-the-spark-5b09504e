@@ -115,10 +115,11 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
       // Palm center = average of wrist + 4 MCP joints
       const palmPoints = [lm[0], lm[5], lm[9], lm[13], lm[17]];
       const avgY = palmPoints.reduce((sum, p) => sum + p.y, 0) / palmPoints.length;
+      const avgX = palmPoints.reduce((sum, p) => sum + p.x, 0) / palmPoints.length;
+      jitterRef.current.push({ x: avgX, y: avgY });
+      confRef.current = blendConfidence(handConfidence(result), jitterRef.current.stability);
       // avgY is normalized 0-1 (0 = top of frame); map to stage pixels
-      const targetY = avgY * STAGE_H;
-      // smooth toward target — high enough to feel instant, damped enough to kill jitter
-      handYRef.current += (targetY - handYRef.current) * 0.55;
+      handYRef.current = handSmootherRef.current.push(avgY * STAGE_H, confRef.current);
     }
 
     isDetectingRef.current = false;
