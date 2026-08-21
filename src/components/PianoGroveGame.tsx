@@ -146,11 +146,20 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
     const result = landmarker.detectForVideo(video, performance.now());
 
     if (result.landmarks.length > 0) {
-      const distances = getFingerDistances(result.landmarks[0]);
+      const lm = result.landmarks[0];
+      const distances = getFingerDistances(lm);
       setLiveDistances(distances);
 
-      const active = getActiveFinger(distances);
+      // Confidence-aware touch threshold: dim light / shaky hands get judged
+      // a little more generously instead of taps simply being rejected.
+      const stability = jitterRef.current.push({ x: lm[0].x, y: lm[0].y });
+      const conf = blendConfidence(
+        handConfidence(result),
+        jitterRef.current.stability ?? stability
+      );
+      const active = getActiveFinger(distances, tolerantThreshold(TOUCH_THRESHOLD, conf, 0.4));
       setActiveFinger(active);
+
 
       if (active && !lastHitFrameRef.current[active]) {
         handleTouch(active);
