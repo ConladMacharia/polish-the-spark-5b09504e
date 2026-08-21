@@ -32,11 +32,30 @@ const PINCH_CLOSE = 0.065;
 const PINCH_RELEASE = 0.085;
 const PINCH_GRACE_MS = 140; // brief tracking dropouts don't pause the zip
 
+// Pinch hysteresis + dropout grace are now confidence-scaled by AdaptivePinch.
+const PINCH_CLOSE = 0.065;
+const PINCH_RELEASE = 0.085;
+const PINCH_GRACE_MS = 140;
+
 export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
+  const jitterRef = useRef(new JitterMonitor());
+  const confRef = useRef(0.7);
+  const cursorSmootherRef = useRef(
+    new AdaptivePointSmoother({ minAlpha: 0.2, maxAlpha: 0.8, fastMotion: 0.05 })
+  );
+  const pinchRef = useRef(
+    new AdaptivePinch({
+      closeAt: PINCH_CLOSE,
+      releaseAt: PINCH_RELEASE,
+      graceMs: PINCH_GRACE_MS,
+      lowConfidenceWiden: 0.6,
+    })
+  );
+
 
   const cursorRef = useRef({ x: CENTER_X, y: TENT_BASE_Y });
   const isPinchedRef = useRef(false);
