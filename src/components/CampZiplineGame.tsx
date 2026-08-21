@@ -54,7 +54,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
 
   const cursorRef = useRef({ x: CENTER_X, y: TENT_BASE_Y });
   const isPinchedRef = useRef(false);
-  const lastPinchTimeRef = useRef(0);
+  
   const zipProgressRef = useRef(0); // 0 = open, 1 = fully zipped
 
   const [isReady, setIsReady] = useState(false);
