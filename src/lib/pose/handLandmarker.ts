@@ -14,8 +14,10 @@ export async function getHandLandmarker(): Promise<HandLandmarker> {
 
   loading = (async () => {
     const vision = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
     );
+    // One hand only: halves per-frame inference cost, which is the single
+    // biggest source of perceived tracking lag in the camera games.
     const landmarker = await HandLandmarker.createFromOptions(vision, {
       baseOptions: {
         modelAssetPath:
@@ -23,7 +25,10 @@ export async function getHandLandmarker(): Promise<HandLandmarker> {
         delegate: "GPU",
       },
       runningMode: "VIDEO",
-      numHands: 2,
+      numHands: 1,
+      minHandDetectionConfidence: 0.4,
+      minHandPresenceConfidence: 0.4,
+      minTrackingConfidence: 0.4,
     });
     instance = landmarker;
     return landmarker;
