@@ -141,7 +141,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
     if (startTimeRef.current === 0) startTimeRef.current = t;
     const elapsed = (t - startTimeRef.current) / 1000;
 
-    rocketYRef.current = rocketSmootherRef.current.push(handYRef.current, confRef.current);
+    rocketYRef.current = handYRef.current;
     setRocketY(rocketYRef.current);
 
     setDistance((d) => d + speedRef.current * 0.05);
