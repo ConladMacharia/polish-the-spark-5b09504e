@@ -119,6 +119,13 @@ function buildRegions(macs: MacsLevel): Region[] {
     }
     byRegion.get(game.region)!.push(game);
   }
+  // Fixed opening run, then the remaining regions in catalogue order.
+  const preferred = ["Cloud meadow", "Camp zipline hill", "Balloon fair", "Star harbour", "Piano grove"];
+  order.sort((a, b) => {
+    const ia = preferred.indexOf(a);
+    const ib = preferred.indexOf(b);
+    return (ia === -1 ? preferred.length : ia) - (ib === -1 ? preferred.length : ib);
+  });
   return order.map((region) => {
     const games = byRegion.get(region)!;
     const openable = games
