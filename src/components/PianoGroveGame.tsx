@@ -47,6 +47,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const jitterRef = useRef(new JitterMonitor());
 
   const [isReady, setIsReady] = useState(false);
   const [liveDistances, setLiveDistances] = useState<Record<FingerName, number> | null>(null);
