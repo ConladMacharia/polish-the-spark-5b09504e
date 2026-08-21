@@ -6,7 +6,13 @@
 import { useEffect, useRef, useState } from "react";
 import type { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getHandLandmarker } from "@/lib/pose/handLandmarker";
-import { getFingerDistances, getActiveFinger, type FingerName } from "@/lib/pose/fingerUtils";
+import { getFingerDistances, getActiveFinger, TOUCH_THRESHOLD, type FingerName } from "@/lib/pose/fingerUtils";
+import {
+  handConfidence,
+  blendConfidence,
+  JitterMonitor,
+  tolerantThreshold,
+} from "@/lib/pose/adaptiveTracking";
 
 const FINGER_ORDER: FingerName[] = ["index", "middle", "ring", "pinky"];
 const FINGER_COLOR: Record<FingerName, string> = {
