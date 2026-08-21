@@ -49,6 +49,16 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   const lastSpawnRef = useRef(0);
   const lastItemSpawnRef = useRef(0);
   const startTimeRef = useRef(0);
+  // Adaptive tracking: heavier damping when confidence is low, snappier when
+  // the hand moves fast, so the rocket never jitters and never lags.
+  const jitterRef = useRef(new JitterMonitor());
+  const confRef = useRef(0.7);
+  const handSmootherRef = useRef(
+    new AdaptiveScalar({ minAlpha: 0.22, maxAlpha: 0.85, fastMotion: 0.05 * STAGE_H })
+  );
+  const rocketSmootherRef = useRef(
+    new AdaptiveScalar({ minAlpha: 0.2, maxAlpha: 0.6, fastMotion: 0.06 * STAGE_H })
+  );
 
   const [isReady, setIsReady] = useState(false);
   const [rocketY, setRocketY] = useState(STAGE_H / 2);
