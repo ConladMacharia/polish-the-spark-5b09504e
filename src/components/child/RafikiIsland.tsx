@@ -27,6 +27,7 @@ import { ChildGameScreen } from "@/components/child/ChildGameScreen";
 import { PianoGroveGame } from "@/components/PianoGroveGame";
 import { SpaceExplorerGame } from "@/components/SpaceExplorerGame";
 import { CampZiplineGame } from "@/components/CampZiplineGame";
+import { BalloonFairGame } from "@/components/BalloonFairGame";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "cloud-squeeze": Cloud,
@@ -145,6 +146,13 @@ export function RafikiIsland({ childName }: { childName?: string }) {
       return (
         <GameFrame title={active.game.title} onExit={() => setActive(null)}>
           <SpaceExplorerGame />
+        </GameFrame>
+      );
+    }
+    if (active.game.id === "balloon-pop") {
+      return (
+        <GameFrame title={active.game.title} onExit={() => setActive(null)}>
+          <BalloonFairGame bowHand="left" />
         </GameFrame>
       );
     }
