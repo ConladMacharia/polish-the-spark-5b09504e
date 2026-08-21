@@ -117,7 +117,11 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
       jitterRef.current.push({ x: avgX, y: avgY });
       confRef.current = blendConfidence(handConfidence(result), jitterRef.current.stability);
       // avgY is normalized 0-1 (0 = top of frame); map to stage pixels
-      handYRef.current = handSmootherRef.current.push(avgY * STAGE_H, confRef.current);
+      // Gain around the frame center: a small, comfortable hand movement covers
+      // the whole stage, so the rocket feels immediate instead of sluggish.
+      const gained = 0.5 + (avgY - 0.5) * 1.4;
+      const targetY = Math.max(20, Math.min(STAGE_H - 20, gained * STAGE_H));
+      handYRef.current = handSmootherRef.current.push(targetY, confRef.current);
     }
 
     isDetectingRef.current = false;
