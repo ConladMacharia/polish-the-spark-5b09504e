@@ -5,6 +5,12 @@
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getHandLandmarker } from "@/lib/pose/handLandmarker";
+import {
+  AdaptiveScalar,
+  JitterMonitor,
+  blendConfidence,
+  handConfidence,
+} from "@/lib/pose/adaptiveTracking";
 
 interface Obstacle {
   x: number;
