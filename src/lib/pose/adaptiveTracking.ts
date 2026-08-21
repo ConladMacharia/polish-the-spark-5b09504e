@@ -92,9 +92,9 @@ export function adaptiveAlpha(
   motion: number,
   opts: AdaptiveSmoothingOptions = {}
 ): number {
-  const minAlpha = opts.minAlpha ?? 0.18;
-  const maxAlpha = opts.maxAlpha ?? 0.8;
-  const fastMotion = opts.fastMotion ?? 0.045;
+  const minAlpha = opts.minAlpha ?? 0.35;
+  const maxAlpha = opts.maxAlpha ?? 0.95;
+  const fastMotion = opts.fastMotion ?? 0.03;
 
   const base = minAlpha + (maxAlpha - minAlpha) * clamp01(confidence);
   const speedBoost = clamp01(motion / fastMotion) * (maxAlpha - base);
