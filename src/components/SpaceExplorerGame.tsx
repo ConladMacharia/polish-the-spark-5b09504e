@@ -53,11 +53,9 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   // the hand moves fast, so the rocket never jitters and never lags.
   const jitterRef = useRef(new JitterMonitor());
   const confRef = useRef(0.7);
+  // A single filter only: chaining two smoothers multiplied the lag.
   const handSmootherRef = useRef(
-    new AdaptiveScalar({ minAlpha: 0.22, maxAlpha: 0.85, fastMotion: 0.05 * STAGE_H })
-  );
-  const rocketSmootherRef = useRef(
-    new AdaptiveScalar({ minAlpha: 0.2, maxAlpha: 0.6, fastMotion: 0.06 * STAGE_H })
+    new AdaptiveScalar({ minAlpha: 0.45, maxAlpha: 0.95, fastMotion: 0.025 * STAGE_H })
   );
 
   const [isReady, setIsReady] = useState(false);
