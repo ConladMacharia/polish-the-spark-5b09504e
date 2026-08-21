@@ -54,15 +54,20 @@ export function getFingerDistances(landmarks: Point2D[]): Record<FingerName, num
 const TOUCH_THRESHOLD = 0.35; // tune based on real testing — start generous
 const SEPARATION_MARGIN = 1.3; // target must be this much closer than 2nd-closest
 
-export function getActiveFinger(distances: Record<FingerName, number>): FingerName | null {
+export function getActiveFinger(
+  distances: Record<FingerName, number>,
+  touchThreshold: number = TOUCH_THRESHOLD
+): FingerName | null {
   const entries = Object.entries(distances) as [FingerName, number][];
   entries.sort((a, b) => a[1] - b[1]);
 
   const [closestName, closestDist] = entries[0];
   const [, secondDist] = entries[1];
 
-  if (closestDist > TOUCH_THRESHOLD) return null; // nothing close enough to thumb
+  if (closestDist > touchThreshold) return null; // nothing close enough to thumb
   if (secondDist < closestDist * SEPARATION_MARGIN) return null; // too ambiguous — two fingers equally close
 
   return closestName;
 }
+
+export { TOUCH_THRESHOLD };

@@ -6,7 +6,13 @@
 import { useEffect, useRef, useState } from "react";
 import type { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getHandLandmarker } from "@/lib/pose/handLandmarker";
-import { getFingerDistances, getActiveFinger, type FingerName } from "@/lib/pose/fingerUtils";
+import { getFingerDistances, getActiveFinger, TOUCH_THRESHOLD, type FingerName } from "@/lib/pose/fingerUtils";
+import {
+  handConfidence,
+  blendConfidence,
+  JitterMonitor,
+  tolerantThreshold,
+} from "@/lib/pose/adaptiveTracking";
 
 const FINGER_ORDER: FingerName[] = ["index", "middle", "ring", "pinky"];
 const FINGER_COLOR: Record<FingerName, string> = {
@@ -41,6 +47,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const jitterRef = useRef(new JitterMonitor());
 
   const [isReady, setIsReady] = useState(false);
   const [liveDistances, setLiveDistances] = useState<Record<FingerName, number> | null>(null);
@@ -140,11 +147,20 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
     const result = landmarker.detectForVideo(video, performance.now());
 
     if (result.landmarks.length > 0) {
-      const distances = getFingerDistances(result.landmarks[0]);
+      const lm = result.landmarks[0];
+      const distances = getFingerDistances(lm);
       setLiveDistances(distances);
 
-      const active = getActiveFinger(distances);
+      // Confidence-aware touch threshold: dim light / shaky hands get judged
+      // a little more generously instead of taps simply being rejected.
+      const stability = jitterRef.current.push({ x: lm[0].x, y: lm[0].y });
+      const conf = blendConfidence(
+        handConfidence(result),
+        jitterRef.current.stability ?? stability
+      );
+      const active = getActiveFinger(distances, tolerantThreshold(TOUCH_THRESHOLD, conf, 0.4));
       setActiveFinger(active);
+
 
       if (active && !lastHitFrameRef.current[active]) {
         handleTouch(active);

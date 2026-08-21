@@ -6,6 +6,13 @@ import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getHandLandmarker } from "@/lib/pose/handLandmarker";
 import { HAND_LANDMARKS } from "@/lib/pose/fingerUtils";
+import {
+  AdaptivePinch,
+  AdaptivePointSmoother,
+  JitterMonitor,
+  blendConfidence,
+  handConfidence,
+} from "@/lib/pose/adaptiveTracking";
 
 interface CampZiplineGameProps {
   // Difficulty parameter — read from the per-child target/range system
@@ -20,20 +27,34 @@ const DOOR_HEIGHT = 235; // door opening goes from base up to this height, not t
 const DOOR_BASE_WIDTH = 52; // half-width of the door opening at the base
 const TENT_RENDER_W = 300; // on-screen tent width (viewBox stays 200 wide)
 const CENTER_X = STAGE_W / 2;
-// Hysteresis: pinch engages when tighter than CLOSE, only drops past RELEASE.
+// Pinch hysteresis + dropout grace are confidence-scaled by AdaptivePinch.
 const PINCH_CLOSE = 0.065;
 const PINCH_RELEASE = 0.085;
-const PINCH_GRACE_MS = 140; // brief tracking dropouts don't pause the zip
+const PINCH_GRACE_MS = 140;
 
 export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
+  const jitterRef = useRef(new JitterMonitor());
+  const confRef = useRef(0.7);
+  const cursorSmootherRef = useRef(
+    new AdaptivePointSmoother({ minAlpha: 0.2, maxAlpha: 0.8, fastMotion: 0.05 })
+  );
+  const pinchRef = useRef(
+    new AdaptivePinch({
+      closeAt: PINCH_CLOSE,
+      releaseAt: PINCH_RELEASE,
+      graceMs: PINCH_GRACE_MS,
+      lowConfidenceWiden: 0.6,
+    })
+  );
+
 
   const cursorRef = useRef({ x: CENTER_X, y: TENT_BASE_Y });
   const isPinchedRef = useRef(false);
-  const lastPinchTimeRef = useRef(0);
+  
   const zipProgressRef = useRef(0); // 0 = open, 1 = fully zipped
 
   const [isReady, setIsReady] = useState(false);
@@ -75,27 +96,27 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
       isDetectingRef.current = true;
       lastVideoTimeRef.current = video.currentTime;
 
-      const result = landmarker.detectForVideo(video, performance.now());
+      const now = performance.now();
+      const result = landmarker.detectForVideo(video, now);
       if (result.landmarks.length > 0) {
         const lm = result.landmarks[0];
         const thumb = lm[HAND_LANDMARKS.THUMB_TIP];
         const index = lm[HAND_LANDMARKS.INDEX_TIP];
 
         // cursor position = midpoint between thumb and index (natural pinch center)
-        const cx = ((thumb.x + index.x) / 2) * STAGE_W;
-        const cy = ((thumb.y + index.y) / 2) * STAGE_H;
-        cursorRef.current.x += (cx - cursorRef.current.x) * 0.55;
-        cursorRef.current.y += (cy - cursorRef.current.y) * 0.55;
+        const mid = { x: (thumb.x + index.x) / 2, y: (thumb.y + index.y) / 2 };
+        jitterRef.current.push(mid);
+        confRef.current = blendConfidence(handConfidence(result), jitterRef.current.stability);
+
+        const smoothed = cursorSmootherRef.current.push(mid, confRef.current);
+        cursorRef.current.x = smoothed.x * STAGE_W;
+        cursorRef.current.y = smoothed.y * STAGE_H;
 
         const pinchDist = Math.sqrt((thumb.x - index.x) ** 2 + (thumb.y - index.y) ** 2);
-        const threshold = isPinchedRef.current ? PINCH_RELEASE : PINCH_CLOSE;
-        const pinchedNow = pinchDist < threshold;
-        if (pinchedNow) {
-          lastPinchTimeRef.current = performance.now();
-          isPinchedRef.current = true;
-        } else if (performance.now() - lastPinchTimeRef.current > PINCH_GRACE_MS) {
-          isPinchedRef.current = false;
-        }
+        isPinchedRef.current = pinchRef.current.update(pinchDist, confRef.current, now);
+      } else {
+        // tracking lost: keep a held pinch alive only inside the adaptive grace
+        isPinchedRef.current = pinchRef.current.markMissing(confRef.current, now);
       }
       isDetectingRef.current = false;
     }

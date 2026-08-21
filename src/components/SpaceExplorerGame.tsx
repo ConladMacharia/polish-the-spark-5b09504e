@@ -5,6 +5,12 @@
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getHandLandmarker } from "@/lib/pose/handLandmarker";
+import {
+  AdaptiveScalar,
+  JitterMonitor,
+  blendConfidence,
+  handConfidence,
+} from "@/lib/pose/adaptiveTracking";
 
 interface Obstacle {
   x: number;
@@ -43,6 +49,16 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   const lastSpawnRef = useRef(0);
   const lastItemSpawnRef = useRef(0);
   const startTimeRef = useRef(0);
+  // Adaptive tracking: heavier damping when confidence is low, snappier when
+  // the hand moves fast, so the rocket never jitters and never lags.
+  const jitterRef = useRef(new JitterMonitor());
+  const confRef = useRef(0.7);
+  const handSmootherRef = useRef(
+    new AdaptiveScalar({ minAlpha: 0.22, maxAlpha: 0.85, fastMotion: 0.05 * STAGE_H })
+  );
+  const rocketSmootherRef = useRef(
+    new AdaptiveScalar({ minAlpha: 0.2, maxAlpha: 0.6, fastMotion: 0.06 * STAGE_H })
+  );
 
   const [isReady, setIsReady] = useState(false);
   const [rocketY, setRocketY] = useState(STAGE_H / 2);
@@ -99,10 +115,11 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
       // Palm center = average of wrist + 4 MCP joints
       const palmPoints = [lm[0], lm[5], lm[9], lm[13], lm[17]];
       const avgY = palmPoints.reduce((sum, p) => sum + p.y, 0) / palmPoints.length;
+      const avgX = palmPoints.reduce((sum, p) => sum + p.x, 0) / palmPoints.length;
+      jitterRef.current.push({ x: avgX, y: avgY });
+      confRef.current = blendConfidence(handConfidence(result), jitterRef.current.stability);
       // avgY is normalized 0-1 (0 = top of frame); map to stage pixels
-      const targetY = avgY * STAGE_H;
-      // smooth toward target — high enough to feel instant, damped enough to kill jitter
-      handYRef.current += (targetY - handYRef.current) * 0.55;
+      handYRef.current = handSmootherRef.current.push(avgY * STAGE_H, confRef.current);
     }
 
     isDetectingRef.current = false;
@@ -126,7 +143,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
     if (startTimeRef.current === 0) startTimeRef.current = t;
     const elapsed = (t - startTimeRef.current) / 1000;
 
-    rocketYRef.current += (handYRef.current - rocketYRef.current) * 0.4;
+    rocketYRef.current = rocketSmootherRef.current.push(handYRef.current, confRef.current);
     setRocketY(rocketYRef.current);
 
     setDistance((d) => d + speedRef.current * 0.05);
