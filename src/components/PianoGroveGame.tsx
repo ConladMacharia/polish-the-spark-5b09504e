@@ -48,6 +48,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   const lastVideoTimeRef = useRef(-1);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const jitterRef = useRef(new JitterMonitor());
+  const lastUiUpdateRef = useRef(0);
 
   const [isReady, setIsReady] = useState(false);
   const [liveDistances, setLiveDistances] = useState<Record<FingerName, number> | null>(null);
@@ -149,7 +150,13 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
     if (result.landmarks.length > 0) {
       const lm = result.landmarks[0];
       const distances = getFingerDistances(lm);
-      setLiveDistances(distances);
+      // Debug readout only — refreshing it every frame re-rendered the whole
+      // board and stole frames from detection.
+      const nowMs = performance.now();
+      if (nowMs - lastUiUpdateRef.current > 120) {
+        lastUiUpdateRef.current = nowMs;
+        setLiveDistances(distances);
+      }
 
       // Confidence-aware touch threshold: dim light / shaky hands get judged
       // a little more generously instead of taps simply being rejected.

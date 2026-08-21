@@ -53,11 +53,9 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   // the hand moves fast, so the rocket never jitters and never lags.
   const jitterRef = useRef(new JitterMonitor());
   const confRef = useRef(0.7);
+  // A single filter only: chaining two smoothers multiplied the lag.
   const handSmootherRef = useRef(
-    new AdaptiveScalar({ minAlpha: 0.22, maxAlpha: 0.85, fastMotion: 0.05 * STAGE_H })
-  );
-  const rocketSmootherRef = useRef(
-    new AdaptiveScalar({ minAlpha: 0.2, maxAlpha: 0.6, fastMotion: 0.06 * STAGE_H })
+    new AdaptiveScalar({ minAlpha: 0.45, maxAlpha: 0.95, fastMotion: 0.025 * STAGE_H })
   );
 
   const [isReady, setIsReady] = useState(false);
@@ -119,7 +117,11 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
       jitterRef.current.push({ x: avgX, y: avgY });
       confRef.current = blendConfidence(handConfidence(result), jitterRef.current.stability);
       // avgY is normalized 0-1 (0 = top of frame); map to stage pixels
-      handYRef.current = handSmootherRef.current.push(avgY * STAGE_H, confRef.current);
+      // Gain around the frame center: a small, comfortable hand movement covers
+      // the whole stage, so the rocket feels immediate instead of sluggish.
+      const gained = 0.5 + (avgY - 0.5) * 1.4;
+      const targetY = Math.max(20, Math.min(STAGE_H - 20, gained * STAGE_H));
+      handYRef.current = handSmootherRef.current.push(targetY, confRef.current);
     }
 
     isDetectingRef.current = false;
@@ -143,7 +145,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
     if (startTimeRef.current === 0) startTimeRef.current = t;
     const elapsed = (t - startTimeRef.current) / 1000;
 
-    rocketYRef.current = rocketSmootherRef.current.push(handYRef.current, confRef.current);
+    rocketYRef.current = handYRef.current;
     setRocketY(rocketYRef.current);
 
     setDistance((d) => d + speedRef.current * 0.05);

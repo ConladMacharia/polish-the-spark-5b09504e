@@ -30,7 +30,7 @@ const CENTER_X = STAGE_W / 2;
 // Pinch hysteresis + dropout grace are confidence-scaled by AdaptivePinch.
 const PINCH_CLOSE = 0.065;
 const PINCH_RELEASE = 0.085;
-const PINCH_GRACE_MS = 140;
+const PINCH_GRACE_MS = 90;
 
 export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -40,14 +40,14 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
   const jitterRef = useRef(new JitterMonitor());
   const confRef = useRef(0.7);
   const cursorSmootherRef = useRef(
-    new AdaptivePointSmoother({ minAlpha: 0.2, maxAlpha: 0.8, fastMotion: 0.05 })
+    new AdaptivePointSmoother({ minAlpha: 0.45, maxAlpha: 0.96, fastMotion: 0.025 })
   );
   const pinchRef = useRef(
     new AdaptivePinch({
       closeAt: PINCH_CLOSE,
       releaseAt: PINCH_RELEASE,
       graceMs: PINCH_GRACE_MS,
-      lowConfidenceWiden: 0.6,
+      lowConfidenceWiden: 0.35,
     })
   );
 
@@ -133,7 +133,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
         Math.max(0, (TENT_BASE_Y - cursorRef.current.y) / DOOR_HEIGHT)
       );
       if (targetProgress > zipProgressRef.current) {
-        zipProgressRef.current = Math.min(targetProgress, zipProgressRef.current + 0.09);
+        zipProgressRef.current = Math.min(targetProgress, zipProgressRef.current + 0.2);
       }
       setStatusText("Zipping... keep going up!");
     } else if (isPinchedRef.current && !inChannel) {
