@@ -6,6 +6,13 @@ import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getHandLandmarker } from "@/lib/pose/handLandmarker";
 import { HAND_LANDMARKS } from "@/lib/pose/fingerUtils";
+import {
+  AdaptivePinch,
+  AdaptivePointSmoother,
+  JitterMonitor,
+  blendConfidence,
+  handConfidence,
+} from "@/lib/pose/adaptiveTracking";
 
 interface CampZiplineGameProps {
   // Difficulty parameter — read from the per-child target/range system
