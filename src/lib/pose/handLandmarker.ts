@@ -84,6 +84,31 @@ export async function getTwoHandLandmarker(): Promise<HandLandmarker> {
 }
 
 /**
+ * Drops the cached one-hand landmarker so the next getHandLandmarker() builds a
+ * fresh one. Used by the stall watchdog when detection dies mid-game.
+ */
+export function resetHandLandmarker(): void {
+  try {
+    instance?.close();
+  } catch {
+    /* already gone */
+  }
+  instance = null;
+  loading = null;
+}
+
+/** Same, for the two-hand variant. */
+export function resetTwoHandLandmarker(): void {
+  try {
+    twoInstance?.close();
+  } catch {
+    /* already gone */
+  }
+  twoInstance = null;
+  twoLoading = null;
+}
+
+/**
  * Fire-and-forget preload. Call this as soon as the child sees the game menu so
  * the WASM runtime and model are already in memory by the time a game opens.
  */

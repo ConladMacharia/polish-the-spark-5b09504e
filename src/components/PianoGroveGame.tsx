@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
+import { TrackingWatchdog } from "@/lib/pose/trackingWatchdog";
 import { getFingerDistances, getActiveFinger, TOUCH_THRESHOLD, type FingerName } from "@/lib/pose/fingerUtils";
 import {
   handConfidence,
@@ -46,11 +47,13 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   const animationFrameRef = useRef<number | null>(null);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
+  const watchdogRef = useRef<TrackingWatchdog | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const jitterRef = useRef(new JitterMonitor());
   const lastUiUpdateRef = useRef(0);
 
   const [isReady, setIsReady] = useState(false);
+  const [trackingNotice, setTrackingNotice] = useState<string | null>(null);
   const [liveDistances, setLiveDistances] = useState<Record<FingerName, number> | null>(null);
   const [activeFinger, setActiveFinger] = useState<FingerName | null>(null);
   const [notes, setNotes] = useState<NoteState[]>([]);
@@ -84,6 +87,18 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
       landmarkerRef.current = landmarker;
       stream = mediaStream;
       if (videoRef.current) await attachStream(videoRef.current, mediaStream);
+      watchdogRef.current = new TrackingWatchdog({
+        twoHands: false,
+        video: () => videoRef.current,
+        onLandmarker: (l) => {
+          landmarkerRef.current = l;
+        },
+        onStream: (s) => {
+          stream = s;
+        },
+        onStatus: setTrackingNotice,
+      });
+      watchdogRef.current.markDetection();
 
       setIsReady(true);
       requestAnimationFrame(detectionLoop);
@@ -93,6 +108,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
     setup().catch((err) => console.error("Setup failed:", err));
 
     return () => {
+      watchdogRef.current?.dispose();
       if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current);
       stream?.getTracks().forEach((t) => t.stop());
     };
@@ -125,6 +141,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   }
 
   function detectionLoop() {
+    watchdogRef.current?.markFrame();
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
 
@@ -144,6 +161,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
     const result = landmarker.detectForVideo(video, performance.now());
 
     if (result.landmarks.length > 0) {
+      watchdogRef.current?.markDetection();
       const lm = result.landmarks[0];
       const distances = getFingerDistances(lm);
       // Debug readout only — refreshing it every frame re-rendered the whole

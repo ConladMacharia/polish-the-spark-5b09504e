@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
 import { HAND_LANDMARKS } from "@/lib/pose/fingerUtils";
+import { TrackingWatchdog } from "@/lib/pose/trackingWatchdog";
 import {
   AdaptivePinch,
   AdaptivePointSmoother,
@@ -37,6 +38,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
+  const watchdogRef = useRef<TrackingWatchdog | null>(null);
   const jitterRef = useRef(new JitterMonitor());
   const confRef = useRef(0.7);
   const cursorSmootherRef = useRef(
@@ -58,6 +60,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
   const zipProgressRef = useRef(0); // 0 = open, 1 = fully zipped
 
   const [isReady, setIsReady] = useState(false);
+  const [trackingNotice, setTrackingNotice] = useState<string | null>(null);
   const [cursorPos, setCursorPos] = useState({ x: CENTER_X, y: TENT_BASE_Y });
   const [isPinched, setIsPinched] = useState(false);
   const [zipProgress, setZipProgress] = useState(0);
@@ -75,18 +78,32 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
       landmarkerRef.current = landmarker;
       stream = mediaStream;
       if (videoRef.current) await attachStream(videoRef.current, mediaStream);
+      watchdogRef.current = new TrackingWatchdog({
+        twoHands: false,
+        video: () => videoRef.current,
+        onLandmarker: (l) => {
+          landmarkerRef.current = l;
+        },
+        onStream: (s) => {
+          stream = s;
+        },
+        onStatus: setTrackingNotice,
+      });
+      watchdogRef.current.markDetection();
       setIsReady(true);
       requestAnimationFrame(loop);
     }
     setup().catch((err) => console.error("Setup failed:", err));
 
     return () => {
+      watchdogRef.current?.dispose();
       stream?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function loop() {
+    watchdogRef.current?.markFrame();
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
 
@@ -97,6 +114,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
       const now = performance.now();
       const result = landmarker.detectForVideo(video, now);
       if (result.landmarks.length > 0) {
+        watchdogRef.current?.markDetection(now);
         const lm = result.landmarks[0];
         const thumb = lm[HAND_LANDMARKS.THUMB_TIP];
         const index = lm[HAND_LANDMARKS.INDEX_TIP];

@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
+import { TrackingWatchdog } from "@/lib/pose/trackingWatchdog";
 import {
   AdaptiveScalar,
   JitterMonitor,
@@ -39,6 +40,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
+  const watchdogRef = useRef<TrackingWatchdog | null>(null);
 
   const handYRef = useRef(STAGE_H / 2); // raw tracked hand height, in stage pixels
   const rocketYRef = useRef(STAGE_H / 2);
@@ -59,6 +61,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   );
 
   const [isReady, setIsReady] = useState(false);
+  const [trackingNotice, setTrackingNotice] = useState<string | null>(null);
   const [rocketY, setRocketY] = useState(STAGE_H / 2);
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [collectibles, setCollectibles] = useState<Collectible[]>([]);
@@ -79,6 +82,18 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
       landmarkerRef.current = landmarker;
       stream = mediaStream;
       if (videoRef.current) await attachStream(videoRef.current, mediaStream);
+      watchdogRef.current = new TrackingWatchdog({
+        twoHands: false,
+        video: () => videoRef.current,
+        onLandmarker: (l) => {
+          landmarkerRef.current = l;
+        },
+        onStream: (s) => {
+          stream = s;
+        },
+        onStatus: setTrackingNotice,
+      });
+      watchdogRef.current.markDetection();
       setIsReady(true);
       requestAnimationFrame(detectionLoop);
       requestAnimationFrame(gameLoop);
@@ -86,12 +101,14 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
     setup().catch((err) => console.error("Setup failed:", err));
 
     return () => {
+      watchdogRef.current?.dispose();
       stream?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function detectionLoop() {
+    watchdogRef.current?.markFrame();
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
     if (!video || !landmarker) {
@@ -107,6 +124,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
 
     const result = landmarker.detectForVideo(video, performance.now());
     if (result.landmarks.length > 0) {
+      watchdogRef.current?.markDetection();
       const lm = result.landmarks[0];
       // Palm center = average of wrist + 4 MCP joints
       const palmPoints = [lm[0], lm[5], lm[9], lm[13], lm[17]];
