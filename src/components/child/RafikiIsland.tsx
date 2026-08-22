@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bug,
   Circle,
@@ -23,6 +23,7 @@ import {
   type Eligibility,
   type MacsLevel,
 } from "@/lib/child-games";
+import { warmUpHandLandmarker } from "@/lib/pose/handLandmarker";
 import { Rafiki } from "@/components/child/Rafiki";
 import { ChildGameScreen } from "@/components/child/ChildGameScreen";
 import { PianoGroveGame } from "@/components/PianoGroveGame";
@@ -143,6 +144,12 @@ function buildRegions(macs: MacsLevel): Region[] {
 export function RafikiIsland({ childName }: { childName?: string }) {
   const [macs] = useState(readMacsLevel);
   const [active, setActive] = useState<{ game: ChildGame; variant: Eligibility } | null>(null);
+
+  // Preload the hand-tracking runtime + model while the child browses the map,
+  // so opening a game starts detecting immediately.
+  useEffect(() => {
+    warmUpHandLandmarker();
+  }, []);
 
   const regions = buildRegions(macs);
 
