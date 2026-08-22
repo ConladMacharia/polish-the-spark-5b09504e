@@ -145,6 +145,12 @@ export function RafikiIsland({ childName }: { childName?: string }) {
   const [macs] = useState(readMacsLevel);
   const [active, setActive] = useState<{ game: ChildGame; variant: Eligibility } | null>(null);
 
+  // Preload the hand-tracking runtime + model while the child browses the map,
+  // so opening a game starts detecting immediately.
+  useEffect(() => {
+    warmUpHandLandmarker();
+  }, []);
+
   const regions = buildRegions(macs);
 
   if (active) {
