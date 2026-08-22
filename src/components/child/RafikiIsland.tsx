@@ -23,6 +23,7 @@ import {
   type Eligibility,
   type MacsLevel,
 } from "@/lib/child-games";
+import { warmUpHandLandmarker } from "@/lib/pose/handLandmarker";
 import { Rafiki } from "@/components/child/Rafiki";
 import { ChildGameScreen } from "@/components/child/ChildGameScreen";
 import { PianoGroveGame } from "@/components/PianoGroveGame";
