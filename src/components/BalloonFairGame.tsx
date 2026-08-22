@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getTwoHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
+import { TrackingWatchdog } from "@/lib/pose/trackingWatchdog";
 import { HAND_LANDMARKS } from "@/lib/pose/fingerUtils";
 
 interface BalloonFairGameProps {
@@ -78,6 +79,7 @@ export function BalloonFairGame({
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
+  const watchdogRef = useRef<TrackingWatchdog | null>(null);
   const isMountedRef = useRef(true);
   const detectionFrameRef = useRef<number | null>(null);
   const gameFrameRef = useRef<number | null>(null);
@@ -94,6 +96,7 @@ export function BalloonFairGame({
   const idCounter = useRef(0);
 
   const [isReady, setIsReady] = useState(false);
+  const [trackingNotice, setTrackingNotice] = useState<string | null>(null);
   const [aim, setAim] = useState({ x: STAGE_W / 2, y: STAGE_H * 0.35 });
   const [drawRatio, setDrawRatio] = useState(0);
   const [balloons, setBalloons] = useState<Balloon[]>([]);
@@ -126,6 +129,18 @@ export function BalloonFairGame({
         return;
       }
       if (videoRef.current) await attachStream(videoRef.current, mediaStream);
+      watchdogRef.current = new TrackingWatchdog({
+        twoHands: true,
+        video: () => videoRef.current,
+        onLandmarker: (l) => {
+          landmarkerRef.current = l;
+        },
+        onStream: (s) => {
+          stream = s;
+        },
+        onStatus: setTrackingNotice,
+      });
+      watchdogRef.current.markDetection();
       if (!isMountedRef.current) return;
       setIsReady(true);
       detectionFrameRef.current = requestAnimationFrame(detectionLoop);
@@ -134,6 +149,7 @@ export function BalloonFairGame({
     setup().catch((err) => console.error("Setup failed:", err));
 
     return () => {
+      watchdogRef.current?.dispose();
       isMountedRef.current = false;
       if (detectionFrameRef.current !== null) cancelAnimationFrame(detectionFrameRef.current);
       if (gameFrameRef.current !== null) cancelAnimationFrame(gameFrameRef.current);
@@ -188,6 +204,7 @@ export function BalloonFairGame({
 
   function detectionLoop() {
     if (!isMountedRef.current) return;
+    watchdogRef.current?.markFrame();
 
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
@@ -203,6 +220,7 @@ export function BalloonFairGame({
     lastVideoTimeRef.current = video.currentTime;
 
     const result = landmarker.detectForVideo(video, performance.now());
+    if (result.landmarks.length > 0) watchdogRef.current?.markDetection();
 
     // MediaPipe has used both `handedness` and `handednesses` across
     // versions — check both so this doesn't silently break on a version bump.
