@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
-import { getTwoHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
+import { getTwoHandLandmarker, startCameraStream, attachStream, describeCameraError } from "@/lib/pose/handLandmarker";
 import { TrackingWatchdog } from "@/lib/pose/trackingWatchdog";
 import { HAND_LANDMARKS } from "@/lib/pose/fingerUtils";
 
@@ -97,6 +97,8 @@ export function BalloonFairGame({
 
   const [isReady, setIsReady] = useState(false);
   const [trackingNotice, setTrackingNotice] = useState<string | null>(null);
+  const [setupError, setSetupError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [aim, setAim] = useState({ x: STAGE_W / 2, y: STAGE_H * 0.35 });
   const [drawRatio, setDrawRatio] = useState(0);
   const [balloons, setBalloons] = useState<Balloon[]>([]);
@@ -117,6 +119,7 @@ export function BalloonFairGame({
     isMountedRef.current = true;
 
     async function setup() {
+      setSetupError(null);
       const [landmarker, mediaStream] = await Promise.all([
         getTwoHandLandmarker(),
         startCameraStream(),
@@ -146,7 +149,10 @@ export function BalloonFairGame({
       detectionFrameRef.current = requestAnimationFrame(detectionLoop);
       gameFrameRef.current = requestAnimationFrame(gameLoop);
     }
-    setup().catch((err) => console.error("Setup failed:", err));
+    setup().catch((err) => {
+      console.error("Setup failed:", err);
+      setSetupError(describeCameraError(err));
+    });
 
     return () => {
       watchdogRef.current?.dispose();
@@ -156,7 +162,7 @@ export function BalloonFairGame({
       stream?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [retryKey]);
 
   function spawnBalloon() {
     const isPower = Math.random() < POWER_BALLOON_CHANCE;
@@ -351,6 +357,41 @@ export function BalloonFairGame({
   return (
     <div style={{ maxWidth: STAGE_W, margin: "0 auto" }}>
       <video ref={videoRef} style={{ display: "none" }} playsInline muted />
+
+
+      {setupError && (
+        <div
+          style={{
+            textAlign: "center",
+            fontSize: 13,
+            fontWeight: 700,
+            color: "#8a3b3b",
+            background: "#fdecec",
+            borderRadius: 14,
+            padding: "14px 16px",
+            margin: "12px auto",
+            maxWidth: 320,
+          }}
+        >
+          <div>{setupError}</div>
+          <button
+            type="button"
+            onClick={() => setRetryKey((k) => k + 1)}
+            style={{
+              marginTop: 10,
+              border: "none",
+              borderRadius: 999,
+              background: "#8a3b3b",
+              color: "white",
+              padding: "8px 18px",
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            Try again
+          </button>
+        </div>
+      )}
 
       {trackingNotice && (
         <div

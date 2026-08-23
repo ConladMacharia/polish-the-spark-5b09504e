@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { HandLandmarker } from "@mediapipe/tasks-vision";
-import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
+import { getHandLandmarker, startCameraStream, attachStream, describeCameraError } from "@/lib/pose/handLandmarker";
 import { TrackingWatchdog } from "@/lib/pose/trackingWatchdog";
 import { getFingerDistances, getActiveFinger, TOUCH_THRESHOLD, type FingerName } from "@/lib/pose/fingerUtils";
 import {
@@ -54,6 +54,8 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
 
   const [isReady, setIsReady] = useState(false);
   const [trackingNotice, setTrackingNotice] = useState<string | null>(null);
+  const [setupError, setSetupError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [liveDistances, setLiveDistances] = useState<Record<FingerName, number> | null>(null);
   const [activeFinger, setActiveFinger] = useState<FingerName | null>(null);
   const [notes, setNotes] = useState<NoteState[]>([]);
@@ -80,6 +82,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
     let stream: MediaStream | null = null;
 
     async function setup() {
+      setSetupError(null);
       const [landmarker, mediaStream] = await Promise.all([
         getHandLandmarker(),
         startCameraStream(),
@@ -105,7 +108,10 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
       requestAnimationFrame(gameLoop);
     }
 
-    setup().catch((err) => console.error("Setup failed:", err));
+    setup().catch((err) => {
+      console.error("Setup failed:", err);
+      setSetupError(describeCameraError(err));
+    });
 
     return () => {
       watchdogRef.current?.dispose();
@@ -113,7 +119,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
       stream?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [retryKey]);
 
   function playTone(finger: FingerName) {
     if (!audioCtxRef.current) {
@@ -258,6 +264,41 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
     <div style={{ maxWidth: 480, margin: "0 auto" }}>
       <video ref={videoRef} style={{ display: "none" }} playsInline muted />
 
+
+      {setupError && (
+        <div
+          style={{
+            textAlign: "center",
+            fontSize: 13,
+            fontWeight: 700,
+            color: "#8a3b3b",
+            background: "#fdecec",
+            borderRadius: 14,
+            padding: "14px 16px",
+            margin: "12px auto",
+            maxWidth: 320,
+          }}
+        >
+          <div>{setupError}</div>
+          <button
+            type="button"
+            onClick={() => setRetryKey((k) => k + 1)}
+            style={{
+              marginTop: 10,
+              border: "none",
+              borderRadius: 999,
+              background: "#8a3b3b",
+              color: "white",
+              padding: "8px 18px",
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
       {trackingNotice && (
         <div
           style={{
@@ -295,7 +336,9 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
         </div>
       )}
 
-      {!isReady && <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>}
+      {!isReady && !setupError && (
+        <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>
+      )}
 
       {isReady && (
         <>

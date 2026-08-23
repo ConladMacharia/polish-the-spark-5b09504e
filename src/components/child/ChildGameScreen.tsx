@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
-import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
+import {
+  getHandLandmarker,
+  startCameraStream,
+  attachStream,
+  describeCameraError,
+} from "@/lib/pose/handLandmarker";
 import { TrackingWatchdog } from "@/lib/pose/trackingWatchdog";
 import {
   FINGER_NAMES,
@@ -74,6 +79,8 @@ export function ChildGameScreen({
 
   const [ready, setReady] = useState(false);
   const [trackingNotice, setTrackingNotice] = useState<string | null>(null);
+  const [setupError, setSetupError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const [targets, setTargets] = useState<Target[]>(() => spawn(game, 0));
   const [collected, setCollected] = useState(0);
@@ -94,6 +101,7 @@ export function ChildGameScreen({
 
     async function start() {
       try {
+        setSetupError(null);
         const [landmarker, stream] = await Promise.all([
           getHandLandmarker(),
           startCameraStream(),
@@ -140,8 +148,10 @@ export function ChildGameScreen({
           rafRef.current = requestAnimationFrame(loop);
         };
         rafRef.current = requestAnimationFrame(loop);
-      } catch {
+      } catch (err) {
         // camera unavailable — Rafiki still keeps things warm, never a fail state
+        console.error("Child game camera setup failed:", err);
+        setSetupError(describeCameraError(err));
         setMascotSays("Rafiki can't see you yet — that's okay!");
       }
     }
@@ -154,7 +164,7 @@ export function ChildGameScreen({
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [game.id]);
+  }, [game.id, retryKey]);
 
   function cheer(x?: number, y?: number) {
     setMascotMood("cheer");
@@ -385,6 +395,19 @@ export function ChildGameScreen({
         muted
         className="absolute inset-0 h-full w-full scale-x-[-1] object-cover opacity-25"
       />
+
+      {setupError && (
+        <div className="absolute inset-x-6 top-24 z-40 rounded-2xl bg-white/90 p-4 text-center shadow-lg">
+          <p className="text-sm font-bold text-slate-700">{setupError}</p>
+          <button
+            type="button"
+            onClick={() => setRetryKey((k) => k + 1)}
+            className="mt-3 rounded-full bg-slate-800 px-5 py-2 text-xs font-bold text-white"
+          >
+            Try again
+          </button>
+        </div>
+      )}
 
       {trackingNotice && (
         <div className="pointer-events-none absolute inset-x-0 top-20 z-40 text-center">
