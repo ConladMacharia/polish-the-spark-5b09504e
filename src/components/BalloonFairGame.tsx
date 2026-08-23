@@ -6,8 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
-import { getTwoHandLandmarker, startCameraStream, attachStream, describeCameraError } from "@/lib/pose/handLandmarker";
-import { TrackingWatchdog } from "@/lib/pose/trackingWatchdog";
+import { getTwoHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
 import { HAND_LANDMARKS } from "@/lib/pose/fingerUtils";
 
 interface BalloonFairGameProps {
@@ -79,7 +78,6 @@ export function BalloonFairGame({
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
-  const watchdogRef = useRef<TrackingWatchdog | null>(null);
   const isMountedRef = useRef(true);
   const detectionFrameRef = useRef<number | null>(null);
   const gameFrameRef = useRef<number | null>(null);
@@ -96,9 +94,6 @@ export function BalloonFairGame({
   const idCounter = useRef(0);
 
   const [isReady, setIsReady] = useState(false);
-  const [trackingNotice, setTrackingNotice] = useState<string | null>(null);
-  const [setupError, setSetupError] = useState<string | null>(null);
-  const [retryKey, setRetryKey] = useState(0);
   const [aim, setAim] = useState({ x: STAGE_W / 2, y: STAGE_H * 0.35 });
   const [drawRatio, setDrawRatio] = useState(0);
   const [balloons, setBalloons] = useState<Balloon[]>([]);
@@ -119,7 +114,6 @@ export function BalloonFairGame({
     isMountedRef.current = true;
 
     async function setup() {
-      setSetupError(null);
       const [landmarker, mediaStream] = await Promise.all([
         getTwoHandLandmarker(),
         startCameraStream(),
@@ -132,37 +126,21 @@ export function BalloonFairGame({
         return;
       }
       if (videoRef.current) await attachStream(videoRef.current, mediaStream);
-      watchdogRef.current = new TrackingWatchdog({
-        twoHands: true,
-        video: () => videoRef.current,
-        onLandmarker: (l) => {
-          landmarkerRef.current = l;
-        },
-        onStream: (s) => {
-          stream = s;
-        },
-        onStatus: setTrackingNotice,
-      });
-      watchdogRef.current.markDetection();
       if (!isMountedRef.current) return;
       setIsReady(true);
       detectionFrameRef.current = requestAnimationFrame(detectionLoop);
       gameFrameRef.current = requestAnimationFrame(gameLoop);
     }
-    setup().catch((err) => {
-      console.error("Setup failed:", err);
-      setSetupError(describeCameraError(err));
-    });
+    setup().catch((err) => console.error("Setup failed:", err));
 
     return () => {
-      watchdogRef.current?.dispose();
       isMountedRef.current = false;
       if (detectionFrameRef.current !== null) cancelAnimationFrame(detectionFrameRef.current);
       if (gameFrameRef.current !== null) cancelAnimationFrame(gameFrameRef.current);
       stream?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [retryKey]);
+  }, []);
 
   function spawnBalloon() {
     const isPower = Math.random() < POWER_BALLOON_CHANCE;
@@ -210,7 +188,6 @@ export function BalloonFairGame({
 
   function detectionLoop() {
     if (!isMountedRef.current) return;
-    watchdogRef.current?.markFrame();
 
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
@@ -226,7 +203,6 @@ export function BalloonFairGame({
     lastVideoTimeRef.current = video.currentTime;
 
     const result = landmarker.detectForVideo(video, performance.now());
-    if (result.landmarks.length > 0) watchdogRef.current?.markDetection();
 
     // MediaPipe has used both `handedness` and `handednesses` across
     // versions — check both so this doesn't silently break on a version bump.
@@ -357,60 +333,6 @@ export function BalloonFairGame({
   return (
     <div style={{ maxWidth: STAGE_W, margin: "0 auto" }}>
       <video ref={videoRef} style={{ display: "none" }} playsInline muted />
-
-
-      {setupError && (
-        <div
-          style={{
-            textAlign: "center",
-            fontSize: 13,
-            fontWeight: 700,
-            color: "#8a3b3b",
-            background: "#fdecec",
-            borderRadius: 14,
-            padding: "14px 16px",
-            margin: "12px auto",
-            maxWidth: 320,
-          }}
-        >
-          <div>{setupError}</div>
-          <button
-            type="button"
-            onClick={() => setRetryKey((k) => k + 1)}
-            style={{
-              marginTop: 10,
-              border: "none",
-              borderRadius: 999,
-              background: "#8a3b3b",
-              color: "white",
-              padding: "8px 18px",
-              fontSize: 13,
-              fontWeight: 700,
-            }}
-          >
-            Try again
-          </button>
-        </div>
-      )}
-
-      {trackingNotice && (
-        <div
-          style={{
-            textAlign: "center",
-            fontSize: 12,
-            fontWeight: 700,
-            color: "#8a6d3b",
-            background: "#fff6e0",
-            borderRadius: 999,
-            padding: "6px 12px",
-            margin: "8px auto",
-            maxWidth: 260,
-          }}
-        >
-          {trackingNotice}
-        </div>
-      )}
-
 
       {!isReady && <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>}
 

@@ -4,8 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
-import { getHandLandmarker, startCameraStream, attachStream, describeCameraError } from "@/lib/pose/handLandmarker";
-import { TrackingWatchdog } from "@/lib/pose/trackingWatchdog";
+import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
 import {
   AdaptiveScalar,
   JitterMonitor,
@@ -40,7 +39,6 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
-  const watchdogRef = useRef<TrackingWatchdog | null>(null);
 
   const handYRef = useRef(STAGE_H / 2); // raw tracked hand height, in stage pixels
   const rocketYRef = useRef(STAGE_H / 2);
@@ -61,9 +59,6 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   );
 
   const [isReady, setIsReady] = useState(false);
-  const [trackingNotice, setTrackingNotice] = useState<string | null>(null);
-  const [setupError, setSetupError] = useState<string | null>(null);
-  const [retryKey, setRetryKey] = useState(0);
   const [rocketY, setRocketY] = useState(STAGE_H / 2);
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [collectibles, setCollectibles] = useState<Collectible[]>([]);
@@ -77,7 +72,6 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
     let stream: MediaStream | null = null;
 
     async function setup() {
-      setSetupError(null);
       const [landmarker, mediaStream] = await Promise.all([
         getHandLandmarker(),
         startCameraStream(),
@@ -85,36 +79,19 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
       landmarkerRef.current = landmarker;
       stream = mediaStream;
       if (videoRef.current) await attachStream(videoRef.current, mediaStream);
-      watchdogRef.current = new TrackingWatchdog({
-        twoHands: false,
-        video: () => videoRef.current,
-        onLandmarker: (l) => {
-          landmarkerRef.current = l;
-        },
-        onStream: (s) => {
-          stream = s;
-        },
-        onStatus: setTrackingNotice,
-      });
-      watchdogRef.current.markDetection();
       setIsReady(true);
       requestAnimationFrame(detectionLoop);
       requestAnimationFrame(gameLoop);
     }
-    setup().catch((err) => {
-      console.error("Setup failed:", err);
-      setSetupError(describeCameraError(err));
-    });
+    setup().catch((err) => console.error("Setup failed:", err));
 
     return () => {
-      watchdogRef.current?.dispose();
       stream?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [retryKey]);
+  }, []);
 
   function detectionLoop() {
-    watchdogRef.current?.markFrame();
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
     if (!video || !landmarker) {
@@ -130,7 +107,6 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
 
     const result = landmarker.detectForVideo(video, performance.now());
     if (result.landmarks.length > 0) {
-      watchdogRef.current?.markDetection();
       const lm = result.landmarks[0];
       // Palm center = average of wrist + 4 MCP joints
       const palmPoints = [lm[0], lm[5], lm[9], lm[13], lm[17]];
@@ -229,60 +205,6 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   return (
     <div style={{ maxWidth: 460, margin: "0 auto" }}>
       <video ref={videoRef} style={{ display: "none" }} playsInline muted />
-
-
-      {setupError && (
-        <div
-          style={{
-            textAlign: "center",
-            fontSize: 13,
-            fontWeight: 700,
-            color: "#8a3b3b",
-            background: "#fdecec",
-            borderRadius: 14,
-            padding: "14px 16px",
-            margin: "12px auto",
-            maxWidth: 320,
-          }}
-        >
-          <div>{setupError}</div>
-          <button
-            type="button"
-            onClick={() => setRetryKey((k) => k + 1)}
-            style={{
-              marginTop: 10,
-              border: "none",
-              borderRadius: 999,
-              background: "#8a3b3b",
-              color: "white",
-              padding: "8px 18px",
-              fontSize: 13,
-              fontWeight: 700,
-            }}
-          >
-            Try again
-          </button>
-        </div>
-      )}
-
-      {trackingNotice && (
-        <div
-          style={{
-            textAlign: "center",
-            fontSize: 12,
-            fontWeight: 700,
-            color: "#8a6d3b",
-            background: "#fff6e0",
-            borderRadius: 999,
-            padding: "6px 12px",
-            margin: "8px auto",
-            maxWidth: 260,
-          }}
-        >
-          {trackingNotice}
-        </div>
-      )}
-
 
       {!isReady && <div style={{ textAlign: "center", padding: 20, color: "white" }}>Starting camera...</div>}
 

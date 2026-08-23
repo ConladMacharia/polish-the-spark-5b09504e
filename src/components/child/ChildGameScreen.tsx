@@ -1,13 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
-import {
-  getHandLandmarker,
-  startCameraStream,
-  attachStream,
-  describeCameraError,
-} from "@/lib/pose/handLandmarker";
-import { TrackingWatchdog } from "@/lib/pose/trackingWatchdog";
+import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
 import {
   FINGER_NAMES,
   FistCycle,
@@ -60,8 +54,6 @@ export function ChildGameScreen({
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const watchdogRef = useRef<TrackingWatchdog | null>(null);
-  const landmarkerRef = useRef<Awaited<ReturnType<typeof getHandLandmarker>> | null>(null);
   const smoother = useRef(new PointSmoother(0.4));
   const staircase = useRef(new Staircase(game.range, variant === "simplified"));
 
@@ -78,9 +70,6 @@ export function ChildGameScreen({
   const lastMissRef = useRef(0);
 
   const [ready, setReady] = useState(false);
-  const [trackingNotice, setTrackingNotice] = useState<string | null>(null);
-  const [setupError, setSetupError] = useState<string | null>(null);
-  const [retryKey, setRetryKey] = useState(0);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const [targets, setTargets] = useState<Target[]>(() => spawn(game, 0));
   const [collected, setCollected] = useState(0);
@@ -101,7 +90,6 @@ export function ChildGameScreen({
 
     async function start() {
       try {
-        setSetupError(null);
         const [landmarker, stream] = await Promise.all([
           getHandLandmarker(),
           startCameraStream(),
@@ -114,44 +102,24 @@ export function ChildGameScreen({
         const video = videoRef.current;
         if (!video) return;
         await attachStream(video, stream);
-        landmarkerRef.current = landmarker;
-        watchdogRef.current = new TrackingWatchdog({
-          twoHands: false,
-          video: () => videoRef.current,
-          onLandmarker: (l) => {
-            landmarkerRef.current = l;
-          },
-          onStream: (s) => {
-            streamRef.current = s;
-          },
-          onStatus: setTrackingNotice,
-        });
-        watchdogRef.current.markDetection();
         setReady(true);
 
         const loop = () => {
           if (cancelled || !videoRef.current) return;
-          watchdogRef.current?.markFrame();
           const v = videoRef.current;
-          const lm = landmarkerRef.current;
-          if (lm && v.readyState >= 2) {
-            const res = lm.detectForVideo(v, performance.now());
+          if (v.readyState >= 2) {
+            const res = landmarker.detectForVideo(v, performance.now());
             const hands = (res.landmarks ?? []) as Hand[];
             const sides = (res.handedness ?? []).map(
               (h) => (h?.[0]?.categoryName ?? "Right") as Handedness
             );
-            if (hands.length > 0) {
-              watchdogRef.current?.markDetection();
-              handleFrame(hands, sides);
-            }
+            if (hands.length > 0) handleFrame(hands, sides);
           }
           rafRef.current = requestAnimationFrame(loop);
         };
         rafRef.current = requestAnimationFrame(loop);
-      } catch (err) {
+      } catch {
         // camera unavailable — Rafiki still keeps things warm, never a fail state
-        console.error("Child game camera setup failed:", err);
-        setSetupError(describeCameraError(err));
         setMascotSays("Rafiki can't see you yet — that's okay!");
       }
     }
@@ -159,12 +127,11 @@ export function ChildGameScreen({
     start();
     return () => {
       cancelled = true;
-      watchdogRef.current?.dispose();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [game.id, retryKey]);
+  }, [game.id]);
 
   function cheer(x?: number, y?: number) {
     setMascotMood("cheer");
@@ -395,27 +362,6 @@ export function ChildGameScreen({
         muted
         className="absolute inset-0 h-full w-full scale-x-[-1] object-cover opacity-25"
       />
-
-      {setupError && (
-        <div className="absolute inset-x-6 top-24 z-40 rounded-2xl bg-white/90 p-4 text-center shadow-lg">
-          <p className="text-sm font-bold text-slate-700">{setupError}</p>
-          <button
-            type="button"
-            onClick={() => setRetryKey((k) => k + 1)}
-            className="mt-3 rounded-full bg-slate-800 px-5 py-2 text-xs font-bold text-white"
-          >
-            Try again
-          </button>
-        </div>
-      )}
-
-      {trackingNotice && (
-        <div className="pointer-events-none absolute inset-x-0 top-20 z-40 text-center">
-          <span className="rounded-full bg-white/85 px-4 py-1.5 text-xs font-bold text-slate-700 shadow">
-            {trackingNotice}
-          </span>
-        </div>
-      )}
 
       {/* exit — small, quiet, top-left so children don't hit it by accident */}
       <button
