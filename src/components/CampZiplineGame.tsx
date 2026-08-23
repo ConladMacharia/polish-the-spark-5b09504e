@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
-import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
+import { getHandLandmarker, startCameraStream, attachStream, describeCameraError } from "@/lib/pose/handLandmarker";
 import { HAND_LANDMARKS } from "@/lib/pose/fingerUtils";
 import { TrackingWatchdog } from "@/lib/pose/trackingWatchdog";
 import {
@@ -61,6 +61,8 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
 
   const [isReady, setIsReady] = useState(false);
   const [trackingNotice, setTrackingNotice] = useState<string | null>(null);
+  const [setupError, setSetupError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [cursorPos, setCursorPos] = useState({ x: CENTER_X, y: TENT_BASE_Y });
   const [isPinched, setIsPinched] = useState(false);
   const [zipProgress, setZipProgress] = useState(0);
@@ -71,6 +73,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
     let stream: MediaStream | null = null;
 
     async function setup() {
+      setSetupError(null);
       const [landmarker, mediaStream] = await Promise.all([
         getHandLandmarker(),
         startCameraStream(),
@@ -93,14 +96,17 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
       setIsReady(true);
       requestAnimationFrame(loop);
     }
-    setup().catch((err) => console.error("Setup failed:", err));
+    setup().catch((err) => {
+      console.error("Setup failed:", err);
+      setSetupError(describeCameraError(err));
+    });
 
     return () => {
       watchdogRef.current?.dispose();
       stream?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [retryKey]);
 
   function loop() {
     watchdogRef.current?.markFrame();
@@ -181,6 +187,41 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
   return (
     <div style={{ maxWidth: STAGE_W, margin: "0 auto" }}>
       <video ref={videoRef} style={{ display: "none" }} playsInline muted />
+
+
+      {setupError && (
+        <div
+          style={{
+            textAlign: "center",
+            fontSize: 13,
+            fontWeight: 700,
+            color: "#8a3b3b",
+            background: "#fdecec",
+            borderRadius: 14,
+            padding: "14px 16px",
+            margin: "12px auto",
+            maxWidth: 320,
+          }}
+        >
+          <div>{setupError}</div>
+          <button
+            type="button"
+            onClick={() => setRetryKey((k) => k + 1)}
+            style={{
+              marginTop: 10,
+              border: "none",
+              borderRadius: 999,
+              background: "#8a3b3b",
+              color: "white",
+              padding: "8px 18px",
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            Try again
+          </button>
+        </div>
+      )}
 
       {trackingNotice && (
         <div
