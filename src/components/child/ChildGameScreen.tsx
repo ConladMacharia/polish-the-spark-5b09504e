@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
 import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
+import { TrackingWatchdog } from "@/lib/pose/trackingWatchdog";
 import {
   FINGER_NAMES,
   FistCycle,
@@ -54,6 +55,8 @@ export function ChildGameScreen({
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const watchdogRef = useRef<TrackingWatchdog | null>(null);
+  const landmarkerRef = useRef<Awaited<ReturnType<typeof getHandLandmarker>> | null>(null);
   const smoother = useRef(new PointSmoother(0.4));
   const staircase = useRef(new Staircase(game.range, variant === "simplified"));
 
@@ -70,6 +73,7 @@ export function ChildGameScreen({
   const lastMissRef = useRef(0);
 
   const [ready, setReady] = useState(false);
+  const [trackingNotice, setTrackingNotice] = useState<string | null>(null);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const [targets, setTargets] = useState<Target[]>(() => spawn(game, 0));
   const [collected, setCollected] = useState(0);
@@ -102,18 +106,36 @@ export function ChildGameScreen({
         const video = videoRef.current;
         if (!video) return;
         await attachStream(video, stream);
+        landmarkerRef.current = landmarker;
+        watchdogRef.current = new TrackingWatchdog({
+          twoHands: false,
+          video: () => videoRef.current,
+          onLandmarker: (l) => {
+            landmarkerRef.current = l;
+          },
+          onStream: (s) => {
+            streamRef.current = s;
+          },
+          onStatus: setTrackingNotice,
+        });
+        watchdogRef.current.markDetection();
         setReady(true);
 
         const loop = () => {
           if (cancelled || !videoRef.current) return;
+          watchdogRef.current?.markFrame();
           const v = videoRef.current;
-          if (v.readyState >= 2) {
-            const res = landmarker.detectForVideo(v, performance.now());
+          const lm = landmarkerRef.current;
+          if (lm && v.readyState >= 2) {
+            const res = lm.detectForVideo(v, performance.now());
             const hands = (res.landmarks ?? []) as Hand[];
             const sides = (res.handedness ?? []).map(
               (h) => (h?.[0]?.categoryName ?? "Right") as Handedness
             );
-            if (hands.length > 0) handleFrame(hands, sides);
+            if (hands.length > 0) {
+              watchdogRef.current?.markDetection();
+              handleFrame(hands, sides);
+            }
           }
           rafRef.current = requestAnimationFrame(loop);
         };
@@ -127,6 +149,7 @@ export function ChildGameScreen({
     start();
     return () => {
       cancelled = true;
+      watchdogRef.current?.dispose();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
@@ -362,6 +385,14 @@ export function ChildGameScreen({
         muted
         className="absolute inset-0 h-full w-full scale-x-[-1] object-cover opacity-25"
       />
+
+      {trackingNotice && (
+        <div className="pointer-events-none absolute inset-x-0 top-20 z-40 text-center">
+          <span className="rounded-full bg-white/85 px-4 py-1.5 text-xs font-bold text-slate-700 shadow">
+            {trackingNotice}
+          </span>
+        </div>
+      )}
 
       {/* exit — small, quiet, top-left so children don't hit it by accident */}
       <button
