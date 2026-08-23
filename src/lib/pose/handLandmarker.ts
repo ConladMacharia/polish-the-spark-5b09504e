@@ -118,18 +118,59 @@ export function warmUpHandLandmarker(): void {
   getHandLandmarker().catch((err) => console.error("HandLandmarker warm-up failed", err));
 }
 
-/** Low-latency camera stream shared by every camera game. */
+/**
+ * Low-latency camera stream shared by every camera game.
+ *
+ * Some devices reject the ideal constraints outright (locked frame rate, no
+ * front camera, virtual cameras), so we walk down to plainer requests instead
+ * of failing the whole game on the first rejection.
+ */
 export async function startCameraStream(): Promise<MediaStream> {
-  return navigator.mediaDevices.getUserMedia({
-    video: {
-      width: { ideal: 640 },
-      height: { ideal: 480 },
-      frameRate: { ideal: 30, max: 30 },
-      facingMode: "user",
+  if (!navigator.mediaDevices?.getUserMedia) {
+    throw new Error("no-camera-api");
+  }
+  const attempts: MediaStreamConstraints[] = [
+    {
+      video: {
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+        frameRate: { ideal: 30, max: 30 },
+        facingMode: "user",
+      },
+      audio: false,
     },
-    audio: false,
-  });
+    { video: { facingMode: "user" }, audio: false },
+    { video: true, audio: false },
+  ];
+  let lastErr: unknown;
+  for (const constraints of attempts) {
+    try {
+      return await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (err) {
+      lastErr = err;
+      // A denied permission will never succeed with looser constraints.
+      const name = (err as { name?: string })?.name;
+      if (name === "NotAllowedError" || name === "SecurityError") break;
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error("camera-failed");
 }
+
+/** Child-friendly explanation for a camera / tracking start-up failure. */
+export function describeCameraError(err: unknown): string {
+  const name = (err as { name?: string })?.name;
+  const msg = (err as { message?: string })?.message ?? "";
+  if (name === "NotAllowedError" || name === "SecurityError")
+    return "Rafiki needs the camera. Allow camera access in your browser, then try again.";
+  if (name === "NotFoundError" || name === "OverconstrainedError")
+    return "No camera was found on this device. Plug one in or switch devices, then try again.";
+  if (name === "NotReadableError" || name === "AbortError")
+    return "The camera is being used by another app. Close it, then try again.";
+  if (msg === "no-camera-api")
+    return "This browser can't use the camera. Try Chrome or Safari on a secure (https) link.";
+  return "Hand tracking couldn't start. Check your connection and try again.";
+}
+
 
 /**
  * Attaches a stream to a video element and resolves once real frames are
