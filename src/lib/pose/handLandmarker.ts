@@ -18,7 +18,12 @@ const MODEL_URL =
 
 let visionPromise: ReturnType<typeof FilesetResolver.forVisionTasks> | null = null;
 function getVision() {
-  if (!visionPromise) visionPromise = FilesetResolver.forVisionTasks(WASM_BASE);
+  if (!visionPromise) {
+    visionPromise = FilesetResolver.forVisionTasks(WASM_BASE).catch((err) => {
+      visionPromise = null;
+      throw err;
+    });
+  }
   return visionPromise;
 }
 
@@ -26,8 +31,15 @@ let modelPromise: Promise<Uint8Array> | null = null;
 function getModelBuffer() {
   if (!modelPromise) {
     modelPromise = fetch(MODEL_URL)
-      .then((r) => r.arrayBuffer())
-      .then((b) => new Uint8Array(b));
+      .then((r) => {
+        if (!r.ok) throw new Error(`model-fetch-${r.status}`);
+        return r.arrayBuffer();
+      })
+      .then((b) => new Uint8Array(b))
+      .catch((err) => {
+        modelPromise = null;
+        throw err;
+      });
   }
   return modelPromise;
 }
@@ -59,10 +71,16 @@ let loading: Promise<HandLandmarker> | null = null;
 export async function getHandLandmarker(): Promise<HandLandmarker> {
   if (instance) return instance;
   if (!loading) {
-    loading = create(1).then((l) => {
-      instance = l;
-      return l;
-    });
+    loading = create(1)
+      .then((l) => {
+        instance = l;
+        return l;
+      })
+      .catch((err) => {
+        // Never cache a failed load, otherwise every retry replays the failure.
+        loading = null;
+        throw err;
+      });
   }
   return loading;
 }
@@ -75,10 +93,15 @@ let twoLoading: Promise<HandLandmarker> | null = null;
 export async function getTwoHandLandmarker(): Promise<HandLandmarker> {
   if (twoInstance) return twoInstance;
   if (!twoLoading) {
-    twoLoading = create(2).then((l) => {
-      twoInstance = l;
-      return l;
-    });
+    twoLoading = create(2)
+      .then((l) => {
+        twoInstance = l;
+        return l;
+      })
+      .catch((err) => {
+        twoLoading = null;
+        throw err;
+      });
   }
   return twoLoading;
 }
