@@ -352,6 +352,25 @@ export function BalloonFairGame({
     <div style={{ maxWidth: STAGE_W, margin: "0 auto" }}>
       <video ref={videoRef} style={{ display: "none" }} playsInline muted />
 
+      {trackingNotice && (
+        <div
+          style={{
+            textAlign: "center",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#8a6d3b",
+            background: "#fff6e0",
+            borderRadius: 999,
+            padding: "6px 12px",
+            margin: "8px auto",
+            maxWidth: 260,
+          }}
+        >
+          {trackingNotice}
+        </div>
+      )}
+
+
       {!isReady && <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>}
 
       {isReady && (
