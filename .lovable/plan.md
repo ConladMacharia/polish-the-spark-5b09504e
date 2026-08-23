@@ -1,35 +1,41 @@
-# Finish the remaining 34 language translations
+# What still needs work in Neuro-Bridge
 
-## Where things stand
+Based on a read of the current code, here is what is genuinely unfinished — ordered by how much it affects real users.
 
-10 of the 44 languages have full text today:
+## 1. Translations are half done (visible to every user)
 
-English, Kiswahili, Gĩkũyũ, Oluluhya, Dholuo, Kĩkamba, Kalenjin, Ekegusii, Kĩmĩrũ, Kĩembu.
+Of the 47 languages in the picker, 13 bundles are complete (en, sw, ki, kam, luo, luy, kln, kis, mer, emb, mas, dav, dig, nyf, tur — 64 keys each) and **10 files are empty** (dug, mij, pkm, pko, saq, seg, sqm, swk, teo). The rest have no file at all and silently fall back to Swahili/English.
 
-34 still fall back to Swahili/English:
+Nothing looks broken because of the fallback, but choosing e.g. Chiduruma or Ateso today changes nothing. This is a credits-bound generation run, not a code problem.
 
-- Files exist but are empty (14): Kimijikenda, Chidigo, Chiduruma, Kigiryama, Kibajuni, Kipokomo, Kidawida, Kisegeju, Ng'aturkana, Maa, Sampur, Pökoot, Ateso, Olusuba.
-- No file yet (20): Igikuria, Soomaali, Boraana, Rendille, Gabra, Orma, Kipsigis, Nandi, Markweeta, Tugen, Sabaot, Terik, Ogiek, Sengwer, El Molo, Yaakunte, Dahalo, Aweer, Ki-Nubi, Kenyan Sign Language (stays English text by design).
+## 2. Incorrect-form video capture never got built
 
-Nothing is broken meanwhile — every missing key falls back, so no blank UI.
+The original requirement was: record a short video snippet **only** when the AI detects the caregiver is doing the therapy wrong. There is no `MediaRecorder` anywhere in the app and no storage bucket for clips. Today a therapist sees numbers but never sees what went wrong.
 
-## What blocked it
+Needs: a rolling in-memory buffer during a session, a trigger on sustained poor rep quality, upload to a private storage bucket, and a clips list on the therapist's patient page.
 
-The last run stopped on an AI Gateway 402 "Not enough credits", then rate limits. It is a credits issue, not a code issue.
+## 3. Therapist-side loop is thin
 
-## The command to give me
+- AI reports exist, but plan assignment/adjustment (the "reduce therapist workload" goal) is still manual.
+- No notifications when a child misses days or regresses.
+- Patient page shows one patient at a time; no caseload triage view.
 
-Once the workspace has AI credits available, just say:
+## 4. Child view polish
 
-> resume translations
+Games work and tracking self-heals, but: no per-child difficulty memory across sessions, no reward/streak persistence in the database, and the reward screens differ between games.
 
-I will re-run the generation script for all 34 remaining languages, one language per request with a delay between calls to stay under rate limits, writing both `src/lib/i18n/locales/<code>.json` (dashboard) and `public/neuro-bridge/locales/<code>.json` (therapy player). Kenyan Sign Language is skipped intentionally.
+## 5. Home-use realities
 
-You can also scope it, e.g. "translate Maa, Ateso and Turkana only" if you want to spend fewer credits first.
+- No PWA/offline support — clinic-introduced, home-used app on Kenyan mobile data currently needs a live connection for everything.
+- No low-bandwidth mode for the reference videos.
+- No caregiver onboarding walkthrough on first launch.
 
-## Technical notes
+## 6. Smaller correctness items
 
-- Script: `/tmp/gen_locales.py`, source keys from `src/lib/i18n/strings.ts` (64 keys), model `openai/gpt-5.6-sol` via the Lovable AI Gateway.
-- Each language is validated as JSON with all 64 keys and `{placeholders}` preserved before being written; a failed language is retried rather than written half-empty.
-- Existing hand-checked bundles (en, sw, ki) are never overwritten.
-- After the run I will spot-check two languages in the preview (dashboard text + player prompts) before reporting done.
+- Landing, auth and every app route have their own metadata — this part is fine.
+- Exercise target editing exists, but targets are not shown in the child games, only in the tracking session.
+- Session data and reports have no export (PDF/print) for clinic visits.
+
+## Where to start
+
+My recommendation, in order: (2) form-failure video capture, then (1) finishing the translations, then (3) automatic plan adjustment. Tell me which one to take and I will write a build plan for it.
