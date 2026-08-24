@@ -75,29 +75,37 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
 
   useEffect(() => {
     let stream: MediaStream | null = null;
+    cancelledRef.current = false;
 
     async function setup() {
-      landmarkerRef.current = await getHandLandmarker();
-
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
-        audio: false,
-      });
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+      // Camera prompt and model load start together: waiting for the model
+      // first delayed the permission dialog by seconds.
+      const [landmarker, camera] = await Promise.all([
+        getHandLandmarker(),
+        startCameraStream(),
+      ]);
+      stream = camera;
+      if (cancelledRef.current) {
+        camera.getTracks().forEach((t) => t.stop());
+        return;
       }
-
+      landmarkerRef.current = landmarker;
+      if (videoRef.current) await attachStream(videoRef.current, camera);
+      if (cancelledRef.current) return;
       setIsReady(true);
-      requestAnimationFrame(detectionLoop);
-      requestAnimationFrame(gameLoop);
+      animationFrameRef.current = requestAnimationFrame(detectionLoop);
+      gameFrameRef.current = requestAnimationFrame(gameLoop);
     }
 
-    setup().catch((err) => console.error("Setup failed:", err));
+    setup().catch((err) => {
+      console.error("Setup failed:", err);
+      setError("Rafiki can't reach the camera. Allow camera access and try again.");
+    });
 
     return () => {
+      cancelledRef.current = true;
       if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current);
+      if (gameFrameRef.current !== null) cancelAnimationFrame(gameFrameRef.current);
       stream?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
