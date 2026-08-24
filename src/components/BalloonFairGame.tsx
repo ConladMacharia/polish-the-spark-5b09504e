@@ -338,7 +338,10 @@ export function BalloonFairGame({
     <div style={{ maxWidth: STAGE_W, margin: "0 auto" }}>
       <video ref={videoRef} style={{ display: "none" }} playsInline muted />
 
-      {!isReady && <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>}
+      {error && <div style={{ textAlign: "center", padding: 20 }}>{error}</div>}
+      {!isReady && !error && (
+        <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>
+      )}
 
       {isReady && (
         <>
