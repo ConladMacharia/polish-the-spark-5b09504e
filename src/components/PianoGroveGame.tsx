@@ -44,6 +44,8 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const gameFrameRef = useRef<number | null>(null);
+  const cancelledRef = useRef(false);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -51,6 +53,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   const lastUiUpdateRef = useRef(0);
 
   const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [liveDistances, setLiveDistances] = useState<Record<FingerName, number> | null>(null);
   const [activeFinger, setActiveFinger] = useState<FingerName | null>(null);
   const [notes, setNotes] = useState<NoteState[]>([]);
