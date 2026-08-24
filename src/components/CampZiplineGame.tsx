@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
-import { getHandLandmarker } from "@/lib/pose/handLandmarker";
+import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
 import { HAND_LANDMARKS } from "@/lib/pose/fingerUtils";
 import {
   AdaptivePinch,
@@ -57,7 +57,11 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
   
   const zipProgressRef = useRef(0); // 0 = open, 1 = fully zipped
 
+  const frameRef = useRef<number | null>(null);
+  const cancelledRef = useRef(false);
+
   const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [cursorPos, setCursorPos] = useState({ x: CENTER_X, y: TENT_BASE_Y });
   const [isPinched, setIsPinched] = useState(false);
   const [zipProgress, setZipProgress] = useState(0);
@@ -66,29 +70,39 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
 
   useEffect(() => {
     let stream: MediaStream | null = null;
+    cancelledRef.current = false;
 
     async function setup() {
-      landmarkerRef.current = await getHandLandmarker();
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
-        audio: false,
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+      const [landmarker, camera] = await Promise.all([
+        getHandLandmarker(),
+        startCameraStream(),
+      ]);
+      stream = camera;
+      if (cancelledRef.current) {
+        camera.getTracks().forEach((t) => t.stop());
+        return;
       }
+      landmarkerRef.current = landmarker;
+      if (videoRef.current) await attachStream(videoRef.current, camera);
+      if (cancelledRef.current) return;
       setIsReady(true);
-      requestAnimationFrame(loop);
+      frameRef.current = requestAnimationFrame(loop);
     }
-    setup().catch((err) => console.error("Setup failed:", err));
+    setup().catch((err) => {
+      console.error("Setup failed:", err);
+      setError("Rafiki can't reach the camera. Allow camera access and try again.");
+    });
 
     return () => {
+      cancelledRef.current = true;
+      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
       stream?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function loop() {
+    if (cancelledRef.current) return;
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
 
@@ -149,7 +163,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
     setZipProgress(zipProgressRef.current);
     if (zipProgressRef.current >= 0.999) setComplete(true);
 
-    requestAnimationFrame(loop);
+    frameRef.current = requestAnimationFrame(loop);
   }
 
   function reset() {
@@ -166,7 +180,10 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
     <div style={{ maxWidth: STAGE_W, margin: "0 auto" }}>
       <video ref={videoRef} style={{ display: "none" }} playsInline muted />
 
-      {!isReady && <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>}
+      {error && <div style={{ textAlign: "center", padding: 20 }}>{error}</div>}
+      {!isReady && !error && (
+        <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>
+      )}
 
       {isReady && (
         <div

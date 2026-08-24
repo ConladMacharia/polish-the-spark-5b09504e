@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { HandLandmarker } from "@mediapipe/tasks-vision";
-import { getHandLandmarker } from "@/lib/pose/handLandmarker";
+import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
 import { getFingerDistances, getActiveFinger, TOUCH_THRESHOLD, type FingerName } from "@/lib/pose/fingerUtils";
 import {
   handConfidence,
@@ -44,6 +44,8 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const gameFrameRef = useRef<number | null>(null);
+  const cancelledRef = useRef(false);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -51,6 +53,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   const lastUiUpdateRef = useRef(0);
 
   const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [liveDistances, setLiveDistances] = useState<Record<FingerName, number> | null>(null);
   const [activeFinger, setActiveFinger] = useState<FingerName | null>(null);
   const [notes, setNotes] = useState<NoteState[]>([]);
@@ -75,29 +78,37 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
 
   useEffect(() => {
     let stream: MediaStream | null = null;
+    cancelledRef.current = false;
 
     async function setup() {
-      landmarkerRef.current = await getHandLandmarker();
-
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
-        audio: false,
-      });
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+      // Camera prompt and model load start together: waiting for the model
+      // first delayed the permission dialog by seconds.
+      const [landmarker, camera] = await Promise.all([
+        getHandLandmarker(),
+        startCameraStream(),
+      ]);
+      stream = camera;
+      if (cancelledRef.current) {
+        camera.getTracks().forEach((t) => t.stop());
+        return;
       }
-
+      landmarkerRef.current = landmarker;
+      if (videoRef.current) await attachStream(videoRef.current, camera);
+      if (cancelledRef.current) return;
       setIsReady(true);
-      requestAnimationFrame(detectionLoop);
-      requestAnimationFrame(gameLoop);
+      animationFrameRef.current = requestAnimationFrame(detectionLoop);
+      gameFrameRef.current = requestAnimationFrame(gameLoop);
     }
 
-    setup().catch((err) => console.error("Setup failed:", err));
+    setup().catch((err) => {
+      console.error("Setup failed:", err);
+      setError("Rafiki can't reach the camera. Allow camera access and try again.");
+    });
 
     return () => {
+      cancelledRef.current = true;
       if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current);
+      if (gameFrameRef.current !== null) cancelAnimationFrame(gameFrameRef.current);
       stream?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,6 +140,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   }
 
   function detectionLoop() {
+    if (cancelledRef.current) return;
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
 
@@ -217,6 +229,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   }
 
   function gameLoop(t: number) {
+    if (cancelledRef.current) return;
     if (spawnedRef.current < SONG_LENGTH && t - lastSpawnRef.current > SPAWN_GAP_MS) {
       const finger = FINGER_ORDER[Math.floor(Math.random() * 4)];
       const newNote: NoteState = { id: noteIdRef.current++, finger, progress: 0, hit: false };
@@ -237,7 +250,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
         })
     );
 
-    requestAnimationFrame(gameLoop);
+    gameFrameRef.current = requestAnimationFrame(gameLoop);
   }
 
   return (
@@ -262,7 +275,10 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
         </div>
       )}
 
-      {!isReady && <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>}
+      {error && <div style={{ textAlign: "center", padding: 20 }}>{error}</div>}
+      {!isReady && !error && (
+        <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>
+      )}
 
       {isReady && (
         <>

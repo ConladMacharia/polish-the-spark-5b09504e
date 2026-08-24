@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
-import { getTwoHandLandmarker } from "@/lib/pose/handLandmarker";
+import { getTwoHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
 import { HAND_LANDMARKS } from "@/lib/pose/fingerUtils";
 
 interface BalloonFairGameProps {
@@ -94,6 +94,7 @@ export function BalloonFairGame({
   const idCounter = useRef(0);
 
   const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [aim, setAim] = useState({ x: STAGE_W / 2, y: STAGE_H * 0.35 });
   const [drawRatio, setDrawRatio] = useState(0);
   const [balloons, setBalloons] = useState<Balloon[]>([]);
@@ -114,26 +115,27 @@ export function BalloonFairGame({
     isMountedRef.current = true;
 
     async function setup() {
-      landmarkerRef.current = await getTwoHandLandmarker();
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
-        audio: false,
-      });
+      const [landmarker, camera] = await Promise.all([
+        getTwoHandLandmarker(),
+        startCameraStream(),
+      ]);
+      stream = camera;
       if (!isMountedRef.current) {
         // component was unmounted while camera permission was pending
-        stream.getTracks().forEach((t) => t.stop());
+        camera.getTracks().forEach((t) => t.stop());
         return;
       }
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
+      landmarkerRef.current = landmarker;
+      if (videoRef.current) await attachStream(videoRef.current, camera);
       if (!isMountedRef.current) return;
       setIsReady(true);
       detectionFrameRef.current = requestAnimationFrame(detectionLoop);
       gameFrameRef.current = requestAnimationFrame(gameLoop);
     }
-    setup().catch((err) => console.error("Setup failed:", err));
+    setup().catch((err) => {
+      console.error("Setup failed:", err);
+      setError("Rafiki can't reach the camera. Allow camera access and try again.");
+    });
 
     return () => {
       isMountedRef.current = false;
@@ -336,7 +338,10 @@ export function BalloonFairGame({
     <div style={{ maxWidth: STAGE_W, margin: "0 auto" }}>
       <video ref={videoRef} style={{ display: "none" }} playsInline muted />
 
-      {!isReady && <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>}
+      {error && <div style={{ textAlign: "center", padding: 20 }}>{error}</div>}
+      {!isReady && !error && (
+        <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>
+      )}
 
       {isReady && (
         <>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
-import { getHandLandmarker } from "@/lib/pose/handLandmarker";
+import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
 import {
   FINGER_NAMES,
   FistCycle,
@@ -92,10 +92,7 @@ export function ChildGameScreen({
       try {
         const [landmarker, stream] = await Promise.all([
           getHandLandmarker(),
-          navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user", width: 640, height: 480 },
-            audio: false,
-          }),
+          startCameraStream(),
         ]);
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
@@ -104,8 +101,7 @@ export function ChildGameScreen({
         streamRef.current = stream;
         const video = videoRef.current;
         if (!video) return;
-        video.srcObject = stream;
-        await video.play();
+        await attachStream(video, stream);
         setReady(true);
 
         const loop = () => {
