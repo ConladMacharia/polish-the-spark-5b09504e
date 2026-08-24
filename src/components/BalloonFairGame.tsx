@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
-import { getTwoHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
+import { getTwoHandLandmarker } from "@/lib/pose/handLandmarker";
 import { HAND_LANDMARKS } from "@/lib/pose/fingerUtils";
 
 interface BalloonFairGameProps {
@@ -114,18 +114,20 @@ export function BalloonFairGame({
     isMountedRef.current = true;
 
     async function setup() {
-      const [landmarker, mediaStream] = await Promise.all([
-        getTwoHandLandmarker(),
-        startCameraStream(),
-      ]);
-      landmarkerRef.current = landmarker;
-      stream = mediaStream;
+      landmarkerRef.current = await getTwoHandLandmarker();
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+        audio: false,
+      });
       if (!isMountedRef.current) {
         // component was unmounted while camera permission was pending
-        mediaStream.getTracks().forEach((t) => t.stop());
+        stream.getTracks().forEach((t) => t.stop());
         return;
       }
-      if (videoRef.current) await attachStream(videoRef.current, mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
       if (!isMountedRef.current) return;
       setIsReady(true);
       detectionFrameRef.current = requestAnimationFrame(detectionLoop);

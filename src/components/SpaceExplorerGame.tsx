@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
-import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
+import { getHandLandmarker } from "@/lib/pose/handLandmarker";
 import {
   AdaptiveScalar,
   JitterMonitor,
@@ -72,13 +72,15 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
     let stream: MediaStream | null = null;
 
     async function setup() {
-      const [landmarker, mediaStream] = await Promise.all([
-        getHandLandmarker(),
-        startCameraStream(),
-      ]);
-      landmarkerRef.current = landmarker;
-      stream = mediaStream;
-      if (videoRef.current) await attachStream(videoRef.current, mediaStream);
+      landmarkerRef.current = await getHandLandmarker();
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+        audio: false,
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
       setIsReady(true);
       requestAnimationFrame(detectionLoop);
       requestAnimationFrame(gameLoop);
