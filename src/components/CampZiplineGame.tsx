@@ -163,7 +163,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
     setZipProgress(zipProgressRef.current);
     if (zipProgressRef.current >= 0.999) setComplete(true);
 
-    requestAnimationFrame(loop);
+    frameRef.current = requestAnimationFrame(loop);
   }
 
   function reset() {
@@ -180,7 +180,10 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
     <div style={{ maxWidth: STAGE_W, margin: "0 auto" }}>
       <video ref={videoRef} style={{ display: "none" }} playsInline muted />
 
-      {!isReady && <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>}
+      {error && <div style={{ textAlign: "center", padding: 20 }}>{error}</div>}
+      {!isReady && !error && (
+        <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>
+      )}
 
       {isReady && (
         <div

@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
-import { getHandLandmarker } from "@/lib/pose/handLandmarker";
+import { getHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
 import {
   AdaptiveScalar,
   JitterMonitor,
@@ -58,7 +58,12 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
     new AdaptiveScalar({ minAlpha: 0.45, maxAlpha: 0.95, fastMotion: 0.025 * STAGE_H })
   );
 
+  const detectFrameRef = useRef<number | null>(null);
+  const gameFrameRef = useRef<number | null>(null);
+  const cancelledRef = useRef(false);
+
   const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [rocketY, setRocketY] = useState(STAGE_H / 2);
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [collectibles, setCollectibles] = useState<Collectible[]>([]);
@@ -70,38 +75,49 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
 
   useEffect(() => {
     let stream: MediaStream | null = null;
+    cancelledRef.current = false;
 
     async function setup() {
-      landmarkerRef.current = await getHandLandmarker();
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
-        audio: false,
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+      const [landmarker, camera] = await Promise.all([
+        getHandLandmarker(),
+        startCameraStream(),
+      ]);
+      stream = camera;
+      if (cancelledRef.current) {
+        camera.getTracks().forEach((t) => t.stop());
+        return;
       }
+      landmarkerRef.current = landmarker;
+      if (videoRef.current) await attachStream(videoRef.current, camera);
+      if (cancelledRef.current) return;
       setIsReady(true);
-      requestAnimationFrame(detectionLoop);
-      requestAnimationFrame(gameLoop);
+      detectFrameRef.current = requestAnimationFrame(detectionLoop);
+      gameFrameRef.current = requestAnimationFrame(gameLoop);
     }
-    setup().catch((err) => console.error("Setup failed:", err));
+    setup().catch((err) => {
+      console.error("Setup failed:", err);
+      setError("Rafiki can't reach the camera. Allow camera access and try again.");
+    });
 
     return () => {
+      cancelledRef.current = true;
+      if (detectFrameRef.current !== null) cancelAnimationFrame(detectFrameRef.current);
+      if (gameFrameRef.current !== null) cancelAnimationFrame(gameFrameRef.current);
       stream?.getTracks().forEach((t) => t.stop());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function detectionLoop() {
+    if (cancelledRef.current) return;
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
     if (!video || !landmarker) {
-      requestAnimationFrame(detectionLoop);
+      detectFrameRef.current = requestAnimationFrame(detectionLoop);
       return;
     }
     if (isDetectingRef.current || video.currentTime === lastVideoTimeRef.current) {
-      requestAnimationFrame(detectionLoop);
+      detectFrameRef.current = requestAnimationFrame(detectionLoop);
       return;
     }
     isDetectingRef.current = true;
@@ -125,7 +141,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
     }
 
     isDetectingRef.current = false;
-    requestAnimationFrame(detectionLoop);
+    detectFrameRef.current = requestAnimationFrame(detectionLoop);
   }
 
   function registerHit() {
@@ -142,6 +158,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
   }
 
   function gameLoop(t: number) {
+    if (cancelledRef.current) return;
     if (startTimeRef.current === 0) startTimeRef.current = t;
     const elapsed = (t - startTimeRef.current) / 1000;
 
@@ -199,7 +216,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
     collectiblesRef.current = collectiblesRef.current.filter((c) => c.x > -30 && !c.collected);
     setCollectibles([...collectiblesRef.current]);
 
-    requestAnimationFrame(gameLoop);
+    gameFrameRef.current = requestAnimationFrame(gameLoop);
   }
 
 
@@ -208,7 +225,10 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
     <div style={{ maxWidth: 460, margin: "0 auto" }}>
       <video ref={videoRef} style={{ display: "none" }} playsInline muted />
 
-      {!isReady && <div style={{ textAlign: "center", padding: 20, color: "white" }}>Starting camera...</div>}
+      {error && <div style={{ textAlign: "center", padding: 20, color: "white" }}>{error}</div>}
+      {!isReady && !error && (
+        <div style={{ textAlign: "center", padding: 20, color: "white" }}>Starting camera...</div>
+      )}
 
       {isReady && (
         <>
