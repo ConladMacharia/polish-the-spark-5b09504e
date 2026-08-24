@@ -140,6 +140,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   }
 
   function detectionLoop() {
+    if (cancelledRef.current) return;
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
 
@@ -228,6 +229,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   }
 
   function gameLoop(t: number) {
+    if (cancelledRef.current) return;
     if (spawnedRef.current < SONG_LENGTH && t - lastSpawnRef.current > SPAWN_GAP_MS) {
       const finger = FINGER_ORDER[Math.floor(Math.random() * 4)];
       const newNote: NoteState = { id: noteIdRef.current++, finger, progress: 0, hit: false };
@@ -248,7 +250,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
         })
     );
 
-    requestAnimationFrame(gameLoop);
+    gameFrameRef.current = requestAnimationFrame(gameLoop);
   }
 
   return (
@@ -273,7 +275,10 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
         </div>
       )}
 
-      {!isReady && <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>}
+      {error && <div style={{ textAlign: "center", padding: 20 }}>{error}</div>}
+      {!isReady && !error && (
+        <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>
+      )}
 
       {isReady && (
         <>
