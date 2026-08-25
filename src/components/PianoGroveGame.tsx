@@ -465,11 +465,57 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
             style={{
               position: "relative",
               height: 360,
-              background: "white",
               borderRadius: 16,
               overflow: "hidden",
+              color: "#F4EEDC",
+              background:
+                "radial-gradient(120% 70% at 50% 0%, #4C3B7A 0%, #2B2450 45%, #14122B 100%)",
+              boxShadow: "inset 0 -40px 60px rgba(0,0,0,0.45)",
             }}
           >
+            {/* moon + fireflies + grove silhouette make the stage feel alive */}
+            <div
+              style={{
+                position: "absolute",
+                top: 26,
+                right: 28,
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: "radial-gradient(circle at 35% 35%, #FFF6D8, #F0D890)",
+                boxShadow: "0 0 30px rgba(255,240,200,0.55)",
+              }}
+            />
+            {[
+              [12, 60], [30, 120], [55, 40], [72, 150], [88, 90], [20, 200], [64, 240],
+            ].map(([leftPct, top], i) => (
+              <div
+                key={i}
+                style={{
+                  position: "absolute",
+                  left: `${leftPct}%`,
+                  top,
+                  width: 4,
+                  height: 4,
+                  borderRadius: "50%",
+                  background: "#FFE9A8",
+                  opacity: 0.85,
+                  boxShadow: "0 0 8px #FFD86B",
+                }}
+              />
+            ))}
+            <svg
+              viewBox="0 0 400 120"
+              preserveAspectRatio="none"
+              style={{ position: "absolute", bottom: 52, left: 0, width: "100%", height: 110, opacity: 0.85 }}
+            >
+              <polygon points="30,120 55,10 80,120" fill="#122A22" />
+              <polygon points="90,120 120,26 150,120" fill="#0E241D" />
+              <polygon points="250,120 280,18 310,120" fill="#0E241D" />
+              <polygon points="320,120 350,34 380,120" fill="#122A22" />
+              <rect x="0" y="104" width="400" height="16" fill="#0B1A16" />
+            </svg>
+
             <div
               style={{
                 position: "absolute",
