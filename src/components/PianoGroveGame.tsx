@@ -602,15 +602,18 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
                 <div
                   key={f}
                   style={{
-                    background: activeFinger === f ? FINGER_COLOR[f] : "#ddd",
+                    background: activeFinger === f ? FINGER_COLOR[f] : "rgba(255,255,255,0.14)",
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    boxShadow: activeFinger === f ? `0 0 18px ${FINGER_COLOR[f]}` : "none",
                     borderRadius: 10,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: 11,
                     fontWeight: 700,
-                    color: activeFinger === f ? "white" : "#888",
-                    transition: "background 100ms",
+                    color: activeFinger === f ? "#1A1630" : "#EDE6D2",
+                    transition: "background 100ms, box-shadow 100ms",
+
                   }}
                 >
                   {f}
