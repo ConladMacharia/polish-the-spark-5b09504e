@@ -65,6 +65,22 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const jitterRef = useRef(new JitterMonitor());
   const lastUiUpdateRef = useRef(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Per-finger smoothing + hysteresis: a smoothed distance stops jitter from
+  // faking taps, and the pinch band stops a held touch from flickering.
+  const smoothRef = useRef<Record<FingerName, AdaptiveScalar>>({
+    index: new AdaptiveScalar(),
+    middle: new AdaptiveScalar(),
+    ring: new AdaptiveScalar(),
+    pinky: new AdaptiveScalar(),
+  });
+  const pinchRef = useRef<Record<FingerName, AdaptivePinch>>({
+    index: new AdaptivePinch({ closeAt: 0.32, releaseAt: 0.46, graceMs: 120 }),
+    middle: new AdaptivePinch({ closeAt: 0.32, releaseAt: 0.46, graceMs: 120 }),
+    ring: new AdaptivePinch({ closeAt: 0.34, releaseAt: 0.48, graceMs: 120 }),
+    pinky: new AdaptivePinch({ closeAt: 0.36, releaseAt: 0.5, graceMs: 120 }),
+  });
+
 
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
