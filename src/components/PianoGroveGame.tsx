@@ -367,7 +367,34 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
 
   return (
     <div style={{ maxWidth: 480, margin: "0 auto" }}>
-      <video ref={videoRef} style={{ display: "none" }} playsInline muted />
+      <div
+        style={{
+          position: "relative",
+          borderRadius: 12,
+          overflow: "hidden",
+          background: "#000",
+          aspectRatio: "16 / 9",
+          display: isReady ? "block" : "none",
+          marginBottom: 12,
+        }}
+      >
+        <video
+          ref={videoRef}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            transform: "scaleX(-1)",
+          }}
+          playsInline
+          muted
+        />
+        <canvas
+          ref={canvasRef}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        />
+      </div>
+
 
       {onExit && (
         <div style={{ padding: "12px 0" }}>
