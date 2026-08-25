@@ -314,6 +314,10 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
 
 
   function handleTouch(finger: FingerName) {
+    // Every recognised thumb→finger touch sounds its own motif/timbre, whether
+    // or not a note is in the hit window. The finger IS the instrument.
+    playTone(finger);
+
     const candidates = notesRef.current.filter((n) => n.finger === finger && !n.hit);
     if (candidates.length === 0) return;
 
@@ -325,7 +329,6 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
     if (distFromTarget > 0.25) return;
 
     closest.hit = true;
-    playTone(finger);
 
     const quality = distFromTarget < 0.08 ? "great" : "good";
     setFeedback({
@@ -339,6 +342,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
 
     setNotes((prev) => prev.filter((n) => n.id !== closest.id));
   }
+
 
   function gameLoop(t: number) {
     if (cancelledRef.current) return;
