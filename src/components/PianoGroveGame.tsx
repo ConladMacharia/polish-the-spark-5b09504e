@@ -553,7 +553,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
               }}
             >
               {FINGER_ORDER.map((f) => (
-                <div key={f} style={{ position: "relative", borderRight: "1px solid #eee" }}>
+                <div key={f} style={{ position: "relative", borderRight: "1px solid rgba(255,255,255,0.12)" }}>
                   <div
                     style={{
                       position: "absolute",
@@ -561,10 +561,11 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
                       left: 4,
                       right: 4,
                       height: 8,
-                      background: "#eee",
+                      background: "rgba(255,255,255,0.3)",
                       borderRadius: 4,
                     }}
                   />
+
                   {notes
                     .filter((n) => n.finger === f)
                     .map((n) => (
