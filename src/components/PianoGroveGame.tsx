@@ -12,7 +12,21 @@ import {
   blendConfidence,
   JitterMonitor,
   tolerantThreshold,
+  AdaptiveScalar,
+  AdaptivePinch,
 } from "@/lib/pose/adaptiveTracking";
+
+// Finger skeleton connections (MediaPipe hand model) for the live overlay.
+const HAND_BONES: [number, number][] = [
+  [0, 1], [1, 2], [2, 3], [3, 4],
+  [0, 5], [5, 6], [6, 7], [7, 8],
+  [5, 9], [9, 10], [10, 11], [11, 12],
+  [9, 13], [13, 14], [14, 15], [15, 16],
+  [13, 17], [17, 18], [18, 19], [19, 20],
+  [0, 17],
+];
+const TIP_INDEX: Record<FingerName, number> = { index: 8, middle: 12, ring: 16, pinky: 20 };
+
 
 const FINGER_ORDER: FingerName[] = ["index", "middle", "ring", "pinky"];
 const FINGER_COLOR: Record<FingerName, string> = {
