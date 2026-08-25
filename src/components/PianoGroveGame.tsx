@@ -259,6 +259,60 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
     animationFrameRef.current = requestAnimationFrame(detectionLoop);
   }
 
+  // Mirrored finger overlay so the child can see exactly what is tracked.
+  function drawHand(lm: { x: number; y: number }[] | null, active: FingerName | null) {
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    if (!canvas || !video) return;
+    const w = canvas.clientWidth || 320;
+    const h = canvas.clientHeight || 180;
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, w, h);
+    if (!lm) return;
+
+    const px = (i: number) => ({ x: (1 - lm[i].x) * w, y: lm[i].y * h });
+
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "rgba(255,255,255,0.85)";
+    for (const [a, b] of HAND_BONES) {
+      const p1 = px(a);
+      const p2 = px(b);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+
+    const thumb = px(4);
+    for (const f of FINGER_ORDER) {
+      const tip = px(TIP_INDEX[f]);
+      ctx.fillStyle = FINGER_COLOR[f];
+      ctx.beginPath();
+      ctx.arc(tip.x, tip.y, active === f ? 10 : 6, 0, Math.PI * 2);
+      ctx.fill();
+      if (active === f) {
+        ctx.strokeStyle = FINGER_COLOR[f];
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(thumb.x, thumb.y);
+        ctx.lineTo(tip.x, tip.y);
+        ctx.stroke();
+      }
+    }
+
+    ctx.fillStyle = "#333";
+    ctx.beginPath();
+    ctx.arc(thumb.x, thumb.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+
+
   function handleTouch(finger: FingerName) {
     const candidates = notesRef.current.filter((n) => n.finger === finger && !n.hit);
     if (candidates.length === 0) return;
