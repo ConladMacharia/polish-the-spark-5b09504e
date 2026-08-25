@@ -117,14 +117,17 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
         const thumb = lm[HAND_LANDMARKS.THUMB_TIP];
         const index = lm[HAND_LANDMARKS.INDEX_TIP];
 
-        // cursor position = midpoint between thumb and index (natural pinch center)
-        const mid = { x: (thumb.x + index.x) / 2, y: (thumb.y + index.y) / 2 };
+        // cursor position = midpoint between thumb and index (natural pinch center).
+        // x is mirrored: the camera feed is a mirror of the child, so a raw
+        // landmark x moves the cursor the wrong way and feels untracked.
+        const mid = { x: 1 - (thumb.x + index.x) / 2, y: (thumb.y + index.y) / 2 };
         jitterRef.current.push(mid);
         confRef.current = blendConfidence(handConfidence(result), jitterRef.current.stability);
 
         const smoothed = cursorSmootherRef.current.push(mid, confRef.current);
         cursorRef.current.x = smoothed.x * STAGE_W;
         cursorRef.current.y = smoothed.y * STAGE_H;
+
 
         const pinchDist = Math.sqrt((thumb.x - index.x) ** 2 + (thumb.y - index.y) ** 2);
         isPinchedRef.current = pinchRef.current.update(pinchDist, confRef.current, now);
