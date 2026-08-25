@@ -314,6 +314,10 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
 
 
   function handleTouch(finger: FingerName) {
+    // Every recognised thumb→finger touch sounds its own motif/timbre, whether
+    // or not a note is in the hit window. The finger IS the instrument.
+    playTone(finger);
+
     const candidates = notesRef.current.filter((n) => n.finger === finger && !n.hit);
     if (candidates.length === 0) return;
 
@@ -325,7 +329,6 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
     if (distFromTarget > 0.25) return;
 
     closest.hit = true;
-    playTone(finger);
 
     const quality = distFromTarget < 0.08 ? "great" : "good";
     setFeedback({
@@ -339,6 +342,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
 
     setNotes((prev) => prev.filter((n) => n.id !== closest.id));
   }
+
 
   function gameLoop(t: number) {
     if (cancelledRef.current) return;
@@ -461,11 +465,57 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
             style={{
               position: "relative",
               height: 360,
-              background: "white",
               borderRadius: 16,
               overflow: "hidden",
+              color: "#F4EEDC",
+              background:
+                "radial-gradient(120% 70% at 50% 0%, #4C3B7A 0%, #2B2450 45%, #14122B 100%)",
+              boxShadow: "inset 0 -40px 60px rgba(0,0,0,0.45)",
             }}
           >
+            {/* moon + fireflies + grove silhouette make the stage feel alive */}
+            <div
+              style={{
+                position: "absolute",
+                top: 26,
+                right: 28,
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: "radial-gradient(circle at 35% 35%, #FFF6D8, #F0D890)",
+                boxShadow: "0 0 30px rgba(255,240,200,0.55)",
+              }}
+            />
+            {[
+              [12, 60], [30, 120], [55, 40], [72, 150], [88, 90], [20, 200], [64, 240],
+            ].map(([leftPct, top], i) => (
+              <div
+                key={i}
+                style={{
+                  position: "absolute",
+                  left: `${leftPct}%`,
+                  top,
+                  width: 4,
+                  height: 4,
+                  borderRadius: "50%",
+                  background: "#FFE9A8",
+                  opacity: 0.85,
+                  boxShadow: "0 0 8px #FFD86B",
+                }}
+              />
+            ))}
+            <svg
+              viewBox="0 0 400 120"
+              preserveAspectRatio="none"
+              style={{ position: "absolute", bottom: 52, left: 0, width: "100%", height: 110, opacity: 0.85 }}
+            >
+              <polygon points="30,120 55,10 80,120" fill="#122A22" />
+              <polygon points="90,120 120,26 150,120" fill="#0E241D" />
+              <polygon points="250,120 280,18 310,120" fill="#0E241D" />
+              <polygon points="320,120 350,34 380,120" fill="#122A22" />
+              <rect x="0" y="104" width="400" height="16" fill="#0B1A16" />
+            </svg>
+
             <div
               style={{
                 position: "absolute",
@@ -503,7 +553,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
               }}
             >
               {FINGER_ORDER.map((f) => (
-                <div key={f} style={{ position: "relative", borderRight: "1px solid #eee" }}>
+                <div key={f} style={{ position: "relative", borderRight: "1px solid rgba(255,255,255,0.12)" }}>
                   <div
                     style={{
                       position: "absolute",
@@ -511,10 +561,11 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
                       left: 4,
                       right: 4,
                       height: 8,
-                      background: "#eee",
+                      background: "rgba(255,255,255,0.3)",
                       borderRadius: 4,
                     }}
                   />
+
                   {notes
                     .filter((n) => n.finger === f)
                     .map((n) => (
@@ -551,15 +602,18 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
                 <div
                   key={f}
                   style={{
-                    background: activeFinger === f ? FINGER_COLOR[f] : "#ddd",
+                    background: activeFinger === f ? FINGER_COLOR[f] : "rgba(255,255,255,0.14)",
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    boxShadow: activeFinger === f ? `0 0 18px ${FINGER_COLOR[f]}` : "none",
                     borderRadius: 10,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: 11,
                     fontWeight: 700,
-                    color: activeFinger === f ? "white" : "#888",
-                    transition: "background 100ms",
+                    color: activeFinger === f ? "#1A1630" : "#EDE6D2",
+                    transition: "background 100ms, box-shadow 100ms",
+
                   }}
                 >
                   {f}

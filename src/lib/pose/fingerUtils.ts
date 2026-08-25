@@ -51,8 +51,8 @@ export function getFingerDistances(landmarks: Point2D[]): Record<FingerName, num
  * meaningfully closer than the other three fingers — this is what stops
  * a full hand-close from triggering every finger as "touched" at once.
  */
-const TOUCH_THRESHOLD = 0.35; // tune based on real testing — start generous
-const SEPARATION_MARGIN = 1.3; // target must be this much closer than 2nd-closest
+const TOUCH_THRESHOLD = 0.45; // generous: a real touch lands near 0.1-0.25
+const SEPARATION_MARGIN = 0.1; // absolute gap the target must beat the runner-up by
 
 export function getActiveFinger(
   distances: Record<FingerName, number>,
@@ -65,9 +65,12 @@ export function getActiveFinger(
   const [, secondDist] = entries[1];
 
   if (closestDist > touchThreshold) return null; // nothing close enough to thumb
-  if (secondDist < closestDist * SEPARATION_MARGIN) return null; // too ambiguous — two fingers equally close
+  // An absolute gap works where a ratio did not: neighbouring fingertips sit
+  // close together, so a 30% ratio rule rejected almost every genuine touch.
+  if (secondDist - closestDist < SEPARATION_MARGIN) return null;
 
   return closestName;
 }
+
 
 export { TOUCH_THRESHOLD };
