@@ -189,27 +189,50 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
 
     const result = landmarker.detectForVideo(video, performance.now());
 
+    const nowMs = performance.now();
+
     if (result.landmarks.length > 0) {
       const lm = result.landmarks[0];
-      const distances = getFingerDistances(lm);
-      // Debug readout only — refreshing it every frame re-rendered the whole
-      // board and stole frames from detection.
-      const nowMs = performance.now();
-      if (nowMs - lastUiUpdateRef.current > 120) {
-        lastUiUpdateRef.current = nowMs;
-        setLiveDistances(distances);
-      }
+      const raw = getFingerDistances(lm);
 
-      // Confidence-aware touch threshold: dim light / shaky hands get judged
-      // a little more generously instead of taps simply being rejected.
       const stability = jitterRef.current.push({ x: lm[0].x, y: lm[0].y });
       const conf = blendConfidence(
         handConfidence(result),
         jitterRef.current.stability ?? stability
       );
-      const active = getActiveFinger(distances, tolerantThreshold(TOUCH_THRESHOLD, conf, 0.4));
-      setActiveFinger(active);
 
+      // Smooth each thumb→fingertip distance before judging a touch, so
+      // landmark jitter can't fire phantom taps.
+      const smooth = {
+        index: smoothRef.current.index.push(raw.index, conf),
+        middle: smoothRef.current.middle.push(raw.middle, conf),
+        ring: smoothRef.current.ring.push(raw.ring, conf),
+        pinky: smoothRef.current.pinky.push(raw.pinky, conf),
+      } as Record<FingerName, number>;
+
+      if (nowMs - lastUiUpdateRef.current > 120) {
+        lastUiUpdateRef.current = nowMs;
+        setLiveDistances(smooth);
+      }
+
+      // Which finger is the unambiguous candidate this frame…
+      const candidate = getActiveFinger(
+        smooth,
+        tolerantThreshold(TOUCH_THRESHOLD, conf, 0.4)
+      );
+
+      // …then hysteresis decides engage/release per finger so a held touch
+      // stays held and a released one doesn't retrigger on noise.
+      let active: FingerName | null = null;
+      for (const f of FINGER_ORDER) {
+        const detector = pinchRef.current[f];
+        const closed =
+          f === candidate
+            ? detector.update(smooth[f], conf, nowMs)
+            : detector.markMissing(conf, nowMs);
+        if (closed && (active === null || smooth[f] < smooth[active])) active = f;
+      }
+      setActiveFinger(active);
 
       if (active && !lastHitFrameRef.current[active]) {
         handleTouch(active);
@@ -222,10 +245,15 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
       };
       if (active) newHitState[active] = true;
       lastHitFrameRef.current = newHitState;
+
+      drawHand(lm, active);
     } else {
+      for (const f of FINGER_ORDER) pinchRef.current[f].markMissing(0.2, nowMs);
       setLiveDistances(null);
       setActiveFinger(null);
+      drawHand(null, null);
     }
+
 
     isDetectingRef.current = false;
     animationFrameRef.current = requestAnimationFrame(detectionLoop);
