@@ -12,7 +12,21 @@ import {
   blendConfidence,
   JitterMonitor,
   tolerantThreshold,
+  AdaptiveScalar,
+  AdaptivePinch,
 } from "@/lib/pose/adaptiveTracking";
+
+// Finger skeleton connections (MediaPipe hand model) for the live overlay.
+const HAND_BONES: [number, number][] = [
+  [0, 1], [1, 2], [2, 3], [3, 4],
+  [0, 5], [5, 6], [6, 7], [7, 8],
+  [5, 9], [9, 10], [10, 11], [11, 12],
+  [9, 13], [13, 14], [14, 15], [15, 16],
+  [13, 17], [17, 18], [18, 19], [19, 20],
+  [0, 17],
+];
+const TIP_INDEX: Record<FingerName, number> = { index: 8, middle: 12, ring: 16, pinky: 20 };
+
 
 const FINGER_ORDER: FingerName[] = ["index", "middle", "ring", "pinky"];
 const FINGER_COLOR: Record<FingerName, string> = {
@@ -51,6 +65,22 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const jitterRef = useRef(new JitterMonitor());
   const lastUiUpdateRef = useRef(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Per-finger smoothing + hysteresis: a smoothed distance stops jitter from
+  // faking taps, and the pinch band stops a held touch from flickering.
+  const smoothRef = useRef<Record<FingerName, AdaptiveScalar>>({
+    index: new AdaptiveScalar(),
+    middle: new AdaptiveScalar(),
+    ring: new AdaptiveScalar(),
+    pinky: new AdaptiveScalar(),
+  });
+  const pinchRef = useRef<Record<FingerName, AdaptivePinch>>({
+    index: new AdaptivePinch({ closeAt: 0.32, releaseAt: 0.46, graceMs: 120 }),
+    middle: new AdaptivePinch({ closeAt: 0.32, releaseAt: 0.46, graceMs: 120 }),
+    ring: new AdaptivePinch({ closeAt: 0.34, releaseAt: 0.48, graceMs: 120 }),
+    pinky: new AdaptivePinch({ closeAt: 0.36, releaseAt: 0.5, graceMs: 120 }),
+  });
+
 
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -159,27 +189,50 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
 
     const result = landmarker.detectForVideo(video, performance.now());
 
+    const nowMs = performance.now();
+
     if (result.landmarks.length > 0) {
       const lm = result.landmarks[0];
-      const distances = getFingerDistances(lm);
-      // Debug readout only — refreshing it every frame re-rendered the whole
-      // board and stole frames from detection.
-      const nowMs = performance.now();
-      if (nowMs - lastUiUpdateRef.current > 120) {
-        lastUiUpdateRef.current = nowMs;
-        setLiveDistances(distances);
-      }
+      const raw = getFingerDistances(lm);
 
-      // Confidence-aware touch threshold: dim light / shaky hands get judged
-      // a little more generously instead of taps simply being rejected.
       const stability = jitterRef.current.push({ x: lm[0].x, y: lm[0].y });
       const conf = blendConfidence(
         handConfidence(result),
         jitterRef.current.stability ?? stability
       );
-      const active = getActiveFinger(distances, tolerantThreshold(TOUCH_THRESHOLD, conf, 0.4));
-      setActiveFinger(active);
 
+      // Smooth each thumb→fingertip distance before judging a touch, so
+      // landmark jitter can't fire phantom taps.
+      const smooth = {
+        index: smoothRef.current.index.push(raw.index, conf),
+        middle: smoothRef.current.middle.push(raw.middle, conf),
+        ring: smoothRef.current.ring.push(raw.ring, conf),
+        pinky: smoothRef.current.pinky.push(raw.pinky, conf),
+      } as Record<FingerName, number>;
+
+      if (nowMs - lastUiUpdateRef.current > 120) {
+        lastUiUpdateRef.current = nowMs;
+        setLiveDistances(smooth);
+      }
+
+      // Which finger is the unambiguous candidate this frame…
+      const candidate = getActiveFinger(
+        smooth,
+        tolerantThreshold(TOUCH_THRESHOLD, conf, 0.4)
+      );
+
+      // …then hysteresis decides engage/release per finger so a held touch
+      // stays held and a released one doesn't retrigger on noise.
+      let active: FingerName | null = null;
+      for (const f of FINGER_ORDER) {
+        const detector = pinchRef.current[f];
+        const closed =
+          f === candidate
+            ? detector.update(smooth[f], conf, nowMs)
+            : detector.markMissing(conf, nowMs);
+        if (closed && (active === null || smooth[f] < smooth[active])) active = f;
+      }
+      setActiveFinger(active);
 
       if (active && !lastHitFrameRef.current[active]) {
         handleTouch(active);
@@ -192,14 +245,73 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
       };
       if (active) newHitState[active] = true;
       lastHitFrameRef.current = newHitState;
+
+      drawHand(lm, active);
     } else {
+      for (const f of FINGER_ORDER) pinchRef.current[f].markMissing(0.2, nowMs);
       setLiveDistances(null);
       setActiveFinger(null);
+      drawHand(null, null);
     }
+
 
     isDetectingRef.current = false;
     animationFrameRef.current = requestAnimationFrame(detectionLoop);
   }
+
+  // Mirrored finger overlay so the child can see exactly what is tracked.
+  function drawHand(lm: { x: number; y: number }[] | null, active: FingerName | null) {
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    if (!canvas || !video) return;
+    const w = canvas.clientWidth || 320;
+    const h = canvas.clientHeight || 180;
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, w, h);
+    if (!lm) return;
+
+    const px = (i: number) => ({ x: (1 - lm[i].x) * w, y: lm[i].y * h });
+
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "rgba(255,255,255,0.85)";
+    for (const [a, b] of HAND_BONES) {
+      const p1 = px(a);
+      const p2 = px(b);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+
+    const thumb = px(4);
+    for (const f of FINGER_ORDER) {
+      const tip = px(TIP_INDEX[f]);
+      ctx.fillStyle = FINGER_COLOR[f];
+      ctx.beginPath();
+      ctx.arc(tip.x, tip.y, active === f ? 10 : 6, 0, Math.PI * 2);
+      ctx.fill();
+      if (active === f) {
+        ctx.strokeStyle = FINGER_COLOR[f];
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(thumb.x, thumb.y);
+        ctx.lineTo(tip.x, tip.y);
+        ctx.stroke();
+      }
+    }
+
+    ctx.fillStyle = "#333";
+    ctx.beginPath();
+    ctx.arc(thumb.x, thumb.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+
 
   function handleTouch(finger: FingerName) {
     const candidates = notesRef.current.filter((n) => n.finger === finger && !n.hit);
@@ -255,7 +367,34 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
 
   return (
     <div style={{ maxWidth: 480, margin: "0 auto" }}>
-      <video ref={videoRef} style={{ display: "none" }} playsInline muted />
+      <div
+        style={{
+          position: "relative",
+          borderRadius: 12,
+          overflow: "hidden",
+          background: "#000",
+          aspectRatio: "16 / 9",
+          display: isReady ? "block" : "none",
+          marginBottom: 12,
+        }}
+      >
+        <video
+          ref={videoRef}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            transform: "scaleX(-1)",
+          }}
+          playsInline
+          muted
+        />
+        <canvas
+          ref={canvasRef}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        />
+      </div>
+
 
       {onExit && (
         <div style={{ padding: "12px 0" }}>
