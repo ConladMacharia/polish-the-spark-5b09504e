@@ -335,6 +335,12 @@ export function BalloonFairGame({
     if (!isMountedRef.current) return;
 
     updateWind(t);
+    // ease the reticle toward the tracked hand: responsive but jitter-free
+    const target = aimTargetRef.current;
+    aimRef.current = {
+      x: aimRef.current.x + (target.x - aimRef.current.x) * 0.45,
+      y: aimRef.current.y + (target.y - aimRef.current.y) * 0.45,
+    };
     setAim({ ...aimRef.current });
     setDrawRatio(drawRatioRef.current);
     setTreeLean(windXRef.current * 14);
