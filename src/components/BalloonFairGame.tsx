@@ -447,6 +447,31 @@ export function BalloonFairGame({
               {windLabel}
             </div>
 
+            <div
+              style={{
+                position: "absolute",
+                top: 34,
+                left: "50%",
+                transform: "translateX(-50%)",
+                fontSize: 11,
+                background: "rgba(0,0,0,0.45)",
+                color: "white",
+                padding: "4px 12px",
+                borderRadius: 999,
+                whiteSpace: "nowrap",
+                zIndex: 20,
+              }}
+            >
+              {handCount === 0
+                ? "Show both hands to the camera"
+                : handCount === 1
+                  ? "Aiming — bring your other hand in to draw"
+                  : drawRatio > 0.08
+                    ? "Pull back… let go to shoot!"
+                    : "Pinch your other hand and pull back"}
+            </div>
+
+
             {balloons.map((b) => {
               const size = 34 + b.depth * 60;
               const y = b.baseY + Math.sin(Date.now() / 900 + b.bobPhase) * 8;
