@@ -513,7 +513,6 @@ export function BalloonFairGame({
                 ? "Show both hands to the camera"
                 : handCount === 1
                   ? "Aiming — bring your other hand in to draw"
-                  : drawRatio > 0.08
                   : drawRatio > 0.25
                     ? "Now open your hand to shoot!"
                     : drawRatio > 0.02
