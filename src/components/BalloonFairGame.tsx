@@ -207,55 +207,73 @@ export function BalloonFairGame({
     lastVideoTimeRef.current = video.currentTime;
 
     const result = landmarker.detectForVideo(video, performance.now());
+    const hands = result.landmarks ?? [];
 
-    // MediaPipe has used both `handedness` and `handednesses` across
-    // versions — check both so this doesn't silently break on a version bump.
-    const handednessData: any[] =
-      (result as any).handednesses ?? (result as any).handedness ?? [];
+    // Each hand is described purely by what it's doing — pinching or not — so
+    // handedness labels (which flip in a mirrored feed) can't break the game.
+    const infos = hands.map((lm) => {
+      const palm = averagePoint(lm, [0, 5, 9, 13, 17]);
+      const wrist = lm[HAND_LANDMARKS.WRIST];
+      const indexMcp = lm[HAND_LANDMARKS.INDEX_MCP];
+      const scale = Math.hypot(wrist.x - indexMcp.x, wrist.y - indexMcp.y) || 1;
+      const thumb = lm[HAND_LANDMARKS.THUMB_TIP];
+      const index = lm[HAND_LANDMARKS.INDEX_TIP];
+      const pinch = Math.hypot(thumb.x - index.x, thumb.y - index.y) / scale;
+      return {
+        // mirrored, so the on-screen hand moves with the child's hand
+        mx: 1 - palm.x,
+        my: palm.y,
+        pinching: pinch < PINCH_RATIO,
+      };
+    });
 
-    if (result.landmarks.length === 2 && handednessData.length === 2) {
-      let bowLm: any = null;
-      let stringLm: any = null;
+    setHandCount(infos.length);
 
-      handednessData.forEach((h, i) => {
-        const label = h?.[0]?.categoryName?.toLowerCase();
-        if (!label) return;
-        if (label === bowHand) bowLm = result.landmarks[i];
-        else stringLm = result.landmarks[i];
-      });
+    if (infos.length === 0) {
+      if (isDrawingRef.current && drawRatioRef.current > 0.08) fireArrow(drawRatioRef.current);
+      isDrawingRef.current = false;
+      drawRatioRef.current = 0;
+    } else if (infos.length === 1) {
+      // one hand visible: keep aiming, but a draw can't be held
+      const h = infos[0];
+      if (isDrawingRef.current && drawRatioRef.current > 0.08) fireArrow(drawRatioRef.current);
+      isDrawingRef.current = false;
+      drawRatioRef.current = 0;
+      aimRef.current = { x: h.mx * STAGE_W, y: h.my * STAGE_H };
+    } else {
+      // two hands: the pinching one is the string hand, the other aims.
+      let stringIdx: number;
+      if (infos[0].pinching !== infos[1].pinching) {
+        stringIdx = infos[0].pinching ? 0 : 1;
+      } else {
+        // both or neither pinching — fall back to the configured bow side.
+        // In the mirrored view the child's right hand appears further left.
+        const rightIsLower = infos[0].mx < infos[1].mx ? 0 : 1;
+        const bowIdx = bowHand === "right" ? rightIsLower : 1 - rightIsLower;
+        stringIdx = 1 - bowIdx;
+      }
+      const stringH = infos[stringIdx];
+      const bowH = infos[1 - stringIdx];
 
-      if (bowLm && stringLm) {
-        const bowPalm = averagePoint(bowLm, [0, 5, 9, 13, 17]);
-        const stringThumb = stringLm[HAND_LANDMARKS.THUMB_TIP];
-        const stringIndex = stringLm[HAND_LANDMARKS.INDEX_TIP];
-        const stringPinchDist = Math.hypot(
-          stringThumb.x - stringIndex.x,
-          stringThumb.y - stringIndex.y
-        );
-        const isPinched = stringPinchDist < PINCH_THRESHOLD;
-        const stringPalm = averagePoint(stringLm, [0, 5, 9, 13, 17]);
+      aimRef.current = { x: bowH.mx * STAGE_W, y: bowH.my * STAGE_H };
 
-        if (isPinched) {
-          if (!isDrawingRef.current) {
-            isDrawingRef.current = true;
-            aimRef.current = { x: bowPalm.x * STAGE_W, y: bowPalm.y * STAGE_H };
-          }
-          const handDist = Math.hypot(bowPalm.x - stringPalm.x, bowPalm.y - stringPalm.y);
-          drawRatioRef.current = Math.min(1, handDist / maxDrawDistance);
-        } else {
-          if (isDrawingRef.current && drawRatioRef.current > 0.08) {
-            fireArrow(drawRatioRef.current);
-          }
-          isDrawingRef.current = false;
-          drawRatioRef.current = 0;
-          aimRef.current = { x: bowPalm.x * STAGE_W, y: bowPalm.y * STAGE_H };
+      if (stringH.pinching) {
+        isDrawingRef.current = true;
+        const handDist = Math.hypot(bowH.mx - stringH.mx, bowH.my - stringH.my);
+        drawRatioRef.current = Math.min(1, handDist / maxDrawDistance);
+      } else {
+        if (isDrawingRef.current && drawRatioRef.current > 0.08) {
+          fireArrow(drawRatioRef.current);
         }
+        isDrawingRef.current = false;
+        drawRatioRef.current = 0;
       }
     }
 
     isDetectingRef.current = false;
     detectionFrameRef.current = requestAnimationFrame(detectionLoop);
   }
+
 
   function updateWind(t: number) {
     if (t - windTimerRef.current > 5000) {
