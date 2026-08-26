@@ -86,8 +86,13 @@ export function BalloonFairGame({
   const gameFrameRef = useRef<number | null>(null);
 
   const aimRef = useRef({ x: STAGE_W / 2, y: STAGE_H * 0.35 });
+  const aimTargetRef = useRef({ x: STAGE_W / 2, y: STAGE_H * 0.35 });
   const isDrawingRef = useRef(false);
   const drawRatioRef = useRef(0);
+  // pinch hysteresis + pull tracking so a release only fires after a real draw
+  const pinchLatchRef = useRef(false);
+  const drawStartDistRef = useRef(0);
+  const pulledRef = useRef(false);
   const balloonsRef = useRef<Balloon[]>([]);
   const arrowsRef = useRef<Arrow[]>([]);
   const birdsRef = useRef<Bird[]>([]);
