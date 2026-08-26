@@ -86,8 +86,13 @@ export function BalloonFairGame({
   const gameFrameRef = useRef<number | null>(null);
 
   const aimRef = useRef({ x: STAGE_W / 2, y: STAGE_H * 0.35 });
+  const aimTargetRef = useRef({ x: STAGE_W / 2, y: STAGE_H * 0.35 });
   const isDrawingRef = useRef(false);
   const drawRatioRef = useRef(0);
+  // pinch hysteresis + pull tracking so a release only fires after a real draw
+  const pinchLatchRef = useRef(false);
+  const drawStartDistRef = useRef(0);
+  const pulledRef = useRef(false);
   const balloonsRef = useRef<Balloon[]>([]);
   const arrowsRef = useRef<Arrow[]>([]);
   const birdsRef = useRef<Bird[]>([]);
@@ -214,7 +219,7 @@ export function BalloonFairGame({
     const result = landmarker.detectForVideo(video, performance.now());
     const hands = result.landmarks ?? [];
 
-    // Each hand is described purely by what it's doing — pinching or not — so
+    // Each hand is described purely by what it's doing — pinching or open — so
     // handedness labels (which flip in a mirrored feed) can't break the game.
     const infos = hands.map((lm) => {
       const palm = averagePoint(lm, [0, 5, 9, 13, 17]);
@@ -224,32 +229,51 @@ export function BalloonFairGame({
       const thumb = lm[HAND_LANDMARKS.THUMB_TIP];
       const index = lm[HAND_LANDMARKS.INDEX_TIP];
       const pinch = Math.hypot(thumb.x - index.x, thumb.y - index.y) / scale;
+      // openness: mean fingertip distance from the wrist, hand-size normalized.
+      const openness =
+        [
+          HAND_LANDMARKS.INDEX_TIP,
+          HAND_LANDMARKS.MIDDLE_TIP,
+          HAND_LANDMARKS.RING_TIP,
+          HAND_LANDMARKS.PINKY_TIP,
+        ].reduce((s, i) => s + Math.hypot(lm[i].x - wrist.x, lm[i].y - wrist.y), 0) /
+        4 /
+        scale;
       return {
         // mirrored, so the on-screen hand moves with the child's hand
         mx: 1 - palm.x,
         my: palm.y,
-        pinching: pinch < PINCH_RATIO,
+        pinch,
+        openness,
       };
     });
 
     setHandCount(infos.length);
 
-    if (infos.length === 0) {
-      if (isDrawingRef.current && drawRatioRef.current > 0.08) fireArrow(drawRatioRef.current);
+    // Hysteresis: it takes a tighter pinch to latch than to keep holding, so
+    // small tracking wobble can't fire the arrow mid-draw.
+    const isPinching = (p: number) => (pinchLatchRef.current ? p < 0.85 : p < PINCH_RATIO);
+
+    const cancelDraw = () => {
       isDrawingRef.current = false;
       drawRatioRef.current = 0;
-    } else if (infos.length === 1) {
-      // one hand visible: keep aiming, but a draw can't be held
-      const h = infos[0];
-      if (isDrawingRef.current && drawRatioRef.current > 0.08) fireArrow(drawRatioRef.current);
-      isDrawingRef.current = false;
-      drawRatioRef.current = 0;
-      aimRef.current = { x: h.mx * STAGE_W, y: h.my * STAGE_H };
+      pinchLatchRef.current = false;
+      pulledRef.current = false;
+    };
+
+    if (infos.length < 2) {
+      // a draw can't be held without both hands — abandon it, don't shoot
+      cancelDraw();
+      if (infos.length === 1) {
+        aimTargetRef.current = { x: infos[0].mx * STAGE_W, y: infos[0].my * STAGE_H };
+      }
     } else {
       // two hands: the pinching one is the string hand, the other aims.
       let stringIdx: number;
-      if (infos[0].pinching !== infos[1].pinching) {
-        stringIdx = infos[0].pinching ? 0 : 1;
+      const p0 = isPinching(infos[0].pinch);
+      const p1 = isPinching(infos[1].pinch);
+      if (p0 !== p1) {
+        stringIdx = p0 ? 0 : 1;
       } else {
         // both or neither pinching — fall back to the configured bow side.
         // In the mirrored view the child's right hand appears further left.
@@ -260,18 +284,35 @@ export function BalloonFairGame({
       const stringH = infos[stringIdx];
       const bowH = infos[1 - stringIdx];
 
-      aimRef.current = { x: bowH.mx * STAGE_W, y: bowH.my * STAGE_H };
+      aimTargetRef.current = { x: bowH.mx * STAGE_W, y: bowH.my * STAGE_H };
 
-      if (stringH.pinching) {
-        isDrawingRef.current = true;
-        const handDist = Math.hypot(bowH.mx - stringH.mx, bowH.my - stringH.my);
-        drawRatioRef.current = Math.min(1, handDist / maxDrawDistance);
-      } else {
-        if (isDrawingRef.current && drawRatioRef.current > 0.08) {
-          fireArrow(drawRatioRef.current);
+      const handDist = Math.hypot(bowH.mx - stringH.mx, bowH.my - stringH.my);
+      const pinching = isPinching(stringH.pinch);
+      const opened = stringH.openness > 1.9 && stringH.pinch > 1.0;
+
+      if (pinching) {
+        pinchLatchRef.current = true;
+        if (!isDrawingRef.current) {
+          // nock point: pull is measured from wherever the pinch started
+          isDrawingRef.current = true;
+          drawStartDistRef.current = handDist;
+          pulledRef.current = false;
         }
-        isDrawingRef.current = false;
-        drawRatioRef.current = 0;
+        const pull = Math.max(0, handDist - drawStartDistRef.current);
+        drawRatioRef.current = Math.min(1, pull / maxDrawDistance);
+        if (drawRatioRef.current > 0.25) pulledRef.current = true;
+      } else if (isDrawingRef.current) {
+        // release only counts when the string hand actually pulled back and
+        // then opened up (fingers / palm extended).
+        if (pulledRef.current && opened) {
+          fireArrow(Math.max(0.3, drawRatioRef.current));
+          cancelDraw();
+        } else if (opened || stringH.pinch > 1.2) {
+          // opened without a real pull, or let go loosely — no shot
+          cancelDraw();
+        }
+      } else {
+        pinchLatchRef.current = false;
       }
     }
 
@@ -294,6 +335,12 @@ export function BalloonFairGame({
     if (!isMountedRef.current) return;
 
     updateWind(t);
+    // ease the reticle toward the tracked hand: responsive but jitter-free
+    const target = aimTargetRef.current;
+    aimRef.current = {
+      x: aimRef.current.x + (target.x - aimRef.current.x) * 0.45,
+      y: aimRef.current.y + (target.y - aimRef.current.y) * 0.45,
+    };
     setAim({ ...aimRef.current });
     setDrawRatio(drawRatioRef.current);
     setTreeLean(windXRef.current * 14);
@@ -466,9 +513,11 @@ export function BalloonFairGame({
                 ? "Show both hands to the camera"
                 : handCount === 1
                   ? "Aiming — bring your other hand in to draw"
-                  : drawRatio > 0.08
-                    ? "Pull back… let go to shoot!"
-                    : "Pinch your other hand and pull back"}
+                  : drawRatio > 0.25
+                    ? "Now open your hand to shoot!"
+                    : drawRatio > 0.02
+                      ? "Keep pulling back…"
+                      : "Pinch your other hand and pull back"}
             </div>
 
 
