@@ -106,7 +106,7 @@ export function BalloonFairGame({
   const [treeLean, setTreeLean] = useState(0);
   const [popped, setPopped] = useState(0);
   const [streak, setStreak] = useState(0);
-  const [windLabel, setWindLabel] = useState("Wind: calm");
+  const [handCount, setHandCount] = useState(0);
 
   useEffect(() => {
     for (let i = 0; i < 5; i++) spawnBalloon();
