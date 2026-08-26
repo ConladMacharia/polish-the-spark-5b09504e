@@ -188,7 +188,7 @@ export function BalloonFairGame({
     const dx = aimRef.current.x - BOW_ORIGIN.x;
     const dy = aimRef.current.y - BOW_ORIGIN.y;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    const speed = 6 + powerRatio * 10;
+    const speed = 14 + powerRatio * 22;
     arrowsRef.current.push({
       id: idCounter.current++,
       x: BOW_ORIGIN.x,
