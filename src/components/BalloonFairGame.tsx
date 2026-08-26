@@ -21,6 +21,9 @@ const STAGE_H = 460;
 const POWER_BALLOON_CHANCE = 0.15;
 const BOW_ORIGIN = { x: STAGE_W / 2, y: STAGE_H - 30 };
 const PINCH_THRESHOLD = 0.06;
+// pinch distance normalized by hand size — works near or far from the camera
+const PINCH_RATIO = 0.65;
+
 
 const BALLOON_COLORS: [string, string][] = [
   ["#E85555", "#FF9E9E"],
