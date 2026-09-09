@@ -1,35 +1,58 @@
-# Finish the remaining 34 language translations
+# Recorded voice prompts in the live session
 
-## Where things stand
+Play your own recorded prompts (mp3) during the live session, in whatever language the app is set to, each one triggered by something that happens on screen and never overlapping another prompt.
 
-10 of the 44 languages have full text today:
+## How it will work
 
-English, Kiswahili, Gĩkũyũ, Oluluhya, Dholuo, Kĩkamba, Kalenjin, Ekegusii, Kĩmĩrũ, Kĩembu.
+- Each prompt has a short code (for example `LS_01`). The code is the same in every language; only the recording changes.
+- The app looks for the recording of the current language. If that language has no recording, it reads the English text aloud with the built-in voice instead.
+- Every prompt has a trigger (session opens, exercise starts, camera can't see the child, rep counted, rest, exercise finished, and so on).
+- After a trigger fires, the app waits 1-2 seconds, then plays. While something is playing, new prompts queue by priority instead of talking over it; low-value prompts that are already stale are dropped. The same prompt won't repeat within a short cool-down.
+- The words also appear in the existing cue banner on screen, so the caregiver can read as well as hear.
 
-34 still fall back to Swahili/English:
+## Folders — one per language
 
-- Files exist but are empty (14): Kimijikenda, Chidigo, Chiduruma, Kigiryama, Kibajuni, Kipokomo, Kidawida, Kisegeju, Ng'aturkana, Maa, Sampur, Pökoot, Ateso, Olusuba.
-- No file yet (20): Igikuria, Soomaali, Boraana, Rendille, Gabra, Orma, Kipsigis, Nandi, Markweeta, Tugen, Sabaot, Terik, Ogiek, Sengwer, El Molo, Yaakunte, Dahalo, Aweer, Ki-Nubi, Kenyan Sign Language (stays English text by design).
+```text
+public/voice/
+  en/   LS_01.mp3 …
+  luy/  LS_01.mp3 …   (Luhya)
+  nyf/  LS_01.mp3 …   (Giriama)
+```
 
-Nothing is broken meanwhile — every missing key falls back, so no blank UI.
+Folder names match the language codes the app already uses (`luy` Luhya, `nyf` Giriama, `sw`, `ki`, etc.), and file names are exactly the prompt codes. To add a language later you drop in a new folder — no other change needed.
 
-## What blocked it
+## Reorganising the files
 
-The last run stopped on an AI Gateway 402 "Not enough credits", then rate limits. It is a credits issue, not a code issue.
+Group the code by what it does, so future changes stay contained:
 
-## The command to give me
+```text
+src/features/session/     live session screen + its prompt triggers
+src/features/child/       island map + the games
+src/features/exercises/   catalog, targets, training videos
+src/features/therapist/   therapist dashboards
+src/lib/pose/             camera tracking (unchanged)
+src/lib/i18n/             languages, text, and the new voice-prompt layer
+```
 
-Once the workspace has AI credits available, just say:
+Screens keep their web addresses; only the internal layout moves, done in one pass so nothing breaks.
 
-> resume translations
+## What I need from you
 
-I will re-run the generation script for all 34 remaining languages, one language per request with a delay between calls to stay under rate limits, writing both `src/lib/i18n/locales/<code>.json` (dashboard) and `public/neuro-bridge/locales/<code>.json` (therapy player). Kenyan Sign Language is skipped intentionally.
+1. The 30 English prompts with their codes and the trigger for each (your master list).
+2. The Luhya and Giriama mp3 files — the example you mentioned didn't come through, so nothing audio has reached me yet. Once the list is confirmed I'll set up the folders and you can drop the files in.
 
-You can also scope it, e.g. "translate Maa, Ateso and Turkana only" if you want to spend fewer credits first.
+## Steps
+
+1. Add the master prompt list (code, English text, trigger, priority, cool-down) as a single source of truth.
+2. Add the audio player layer: pick the file for the current language, 1-2 s delay, one-at-a-time queue, English speech fallback, plus banner text.
+3. Wire each trigger into the live session at the right moment.
+4. Create `public/voice/<language>/` folders and load your Luhya and Giriama recordings.
+5. Reorganise files into the feature folders above.
+6. Check the session end to end in English, Luhya and Giriama: correct prompt, right timing, no overlap.
 
 ## Technical notes
 
-- Script: `/tmp/gen_locales.py`, source keys from `src/lib/i18n/strings.ts` (64 keys), model `openai/gpt-5.6-sol` via the Lovable AI Gateway.
-- Each language is validated as JSON with all 64 keys and `{placeholders}` preserved before being written; a failed language is retried rather than written half-empty.
-- Existing hand-checked bundles (en, sw, ki) are never overwritten.
-- After the run I will spot-check two languages in the preview (dashboard text + player prompts) before reporting done.
+- New `src/lib/i18n/voice-prompts.ts` (registry, keyed by code) and `src/lib/voice/promptPlayer.ts` (single `HTMLAudioElement`, priority queue, dedupe, cool-down, `speechSynthesis` fallback in English).
+- Recordings served as static files from `public/voice/<code>/<PROMPT_CODE>.mp3`; a missing file falls back silently, so no broken-audio errors.
+- Triggers hooked into the existing session state in `app.session.tsx`, replacing the current inline `speak()` calls; the cue banner stays as is.
+- Prompt playback is unlocked on the first caregiver tap (Begin session) so mobile browsers allow audio.
