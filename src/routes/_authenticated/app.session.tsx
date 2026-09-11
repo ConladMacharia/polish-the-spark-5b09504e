@@ -136,12 +136,11 @@ export default function LiveSession() {
     [showBanner],
   );
 
-  /* framing timeouts cleanup */
-  const framingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   function clearFraming() {
     framingTimers.current.forEach(clearTimeout);
     framingTimers.current = [];
   }
+
 
   /* auto-framing sequence on mount / exercise change */
   const runFramingSequence = useCallback(() => {
