@@ -2,6 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useVoicePrompts } from "@/lib/voice/useVoicePrompts";
+import { getLanguage, LANGUAGES } from "@/lib/i18n/languages";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 export const Route = createFileRoute("/_authenticated/app/session")({
   head: () => ({
@@ -66,6 +69,8 @@ function cancelSpeech() {
 
 export default function LiveSession() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const langName = getLanguage(lang).native;
 
   /* patient */
   const { data: patient } = useQuery({
@@ -105,24 +110,37 @@ export default function LiveSession() {
   /* voice cue banner */
   const [voiceLine, setVoiceLine] = useState("");
   const [showVoice, setShowVoice] = useState(false);
+  const [voiceSub, setVoiceSub] = useState("");
   const voiceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* framing timeouts cleanup */
   const framingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const showBanner = useCallback((text: string, ms = 3800, subtitle = "") => {
+    setVoiceLine(text);
+    setVoiceSub(subtitle);
+    setShowVoice(true);
+    if (voiceTimer.current) clearTimeout(voiceTimer.current);
+    voiceTimer.current = setTimeout(() => setShowVoice(false), ms);
+  }, []);
+
+  /* recorded voice prompt system */
+  const { cue, unlock, stop } = useVoicePrompts(showBanner);
+
+  /* show a custom banner + English TTS (for text not in the 30-prompt library) */
+  const showCue = useCallback(
+    (text: string, ms = 3800) => {
+      showBanner(text, ms);
+      speak(text);
+    },
+    [showBanner],
+  );
 
   function clearFraming() {
     framingTimers.current.forEach(clearTimeout);
     framingTimers.current = [];
   }
 
-  /* show + speak a voice cue banner */
-  const showCue = useCallback((text: string, ms = 3800) => {
-    setVoiceLine(text);
-    setShowVoice(true);
-    speak(text);
-    if (voiceTimer.current) clearTimeout(voiceTimer.current);
-    voiceTimer.current = setTimeout(() => setShowVoice(false), ms);
-  }, []);
 
   /* auto-framing sequence on mount / exercise change */
   const runFramingSequence = useCallback(() => {
