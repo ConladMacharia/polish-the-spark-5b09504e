@@ -1,7 +1,8 @@
 /**
  * Master list of the 30 caregiver voice prompts used in the live session.
  *
- * Each prompt has a stable CODE. Recordings are stored as
+ * Source: Voice_prompts.pdf — each prompt has a stable, language-independent
+ * CODE. Recordings are stored as
  *   public/voice/<languageCode>/<CODE>.mp3
  * so the same code plays the right language without touching this file.
  *
@@ -18,10 +19,12 @@
 export interface VoicePromptDef {
   /** Unique, language-independent code — also the mp3 file name. */
   code: string;
-  /** English master text (supports {child}, {exercise}, {reps}, {seconds}). */
+  /** English master text (supports {child}, {exercise}). */
   en: string;
-  /** When this prompt is played. */
+  /** Human-readable trigger description. */
   trigger: string;
+  /** Prompt category used to pick the right cue for an exercise. */
+  category: "session" | "arm" | "hand" | "posture" | "leg" | "rep" | "safety";
   priority: number;
   cooldownMs: number;
   ttlMs: number;
@@ -33,56 +36,59 @@ function p(
   code: string,
   en: string,
   trigger: string,
+  category: VoicePromptDef["category"],
   priority = 5,
   cooldownMs = 8000,
   ttlMs = 6000,
   bannerMs = 3800,
 ): VoicePromptDef {
-  return { code, en, trigger, priority, cooldownMs, ttlMs, bannerMs };
+  return { code, en, trigger, category, priority, cooldownMs, ttlMs, bannerMs };
 }
 
 export const VOICE_PROMPTS: VoicePromptDef[] = [
-  /* ── 1. Welcome & setup ── */
-  p("LS_01", "Welcome. Today's session is ready.", "Live session screen opens", 6, 60000, 8000),
-  p("LS_02", "Place the phone so you can see {child} from head to toe.", "Camera opens for framing", 7, 20000, 8000, 4200),
-  p("LS_03", "Step back a little — the whole body should fit on the screen.", "Framing not yet good after a few seconds", 7, 15000, 6000),
-  p("LS_04", "Make sure the room is bright enough.", "Low light detected during framing", 6, 30000, 6000),
-  p("LS_05", "Good, I can see {child} clearly.", "Framing becomes good", 6, 15000, 5000, 3000),
-  p("LS_06", "Sit or stand beside {child}, not in front of the camera.", "Caregiver blocks the view", 7, 20000, 6000),
+  /* ── 1. Session & Camera ── */
+  p("LS001", "Let's begin the exercise.", "Start live session.", "session", 6, 60000, 8000),
+  p("LS002", "Position the child as shown in the exercise.", "Initial positioning.", "session", 7, 20000, 8000, 4200),
+  p("LS003", "Move the phone so I can see the child clearly.", "Poor camera view.", "session", 7, 15000, 6000),
+  p("LS004", "Please adjust the camera so I can see the child's whole body.", "Body not fully visible.", "session", 7, 15000, 6000),
 
-  /* ── 2. Starting ── */
-  p("LS_07", "We will start now. Watch and encourage {child}.", "Framing complete, session starts", 6, 20000, 6000, 4200),
-  p("LS_08", "First exercise: get ready.", "First exercise begins", 5, 20000, 6000),
-  p("LS_09", "Show the movement once yourself, then let {child} try.", "Exercise demonstration step", 5, 25000, 6000, 4200),
-  p("LS_10", "Move slowly. Slow is better than fast.", "Movement is too fast", 6, 15000, 5000),
+  /* ── 2. Arm & Shoulder ── */
+  p("UL001", "Gently guide the child's arm through the movement.", "General arm guidance.", "arm", 5, 12000, 5000),
+  p("UL002", "Guide the arm a little higher.", "Target angle not reached.", "arm", 6, 12000, 5000),
+  p("UL003", "Help keep the child's elbow straight.", "Incorrect elbow position.", "arm", 6, 12000, 5000),
+  p("UL004", "Keep the child's shoulder relaxed.", "Shoulder compensation.", "arm", 6, 12000, 5000),
+  p("UL005", "Keep the child's body upright.", "Trunk leaning.", "arm", 6, 12000, 5000),
+  p("UL006", "Slow the movement down.", "Movement too fast.", "arm", 6, 12000, 5000),
+  p("UL007", "Hold the child's arm in this position.", "Target reached.", "arm", 5, 12000, 5000),
+  p("UL008", "Slowly return the child's arm to the starting position.", "Complete repetition.", "arm", 5, 12000, 5000),
 
-  /* ── 3. During the movement ── */
-  p("LS_11", "Raise both arms slowly overhead.", "Arm/shoulder raise exercise cue", 5, 12000, 5000),
-  p("LS_12", "Reach forward and hold.", "Forward reach exercise cue", 5, 12000, 5000),
-  p("LS_13", "Kick the leg forward, then bring it back gently.", "Leg kick exercise cue", 5, 12000, 5000),
-  p("LS_14", "Stand steady, hands on the hips, and hold.", "Balance hold exercise cue", 5, 12000, 5000),
-  p("LS_15", "Keep the back straight.", "Posture correction", 6, 12000, 5000),
-  p("LS_16", "Support {child} lightly, but let them do the work.", "Caregiver is over-assisting", 6, 20000, 6000, 4200),
-  p("LS_17", "A little higher, if there is no pain.", "Range of motion below target", 6, 12000, 5000),
-  p("LS_18", "That is it — keep going just like that.", "Movement quality is good", 4, 12000, 4000, 3000),
-  p("LS_19", "Hold it… and relax.", "End of a timed hold", 5, 6000, 4000, 2600),
-  p("LS_20", "Well done. One more time.", "One repetition left", 5, 8000, 4000, 3000),
+  /* ── 3. Hand & Wrist ── */
+  p("HW001", "Gently guide the child's hand toward the target.", "Reach movement.", "hand", 5, 12000, 5000),
+  p("HW002", "Help the child open the hand a little more.", "Incomplete hand opening.", "hand", 6, 12000, 5000),
+  p("HW003", "Keep the child's wrist straight.", "Incorrect wrist position.", "hand", 6, 12000, 5000),
+  p("HW004", "Slowly relax the child's hand.", "End of movement.", "hand", 5, 12000, 5000),
 
-  /* ── 4. Counting & progress ── */
-  p("LS_21", "Halfway there.", "Half of the repetitions done", 4, 20000, 4000, 2600),
-  p("LS_22", "Repetitions finished for this set.", "Set complete", 5, 10000, 5000),
-  p("LS_23", "Take a short rest, then we continue.", "Rest between sets", 5, 15000, 6000),
-  p("LS_24", "Next exercise coming up.", "Moving to the next exercise", 6, 10000, 5000),
+  /* ── 4. Posture & Balance ── */
+  p("PT001", "Keep the child's body upright.", "Correct trunk posture.", "posture", 6, 12000, 5000),
+  p("PT002", "Help the child stay centered.", "Weight shift correction.", "posture", 6, 12000, 5000),
+  p("PT003", "Keep the child's shoulders level.", "Shoulder alignment.", "posture", 6, 12000, 5000),
+  p("PT004", "Help the child maintain this position.", "Maintain posture during hold.", "posture", 5, 12000, 5000),
 
-  /* ── 5. Safety ── */
-  p("LS_25", "Stop if {child} feels pain.", "Pain or distress signal", 9, 20000, 8000, 5000),
-  p("LS_26", "{child} looks tired. Let us rest a little.", "Fatigue detected", 8, 30000, 8000, 4600),
-  p("LS_27", "Give {child} some water.", "Long session / rest break", 4, 120000, 8000),
+  /* ── 5. Leg & Lower Limb ── */
+  p("LL001", "Gently guide the child's leg through the movement.", "General leg guidance.", "leg", 5, 12000, 5000),
+  p("LL002", "Help straighten the child's knee a little more.", "Insufficient knee extension.", "leg", 6, 12000, 5000),
+  p("LL003", "Lift the child's foot a little higher.", "Poor foot clearance.", "leg", 6, 12000, 5000),
+  p("LL004", "Slowly return the child's leg to the starting position.", "Complete repetition.", "leg", 5, 12000, 5000),
 
-  /* ── 6. Finishing ── */
-  p("LS_28", "Last exercise. You are almost done.", "Final exercise starts", 6, 20000, 6000),
-  p("LS_29", "Session complete. Very good work today.", "Session finished", 8, 30000, 10000, 4200),
-  p("LS_30", "Come back tomorrow for the next session.", "After the session summary", 5, 60000, 10000, 4200),
+  /* ── 6. Repetition & Hold Guidance ── */
+  p("RH001", "Good. Hold this position.", "Target position achieved.", "rep", 5, 12000, 5000),
+  p("RH002", "Three... two... one...", "Hold countdown.", "rep", 5, 6000, 4000, 2600),
+  p("RH003", "One repetition completed.", "Successful repetition.", "rep", 4, 8000, 4000, 3000),
+
+  /* ── 7. Safety ── */
+  p("SF001", "Please stop the movement.", "Unsafe movement detected.", "safety", 9, 20000, 8000, 5000),
+  p("SF002", "Do not force the child's movement.", "Movement beyond safe range.", "safety", 9, 20000, 8000, 5000),
+  p("SF003", "If the child is uncomfortable, stop the exercise.", "Caregiver safety reminder.", "safety", 8, 30000, 8000, 4600),
 ];
 
 export const PROMPTS_BY_CODE: Record<string, VoicePromptDef> = Object.fromEntries(
@@ -96,4 +102,13 @@ export function fillVars(text: string, vars?: Record<string, string | number>) {
   return text.replace(/\{(\w+)\}/g, (m, k) =>
     vars[k] !== undefined ? String(vars[k]) : m,
   );
+}
+
+/** Pick a sensible default prompt code for the named exercise type. */
+export function defaultCueForExercise(exerciseName: string): VoicePromptCode {
+  const name = exerciseName.toLowerCase();
+  if (name.includes("leg") || name.includes("kick") || name.includes("knee")) return "LL001";
+  if (name.includes("balance") || name.includes("posture") || name.includes("hold")) return "PT001";
+  if (name.includes("hand") || name.includes("wrist") || name.includes("reach")) return "HW001";
+  return "UL001";
 }
