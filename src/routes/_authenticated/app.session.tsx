@@ -69,6 +69,8 @@ function cancelSpeech() {
 
 export default function LiveSession() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const langName = getLanguage(lang).native;
 
   /* patient */
   const { data: patient } = useQuery({
@@ -108,24 +110,31 @@ export default function LiveSession() {
   /* voice cue banner */
   const [voiceLine, setVoiceLine] = useState("");
   const [showVoice, setShowVoice] = useState(false);
+  const [voiceSub, setVoiceSub] = useState("");
   const voiceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* framing timeouts cleanup */
   const framingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  function clearFraming() {
-    framingTimers.current.forEach(clearTimeout);
-    framingTimers.current = [];
-  }
-
-  /* show + speak a voice cue banner */
-  const showCue = useCallback((text: string, ms = 3800) => {
+  const showBanner = useCallback((text: string, ms = 3800, subtitle = "") => {
     setVoiceLine(text);
+    setVoiceSub(subtitle);
     setShowVoice(true);
-    speak(text);
     if (voiceTimer.current) clearTimeout(voiceTimer.current);
     voiceTimer.current = setTimeout(() => setShowVoice(false), ms);
   }, []);
+
+  /* recorded voice prompt system */
+  const { cue, unlock, stop } = useVoicePrompts(showBanner);
+
+  /* show a custom banner + English TTS (for text not in the 30-prompt library) */
+  const showCue = useCallback(
+    (text: string, ms = 3800) => {
+      showBanner(text, ms);
+      speak(text);
+    },
+    [showBanner],
+  );
 
   /* auto-framing sequence on mount / exercise change */
   const runFramingSequence = useCallback(() => {
