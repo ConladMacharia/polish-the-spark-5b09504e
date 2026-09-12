@@ -194,32 +194,41 @@ export default function LiveSession() {
   }, [idx]);
 
   function handleNext() {
+    unlock();
     if (idx + 1 >= SESSION_EXERCISES.length) {
       setDone(true);
       showCue("Session complete! Great work today.", 3000);
-      cancelSpeech();
+      stop();
       setTimeout(
         () => showCue(`${childName} finished all exercises today!`, 3000),
         200,
       );
     } else {
       const next = SESSION_EXERCISES[idx + 1];
-      showCue(`Nice work — moving on to ${next.name}.`, 3000);
+      cue("RH003", { child: childName });
+      setTimeout(() => {
+        showCue(`Moving on to ${next.name}.`, 2600);
+      }, 1800);
       setIdx((i) => i + 1);
       runFramingSequence();
     }
   }
 
   function handleReplay() {
+    unlock();
     const ex = SESSION_EXERCISES[idx];
-    showCue(`Replaying ${ex.name}. ${ex.cue}`, 3200);
+    cue("LS002", { child: childName });
+    setTimeout(() => {
+      showCue(`Replaying ${ex.name}. ${ex.cue}`, 3200);
+    }, 1600);
     setAdjustMode(false);
     setDrawerOpen(false);
   }
 
   function handleExit() {
+    unlock();
     clearFraming();
-    cancelSpeech();
+    stop();
     navigate({ to: "/app/caregiver" });
   }
 
