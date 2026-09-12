@@ -618,13 +618,28 @@ export default function LiveSession() {
               }}
             >
               <div style={{ textAlign: "center", marginBottom: 10 }}>
-                <span
-                  className="session-label"
-                  style={{ fontWeight: 700, fontSize: 16 }}
-                >
-                  Exercise {idx + 1} of {SESSION_EXERCISES.length}
-                </span>
-              </div>
+              <span
+                className="session-label"
+                style={{ fontWeight: 700, fontSize: 16 }}
+              >
+                Exercise {idx + 1} of {SESSION_EXERCISES.length}
+              </span>
+              <span
+                style={{
+                  display: "inline-block",
+                  marginLeft: 10,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  background: "rgba(255,255,255,0.22)",
+                  padding: "3px 8px",
+                  borderRadius: 999,
+                  verticalAlign: "middle",
+                }}
+                title={LANGUAGES.map((l) => `${l.native} (${l.code})`).join(", ")}
+              >
+                🎙 {langName}
+              </span>
+            </div>
               <div
                 style={{
                   height: 7,
