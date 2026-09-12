@@ -540,26 +540,40 @@ export default function LiveSession() {
               boxShadow: "0 8px 22px rgba(0,0,0,0.25)",
             }}
           >
-            <div
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 14,
-                flexShrink: 0,
-              }}
-            >
-              🔊
-            </div>
+          <div
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.15)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 14,
+              flexShrink: 0,
+            }}
+          >
+            🔊
+          </div>
+          <div>
             <div style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.35 }}>
               {voiceLine}
             </div>
+            {voiceSub && (
+              <div
+                style={{
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  opacity: 0.72,
+                  marginTop: 2,
+                }}
+              >
+                {voiceSub}
+              </div>
+            )}
           </div>
-        )}
+        </div>
+      )}
 
         {/* ── DONE STATE ── */}
         {done ? (
