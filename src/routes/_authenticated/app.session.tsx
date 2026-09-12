@@ -142,6 +142,15 @@ export default function LiveSession() {
   }
 
 
+  /* pick a category-specific correction / guidance prompt for the current exercise */
+  const exerciseCategory = useCallback((): "arm" | "hand" | "leg" | "posture" => {
+    const name = SESSION_EXERCISES[idx]?.name.toLowerCase() ?? "";
+    if (name.includes("leg") || name.includes("kick") || name.includes("knee")) return "leg";
+    if (name.includes("balance") || name.includes("posture") || name.includes("hold")) return "posture";
+    if (name.includes("hand") || name.includes("wrist") || name.includes("reach")) return "hand";
+    return "arm";
+  }, [idx]);
+
   /* auto-framing sequence on mount / exercise change */
   const runFramingSequence = useCallback(() => {
     clearFraming();
@@ -150,10 +159,7 @@ export default function LiveSession() {
 
     const t1 = setTimeout(() => {
       setCamSize("fullscreen");
-      showCue(
-        `Let's check the camera. Make sure ${childName}'s whole body is visible.`,
-        3800,
-      );
+      cue("LS002", { child: childName });
     }, 400);
 
     const t2 = setTimeout(() => {
@@ -169,16 +175,17 @@ export default function LiveSession() {
     }, 4200);
 
     framingTimers.current = [t1, t2, t3];
-  }, [childName, showCue]);
+  }, [childName, cue, showCue]);
 
   /* kick off framing on mount */
   useEffect(() => {
+    cue("LS001", { child: childName });
     runFramingSequence();
     return () => {
       clearFraming();
-      cancelSpeech();
+      stop();
     };
-  }, [runFramingSequence]);
+  }, [runFramingSequence, cue, stop, childName]);
 
   /* reset drawer & feedback when exercise changes */
   useEffect(() => {
