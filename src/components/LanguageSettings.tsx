@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Globe, Search, Settings } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,6 +11,44 @@ export function LanguageSettings() {
   const { lang, setLanguage, t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+
+  // Lock background scroll while the sheet is open. On mobile, focusing the
+  // search input opens the keyboard and the browser scrolls the page to
+  // reveal it — since the sheet is `position: fixed`, an unlocked body
+  // scrolls independently underneath it and the home screen bleeds through
+  // the gaps. Pinning the body in place (and restoring scroll position on
+  // close) keeps the sheet as one solid, unbroken layer.
+  useEffect(() => {
+    if (!open) return;
+
+    const scrollY = window.scrollY;
+    const { style } = document.body;
+    const prev = {
+      position: style.position,
+      top: style.top,
+      left: style.left,
+      right: style.right,
+      width: style.width,
+      overflow: style.overflow,
+    };
+
+    style.position = "fixed";
+    style.top = `-${scrollY}px`;
+    style.left = "0";
+    style.right = "0";
+    style.width = "100%";
+    style.overflow = "hidden";
+
+    return () => {
+      style.position = prev.position;
+      style.top = prev.top;
+      style.left = prev.left;
+      style.right = prev.right;
+      style.width = prev.width;
+      style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [open]);
 
   const active = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
 
@@ -47,11 +85,11 @@ export function LanguageSettings() {
 
       {open && (
         <div
-          className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          className="fixed inset-0 z-[60] flex h-[100dvh] items-end justify-center overscroll-none bg-slate-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
           onClick={() => setOpen(false)}
         >
           <div
-            className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-3xl border-3 border-slate-950 bg-card p-6 shadow-2xl sm:rounded-3xl"
+            className="flex max-h-[85dvh] w-full max-w-lg flex-col overscroll-contain rounded-t-3xl border-3 border-slate-950 bg-card p-6 shadow-2xl sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3">
@@ -77,7 +115,7 @@ export function LanguageSettings() {
               />
             </div>
 
-            <div className="mt-4 -mx-1 flex-1 overflow-y-auto px-1">
+            <div className="mt-4 -mx-1 flex-1 overflow-y-auto overscroll-contain px-1">
               <div className="grid gap-2 sm:grid-cols-2">
                 {results.map((l) => {
                   const selected = l.code === lang;
