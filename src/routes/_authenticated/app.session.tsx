@@ -243,15 +243,18 @@ export default function LiveSession() {
   }
 
   function toggleFeedback() {
+    unlock();
     const next = !adjustMode;
     setAdjustMode(next);
+    const cat = exerciseCategory();
     if (next) {
-      showCue(
-        `Almost there — if there's no pain, help raise the arm a little higher.`,
-        3800,
-      );
+      const correctionCode =
+        cat === "leg" ? "LL002" : cat === "posture" ? "PT002" : cat === "hand" ? "HW001" : "UL002";
+      cue(correctionCode, { child: childName });
     } else {
-      showCue(`That's it, well done — keep going just like that.`, 3000);
+      const goodCode =
+        cat === "leg" ? "LL004" : cat === "posture" ? "PT004" : cat === "hand" ? "HW004" : "UL007";
+      cue(goodCode, { child: childName });
     }
   }
 
