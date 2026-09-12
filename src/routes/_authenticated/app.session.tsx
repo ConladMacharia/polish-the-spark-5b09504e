@@ -142,6 +142,15 @@ export default function LiveSession() {
   }
 
 
+  /* pick a category-specific correction / guidance prompt for the current exercise */
+  const exerciseCategory = useCallback((): "arm" | "hand" | "leg" | "posture" => {
+    const name = SESSION_EXERCISES[idx]?.name.toLowerCase() ?? "";
+    if (name.includes("leg") || name.includes("kick") || name.includes("knee")) return "leg";
+    if (name.includes("balance") || name.includes("posture") || name.includes("hold")) return "posture";
+    if (name.includes("hand") || name.includes("wrist") || name.includes("reach")) return "hand";
+    return "arm";
+  }, [idx]);
+
   /* auto-framing sequence on mount / exercise change */
   const runFramingSequence = useCallback(() => {
     clearFraming();
@@ -150,10 +159,7 @@ export default function LiveSession() {
 
     const t1 = setTimeout(() => {
       setCamSize("fullscreen");
-      showCue(
-        `Let's check the camera. Make sure ${childName}'s whole body is visible.`,
-        3800,
-      );
+      cue("LS002", { child: childName });
     }, 400);
 
     const t2 = setTimeout(() => {
@@ -169,16 +175,17 @@ export default function LiveSession() {
     }, 4200);
 
     framingTimers.current = [t1, t2, t3];
-  }, [childName, showCue]);
+  }, [childName, cue, showCue]);
 
   /* kick off framing on mount */
   useEffect(() => {
+    cue("LS001", { child: childName });
     runFramingSequence();
     return () => {
       clearFraming();
-      cancelSpeech();
+      stop();
     };
-  }, [runFramingSequence]);
+  }, [runFramingSequence, cue, stop, childName]);
 
   /* reset drawer & feedback when exercise changes */
   useEffect(() => {
@@ -187,32 +194,41 @@ export default function LiveSession() {
   }, [idx]);
 
   function handleNext() {
+    unlock();
     if (idx + 1 >= SESSION_EXERCISES.length) {
       setDone(true);
       showCue("Session complete! Great work today.", 3000);
-      cancelSpeech();
+      stop();
       setTimeout(
         () => showCue(`${childName} finished all exercises today!`, 3000),
         200,
       );
     } else {
       const next = SESSION_EXERCISES[idx + 1];
-      showCue(`Nice work — moving on to ${next.name}.`, 3000);
+      cue("RH003", { child: childName });
+      setTimeout(() => {
+        showCue(`Moving on to ${next.name}.`, 2600);
+      }, 1800);
       setIdx((i) => i + 1);
       runFramingSequence();
     }
   }
 
   function handleReplay() {
+    unlock();
     const ex = SESSION_EXERCISES[idx];
-    showCue(`Replaying ${ex.name}. ${ex.cue}`, 3200);
+    cue("LS002", { child: childName });
+    setTimeout(() => {
+      showCue(`Replaying ${ex.name}. ${ex.cue}`, 3200);
+    }, 1600);
     setAdjustMode(false);
     setDrawerOpen(false);
   }
 
   function handleExit() {
+    unlock();
     clearFraming();
-    cancelSpeech();
+    stop();
     navigate({ to: "/app/caregiver" });
   }
 
@@ -227,15 +243,18 @@ export default function LiveSession() {
   }
 
   function toggleFeedback() {
+    unlock();
     const next = !adjustMode;
     setAdjustMode(next);
+    const cat = exerciseCategory();
     if (next) {
-      showCue(
-        `Almost there — if there's no pain, help raise the arm a little higher.`,
-        3800,
-      );
+      const correctionCode =
+        cat === "leg" ? "LL002" : cat === "posture" ? "PT002" : cat === "hand" ? "HW001" : "UL002";
+      cue(correctionCode, { child: childName });
     } else {
-      showCue(`That's it, well done — keep going just like that.`, 3000);
+      const goodCode =
+        cat === "leg" ? "LL004" : cat === "posture" ? "PT004" : cat === "hand" ? "HW004" : "UL007";
+      cue(goodCode, { child: childName });
     }
   }
 
@@ -521,26 +540,40 @@ export default function LiveSession() {
               boxShadow: "0 8px 22px rgba(0,0,0,0.25)",
             }}
           >
-            <div
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 14,
-                flexShrink: 0,
-              }}
-            >
-              🔊
-            </div>
+          <div
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.15)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 14,
+              flexShrink: 0,
+            }}
+          >
+            🔊
+          </div>
+          <div>
             <div style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.35 }}>
               {voiceLine}
             </div>
+            {voiceSub && (
+              <div
+                style={{
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  opacity: 0.72,
+                  marginTop: 2,
+                }}
+              >
+                {voiceSub}
+              </div>
+            )}
           </div>
-        )}
+        </div>
+      )}
 
         {/* ── DONE STATE ── */}
         {done ? (
@@ -585,13 +618,28 @@ export default function LiveSession() {
               }}
             >
               <div style={{ textAlign: "center", marginBottom: 10 }}>
-                <span
-                  className="session-label"
-                  style={{ fontWeight: 700, fontSize: 16 }}
-                >
-                  Exercise {idx + 1} of {SESSION_EXERCISES.length}
-                </span>
-              </div>
+              <span
+                className="session-label"
+                style={{ fontWeight: 700, fontSize: 16 }}
+              >
+                Exercise {idx + 1} of {SESSION_EXERCISES.length}
+              </span>
+              <span
+                style={{
+                  display: "inline-block",
+                  marginLeft: 10,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  background: "rgba(255,255,255,0.22)",
+                  padding: "3px 8px",
+                  borderRadius: 999,
+                  verticalAlign: "middle",
+                }}
+                title={LANGUAGES.map((l) => `${l.native} (${l.code})`).join(", ")}
+              >
+                🎙 {langName}
+              </span>
+            </div>
               <div
                 style={{
                   height: 7,
