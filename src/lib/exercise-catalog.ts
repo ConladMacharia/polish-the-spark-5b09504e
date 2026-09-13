@@ -577,3 +577,30 @@ export const CATEGORY_LABEL: Record<ExerciseCategory, string> = {
   pt: "Physiotherapy",
   ot: "Occupational therapy",
 };
+
+/** Converts a kebab-case exercise slug ("wall-pushup") into the camelCase
+ *  suffix used by the `exCatName_<slug>` / `exCatFocus_<slug>` translation
+ *  keys ("wallPushup"). */
+function slugToKeySuffix(slug: string) {
+  return slug.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+}
+
+/**
+ * Returns a copy of the exercise with its `name`/`focus` swapped for the
+ * translated text in the current language (via the `exCatName_<slug>` /
+ * `exCatFocus_<slug>` keys), falling back to the catalog's built-in English
+ * text if a translation is missing for any reason.
+ */
+export function translateExercise(
+  e: Exercise,
+  t: (key: any, vars?: Record<string, string | number>) => string,
+): Exercise {
+  const k = slugToKeySuffix(e.slug);
+  const name = t(`exCatName_${k}`);
+  const focus = t(`exCatFocus_${k}`);
+  return {
+    ...e,
+    name: name || e.name,
+    focus: focus || e.focus,
+  };
+}

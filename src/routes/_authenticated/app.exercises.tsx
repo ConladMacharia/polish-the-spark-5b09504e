@@ -11,7 +11,7 @@ import {
   getShoulderFlexionAngle,
   type Side,
 } from "@/lib/pose/angleUtils";
-import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
+import { EXERCISES, translateExercise, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { TargetBadge } from "@/components/ExerciseTargetDisplay";
 
@@ -386,7 +386,8 @@ function LiveSessionPage() {
       const hay = `${e.name} ${e.focus} ${e.description} ${e.slug}`.toLowerCase();
       return keywords.some((k) => hay.includes(k));
     });
-    return matches.length ? matches : base;
+    const result = matches.length ? matches : base;
+    return result.map((e) => translateExercise(e, t));
   }
 
   return (

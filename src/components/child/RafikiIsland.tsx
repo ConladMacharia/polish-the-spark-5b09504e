@@ -30,6 +30,13 @@ import { PianoGroveGame } from "@/components/PianoGroveGame";
 import { SpaceExplorerGame } from "@/components/SpaceExplorerGame";
 import { CampZiplineGame } from "@/components/CampZiplineGame";
 import { BalloonFairGame } from "@/components/BalloonFairGame";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
+
+/** Converts a game id ("cloud-squeeze") into the camelCase suffix used by
+ *  the gameRegion_/gameTitle_/gameInvite_/gameCaption_ translation keys. */
+function gameKeySuffix(id: string) {
+  return id.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+}
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "cloud-squeeze": Cloud,
@@ -76,6 +83,7 @@ function GameFrame({
   onExit: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-5 py-6">
@@ -86,7 +94,7 @@ function GameFrame({
             onClick={onExit}
             className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted"
           >
-            Back to island
+            {t("backToIsland")}
           </button>
         </div>
         {children}
@@ -95,13 +103,16 @@ function GameFrame({
   );
 }
 
-function macsLabel(games: ChildGame[]) {
+function macsLabel(games: ChildGame[], t: (key: any, vars?: Record<string, string | number>) => string) {
   const full = Math.max(...games.map((g) => g.fullUpTo));
   const simplified = Math.max(...games.map((g) => g.simplifiedUpTo ?? 0));
-  if (full >= 5) return { text: "All MACS levels", tone: "ok" as const };
-  const base = `MACS I–${ROMAN[full]}`;
+  if (full >= 5) return { text: t("allMacsLevels"), tone: "ok" as const };
+  const base = t("macsRange", { roman: ROMAN[full] });
   if (simplified > full)
-    return { text: `${base} · ${ROMAN[simplified]} simplified`, tone: "info" as const };
+    return {
+      text: t("macsRangeSimplified", { base, roman: ROMAN[simplified] }),
+      tone: "info" as const,
+    };
   return { text: base, tone: full <= 2 ? ("warn" as const) : ("info" as const) };
 }
 
@@ -142,6 +153,7 @@ function buildRegions(macs: MacsLevel): Region[] {
  * region, its activity and mechanic, and the MACS gating chip.
  */
 export function RafikiIsland({ childName }: { childName?: string }) {
+  const { t } = useLanguage();
   const [macs] = useState(readMacsLevel);
   const [active, setActive] = useState<{ game: ChildGame; variant: Eligibility } | null>(null);
 
@@ -153,27 +165,31 @@ export function RafikiIsland({ childName }: { childName?: string }) {
 
   const regions = buildRegions(macs);
 
+  function gameTitle(game: ChildGame) {
+    return t(`gameTitle_${gameKeySuffix(game.id)}` as any) || game.title;
+  }
+
   if (active) {
     if (active.game.id === "piano-grove") {
       return <PianoGroveGame onExit={() => setActive(null)} />;
     }
     if (active.game.id === "space-explorer") {
       return (
-        <GameFrame title={active.game.title} onExit={() => setActive(null)}>
+        <GameFrame title={gameTitle(active.game)} onExit={() => setActive(null)}>
           <SpaceExplorerGame />
         </GameFrame>
       );
     }
     if (active.game.id === "balloon-pop") {
       return (
-        <GameFrame title={active.game.title} onExit={() => setActive(null)}>
+        <GameFrame title={gameTitle(active.game)} onExit={() => setActive(null)}>
           <BalloonFairGame bowHand="left" />
         </GameFrame>
       );
     }
     if (active.game.id === "zip-tent") {
       return (
-        <GameFrame title={active.game.title} onExit={() => setActive(null)}>
+        <GameFrame title={gameTitle(active.game)} onExit={() => setActive(null)}>
           <CampZiplineGame />
         </GameFrame>
       );
@@ -196,21 +212,28 @@ export function RafikiIsland({ childName }: { childName?: string }) {
             <Rafiki size={56} />
             <div>
               <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">
-                Rafiki&apos;s island — world map
+                {t("worldMapTitle")}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {childName ? `Come and play, ${childName.split(" ")[0]}!` : "Come and play!"}
+                {childName
+                  ? t("comeAndPlayNamed", { name: childName.split(" ")[0] })
+                  : t("comeAndPlay")}
               </p>
             </div>
           </div>
-          <span className="text-sm text-muted-foreground">Gated by MACS level</span>
+          <span className="text-sm text-muted-foreground">{t("gatedByMacs")}</span>
         </header>
 
         <ul className="mt-8 grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
           {regions.map(({ region, games, playable }) => {
-            const chip = macsLabel(games);
-            const title = games.map((g) => g.title).join(" + ");
-            const caption = MECHANIC_CAPTION[games[0].id] ?? games[0].skill;
+            const chip = macsLabel(games, t);
+            const regionLabel =
+              t(`gameRegion_${gameKeySuffix(games[0].id)}` as any) || region;
+            const title = games.map((g) => gameTitle(g)).join(" + ");
+            const caption =
+              t(`gameCaption_${gameKeySuffix(games[0].id)}` as any) ||
+              MECHANIC_CAPTION[games[0].id] ||
+              games[0].skill;
             const locked = !playable;
 
             return (
@@ -233,7 +256,7 @@ export function RafikiIsland({ childName }: { childName?: string }) {
                       })}
                     </span>
                     <h2 className="text-lg font-semibold text-muted-foreground group-hover:text-foreground">
-                      {region}
+                      {regionLabel}
                     </h2>
                   </div>
                   <p className="mt-2 text-base leading-snug text-foreground/85">

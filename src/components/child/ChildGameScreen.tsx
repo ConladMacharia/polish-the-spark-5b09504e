@@ -22,25 +22,33 @@ import {
 
 import { Staircase, type ChildGame, type Eligibility } from "@/lib/child-games";
 import { Rafiki } from "@/components/child/Rafiki";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 type Target = { id: number; x: number; y: number; drifting: boolean };
 
-const CHEERS = ["Yaaay!", "Nice one!", "Wow!", "Rafiki loves it!", "Beautiful!", "Again!"];
-const NUDGES = ["Almost!", "Keep going!", "You can do it!", "Try with me!"];
+const CHEER_KEYS = ["cheer1", "cheer2", "cheer3", "cheer4", "cheer5", "cheer6"] as const;
+const NUDGE_KEYS = ["nudge1", "nudge2", "nudge3", "nudge4"] as const;
 
-/** Child-friendly nudge for the one movement this game listens to. */
-const HINTS: Record<ChildGame["mechanic"], string> = {
-  fist: "Squeeze your hand shut",
-  pinch: "Pinch your thumb and finger",
-  pinchDrag: "Pinch it, carry it, let go",
-  cursor: "Move your hand over it",
-  crossMidline: "Reach right across your body",
-  thumbSequence: "Touch the finger Rafiki shows",
-  twoWrist: "Hold with both hands, keep them apart",
-  scissor: "Open and close two fingers, snip!",
-  reachTarget: "Reach out and touch it",
-  shipFly: "Move your arm to fly the rocket",
+/** Child-friendly nudge for the one movement this game listens to — translation
+ *  key per mechanic. */
+const HINT_KEYS: Record<ChildGame["mechanic"], string> = {
+  fist: "hintFist",
+  pinch: "hintPinch",
+  pinchDrag: "hintPinchDrag",
+  cursor: "hintCursor",
+  crossMidline: "hintCrossMidline",
+  thumbSequence: "hintThumbSequence",
+  twoWrist: "hintTwoWrist",
+  scissor: "hintScissor",
+  reachTarget: "hintReachTarget",
+  shipFly: "hintShipFly",
 };
+
+/** Converts a game id ("cloud-squeeze") into the camelCase suffix used by
+ *  the gameInvite_ translation keys. */
+function gameKeySuffix(id: string) {
+  return id.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+}
 
 export function ChildGameScreen({
   game,
@@ -51,6 +59,7 @@ export function ChildGameScreen({
   variant: Eligibility;
   onExit: () => void;
 }) {
+  const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -73,7 +82,9 @@ export function ChildGameScreen({
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const [targets, setTargets] = useState<Target[]>(() => spawn(game, 0));
   const [collected, setCollected] = useState(0);
-  const [mascotSays, setMascotSays] = useState(game.invite);
+  const [mascotSays, setMascotSays] = useState(
+    t(`gameInvite_${gameKeySuffix(game.id)}` as any) || game.invite,
+  );
   const [mascotMood, setMascotMood] = useState<"idle" | "cheer" | "encourage">("idle");
   const [rewardOpen, setRewardOpen] = useState(false);
   const [sparkles, setSparkles] = useState<{ id: number; x: number; y: number }[]>([]);
@@ -120,7 +131,7 @@ export function ChildGameScreen({
         rafRef.current = requestAnimationFrame(loop);
       } catch {
         // camera unavailable — Rafiki still keeps things warm, never a fail state
-        setMascotSays("Rafiki can't see you yet — that's okay!");
+        setMascotSays(t("cantSeeYouYet"));
       }
     }
 
@@ -135,7 +146,7 @@ export function ChildGameScreen({
 
   function cheer(x?: number, y?: number) {
     setMascotMood("cheer");
-    setMascotSays(CHEERS[Math.floor(Math.random() * CHEERS.length)]);
+    setMascotSays(t(CHEER_KEYS[Math.floor(Math.random() * CHEER_KEYS.length)] as any));
     if (x !== undefined && y !== undefined) {
       const id = Date.now() + Math.random();
       setSparkles((s) => [...s, { id, x, y }]);
@@ -149,7 +160,7 @@ export function ChildGameScreen({
     if (now - lastMissRef.current < 2500) return;
     lastMissRef.current = now;
     setMascotMood("encourage");
-    setMascotSays(NUDGES[Math.floor(Math.random() * NUDGES.length)]);
+    setMascotSays(t(NUDGE_KEYS[Math.floor(Math.random() * NUDGE_KEYS.length)] as any));
     setTimeout(() => setMascotMood("idle"), 1400);
   }
 
@@ -378,7 +389,7 @@ export function ChildGameScreen({
           {game.region}
         </p>
         <p className="mt-1 text-xs font-bold uppercase tracking-widest text-white/80">
-          {HINTS[game.mechanic]}
+          {t(HINT_KEYS[game.mechanic] as any)}
         </p>
       </div>
 
@@ -484,7 +495,7 @@ export function ChildGameScreen({
       {/* Rafiki */}
       <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2 text-center">
         <div className="mb-2 inline-block max-w-[18rem] rounded-3xl bg-white/90 px-5 py-2 font-display text-xl text-purple-900 shadow-lg">
-          {ready ? mascotSays : "Rafiki is waking up…"}
+          {ready ? mascotSays : t("rafikiWakingUp")}
         </div>
         <Rafiki mood={mascotMood} size={96} />
       </div>

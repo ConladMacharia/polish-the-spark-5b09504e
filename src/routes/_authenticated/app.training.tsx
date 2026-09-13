@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { PlayCircle, ArrowLeft } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { EXERCISES, type Exercise } from "@/lib/exercise-catalog";
+import { EXERCISES, translateExercise, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
@@ -130,7 +130,8 @@ function TrainingPage() {
       const hay = `${e.name} ${e.focus} ${e.description} ${e.slug}`.toLowerCase();
       return keywords.some((k) => hay.includes(k));
     });
-    return matches.length ? matches : base;
+    const result = matches.length ? matches : base;
+    return result.map((e) => translateExercise(e, t));
   }
 
 
