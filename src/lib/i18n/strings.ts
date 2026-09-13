@@ -81,6 +81,42 @@ export const EN_STRINGS = {
   footageMissingSub: "This slot is ready — upload or record the demo video for this move.",
   clinicalBenefit: "Clinical benefit:",
   startTherapyGame: "Start therapy game",
+
+  // --- Body region categories (training & exercise pickers) ---
+  upperBody: "Upper body",
+  lowerBody: "Lower body",
+  catShoulder: "Shoulder",
+  catElbow: "Elbow",
+  catWrist: "Wrist",
+  catHandFingers: "Hand & Fingers",
+  catHip: "Hip",
+  catKnee: "Knee",
+  catAnkle: "Ankle",
+  catBalance: "Balance",
+  sideLeft: "Left",
+  sideRight: "Right",
+
+  // --- Sub-exercise picker names ---
+  exForwardReach: "Forward reach",
+  exArmLowering: "Arm lowering",
+  exSideReach: "Side reach",
+  exCrossBodyReach: "Cross body reach",
+  exRotation: "Rotation",
+  exBendStraighten: "Bend and straighten",
+  exPalmUpDown: "Palm up, palm down",
+  exWristBendUp: "Wrist bend up",
+  exWristBendDown: "Wrist bend down",
+  exWristTilt: "Side to side wrist tilt",
+
+  // --- Movement focus terms ---
+  focusFlexion: "Flexion",
+  focusExtension: "Extension",
+  focusAbduction: "Abduction",
+  focusAdduction: "Adduction",
+  focusRotationFull: "Internal and external rotation",
+  focusFlexionExtension: "Flexion and extension",
+  focusSupinationPronation: "Supination and pronation",
+  focusRadialUlnar: "Radial and ulnar deviation",
 } as const;
 
 export type StringKey = keyof typeof EN_STRINGS;

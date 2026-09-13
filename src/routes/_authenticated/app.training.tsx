@@ -53,59 +53,59 @@ function TrainingPage() {
     () => [
       {
         id: "upper",
-        label: "Upper body",
+        label: t("upperBody"),
         icon: "💪",
         track: "arm",
         subcats: [
           {
             id: "shoulder",
-            label: "Shoulder",
+            label: t("catShoulder"),
             icon: "🦾",
             items: [
-              { slug: "arm", name: "Forward reach", focus: "Flexion" },
-              { slug: "arm-circles", name: "Arm lowering", focus: "Extension" },
-              { slug: "side-bend", name: "Side reach", focus: "Abduction" },
-              { slug: "midline", name: "Cross body reach", focus: "Adduction" },
-              { slug: "wall-slide", name: "Rotation", focus: "Internal and external rotation" },
+              { slug: "arm", name: t("exForwardReach"), focus: t("focusFlexion") },
+              { slug: "arm-circles", name: t("exArmLowering"), focus: t("focusExtension") },
+              { slug: "side-bend", name: t("exSideReach"), focus: t("focusAbduction") },
+              { slug: "midline", name: t("exCrossBodyReach"), focus: t("focusAdduction") },
+              { slug: "wall-slide", name: t("exRotation"), focus: t("focusRotationFull") },
             ],
           },
           {
             id: "elbow",
-            label: "Elbow",
+            label: t("catElbow"),
             icon: "💪",
             items: [
-              { slug: "reach", name: "Bend and straighten", focus: "Flexion and extension" },
-              { slug: "shoulder", name: "Palm up, palm down", focus: "Supination and pronation" },
+              { slug: "reach", name: t("exBendStraighten"), focus: t("focusFlexionExtension") },
+              { slug: "shoulder", name: t("exPalmUpDown"), focus: t("focusSupinationPronation") },
             ],
           },
           {
             id: "wrist",
-            label: "Wrist",
+            label: t("catWrist"),
             icon: "🖐️",
             items: [
-              { slug: "draw", name: "Wrist bend up", focus: "Extension" },
-              { slug: "tracing", name: "Wrist bend down", focus: "Flexion" },
-              { slug: "page-turn", name: "Side to side wrist tilt", focus: "Radial and ulnar deviation" },
+              { slug: "draw", name: t("exWristBendUp"), focus: t("focusExtension") },
+              { slug: "tracing", name: t("exWristBendDown"), focus: t("focusFlexion") },
+              { slug: "page-turn", name: t("exWristTilt"), focus: t("focusRadialUlnar") },
             ],
           },
-          { id: "hand", label: "Hand & Fingers", icon: "🤲", keywords: ["hand", "finger", "grasp", "pincer", "thumb"] },
+          { id: "hand", label: t("catHandFingers"), icon: "🤲", keywords: ["hand", "finger", "grasp", "pincer", "thumb"] },
         ],
 
       },
       {
         id: "lower",
-        label: "Lower body",
+        label: t("lowerBody"),
         icon: "🦵",
         track: "leg",
         subcats: [
-          { id: "hip", label: "Hip", keywords: ["hip"] },
-          { id: "knee", label: "Knee", keywords: ["knee"] },
-          { id: "ankle", label: "Ankle", keywords: ["ankle", "foot"] },
-          { id: "balance", label: "Balance", keywords: ["balance"] },
+          { id: "hip", label: t("catHip"), keywords: ["hip"] },
+          { id: "knee", label: t("catKnee"), keywords: ["knee"] },
+          { id: "ankle", label: t("catAnkle"), keywords: ["ankle", "foot"] },
+          { id: "balance", label: t("catBalance"), keywords: ["balance"] },
         ],
       },
     ],
-    []
+    [t]
   );
 
   function findCategory(id: string) {
