@@ -24,6 +24,8 @@ interface LiveTrackingSessionProps {
   childId?: string;
   /** Optional: exercise slug to annotate saved session */
   exerciseSlug?: string;
+  /** Optional: therapist-set target overrides (accepted for API compatibility) */
+  overrides?: unknown[];
 }
 
 // Downscaled processing resolution — the model runs on this size regardless

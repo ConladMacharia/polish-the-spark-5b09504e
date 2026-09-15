@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, PlayCircle, Flame, ShieldAlert, Rocket } from "lucide-react";
+import { LogOut, PlayCircle, ShieldAlert, Rocket } from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,7 @@ import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { RafikiIsland } from "@/components/child/RafikiIsland";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
-import ProgressIcon from "@/routes/_authenticated/app.caregiver/components/ProgressIcon";
+import ProgressGraph from "@/components/ProgressGraph";
 
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
@@ -37,6 +37,7 @@ function CaregiverHome() {
   const { t } = useLanguage();
   const [uxMode, setUxMode] = useState<"caregiver" | "child">("caregiver");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [progressOpen, setProgressOpen] = useState(false);
 
 
   const { data: profile } = useQuery({
@@ -162,7 +163,6 @@ function CaregiverHome() {
 
               <div className="flex items-center gap-1">
                 <LanguageSettings />
-                <ProgressIcon childId={patient?.id ?? ""} />
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" /> {t("signOut")}
                 </Button>
@@ -246,20 +246,24 @@ function CaregiverHome() {
                 </p>
               </button>
 
-              <div className="sm:col-span-2 flex items-center gap-4 rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 shadow-[4px_4px_0px_#0f172a]">
+              <button
+                type="button"
+                onClick={() => setProgressOpen(true)}
+                className="sm:col-span-2 flex items-center gap-4 rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5 text-left"
+              >
                 <div className="flex items-center gap-1.5 font-display text-3xl font-bold text-pink-600">
-                  <Flame className="h-7 w-7 text-pink-500 fill-pink-500" /> 5
+                  <span>📈</span>
                 </div>
                 <div className="h-10 w-0.5 bg-slate-300" />
                 <div>
                   <p className="text-xs font-extrabold uppercase text-slate-500">
-                    {t("lastSession")}
+                    Progress
                   </p>
                   <p className="font-display text-base text-slate-900 font-bold">
-                    {t("lastSessionValue")}
+                    See how your child is improving
                   </p>
                 </div>
-              </div>
+              </button>
             </div>
 
             {/* Tip Card (Dashed Border) */}
@@ -286,6 +290,28 @@ function CaregiverHome() {
       ) : (
         /* CHILD UX MODE — Rafiki's Island */
         <RafikiIsland childName={childName} />
+      )}
+
+      {progressOpen && patient?.id && (
+        <div
+          className="fixed inset-0 z-60 grid place-items-center bg-black/40 p-4"
+          onClick={() => setProgressOpen(false)}
+        >
+          <div
+            className="w-full max-w-2xl rounded-2xl border-4 border-slate-950 bg-white p-4 shadow-[6px_6px_0px_#0f172a]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-display text-xl font-bold text-slate-900">
+                {childName}'s progress
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => setProgressOpen(false)}>
+                Close
+              </Button>
+            </div>
+            <ProgressGraph childId={patient.id} />
+          </div>
+        </div>
       )}
 
       <ChildProfileSheet
