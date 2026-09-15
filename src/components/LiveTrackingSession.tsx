@@ -14,6 +14,7 @@ import {
   type Side,
 } from "@/lib/pose/angleUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveTargetSlug } from "@/lib/exercise-targets";
 
 type TrackedMovement = "elbow" | "shoulderFlexion";
 
@@ -115,7 +116,9 @@ export function LiveTrackingSession({
         patient_id: childId,
         caregiver_id: caregiverId,
         exercise: exerciseEnum(exerciseSlug) as any,
-        exercise_slug: exerciseSlug ?? null,
+        exercise_slug: resolveTargetSlug(
+          exerciseSlug ?? (movement === "elbow" ? "bend-and-straighten" : "forward-reach"),
+        ),
         started_at: new Date(first).toISOString(),
         duration_seconds: durationSeconds,
         reps_completed: 0,
