@@ -9,6 +9,7 @@ import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { RafikiIsland } from "@/components/child/RafikiIsland";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
+import ProgressIcon from "@/components/ProgressIcon";
 
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
@@ -161,6 +162,7 @@ function CaregiverHome() {
 
               <div className="flex items-center gap-1">
                 <LanguageSettings />
+                <ProgressIcon childId={patient?.id ?? ""} />
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" /> {t("signOut")}
                 </Button>

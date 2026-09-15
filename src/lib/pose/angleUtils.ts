@@ -114,10 +114,15 @@ export class LandmarkSmoother {
 export class AngleRecorder {
   private maxAngle = -Infinity;
   private minAngle = Infinity;
+  private history: { t: number; angle: number }[] = [];
+  private readonly maxHistory = 1024;
 
   record(angle: number): void {
     if (angle > this.maxAngle) this.maxAngle = angle;
     if (angle < this.minAngle) this.minAngle = angle;
+    const ts = Date.now();
+    this.history.push({ t: ts, angle });
+    if (this.history.length > this.maxHistory) this.history.shift();
   }
 
   getMax(): number | null {
@@ -131,5 +136,11 @@ export class AngleRecorder {
   reset(): void {
     this.maxAngle = -Infinity;
     this.minAngle = Infinity;
+    this.history = [];
+  }
+
+  /** Return a shallow copy of the recorded history (timestamp ms, angle). */
+  getHistory(): { t: number; angle: number }[] {
+    return this.history.slice();
   }
 }

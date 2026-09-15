@@ -13,12 +13,17 @@ import {
   type Point2D,
   type Side,
 } from "@/lib/pose/angleUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 type TrackedMovement = "elbow" | "shoulderFlexion";
 
 interface LiveTrackingSessionProps {
   movement: TrackedMovement;
   side?: Side;
+  /** Optional: patient id (from patients.id) to save session results */
+  childId?: string;
+  /** Optional: exercise slug to annotate saved session */
+  exerciseSlug?: string;
 }
 
 // Downscaled processing resolution — the model runs on this size regardless
@@ -29,6 +34,9 @@ const PROCESS_HEIGHT = 480;
 export function LiveTrackingSession({
   movement,
   side = "right",
+  childId,
+  exerciseSlug,
+  overrides = [],
 }: LiveTrackingSessionProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -43,6 +51,88 @@ export function LiveTrackingSession({
   const [maxAngle, setMaxAngle] = useState<number | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [statusMessage, setStatusMessage] = useState("Starting camera...");
+
+  function exerciseEnum(slug?: string) {
+    if (!slug) return "arm_raise" as const;
+    if (slug === "gait") return "gait" as const;
+    if (["balance", "head", "stretch", "ball-throw"].includes(slug)) return "balance_hold" as const;
+    if (
+      [
+        "prone",
+        "rolling",
+        "kneeling",
+        "half-kneel",
+        "wall-stand",
+        "horse",
+        "breathing",
+      ].includes(slug)
+    )
+      return "postural_control" as const;
+    if (
+      [
+        "leg",
+        "march",
+        "squat",
+        "sitstand",
+        "bridge",
+        "ankle",
+        "crawl",
+        "heel-raise",
+        "step-up",
+        "obstacle",
+        "aquatic",
+      ].includes(slug)
+    )
+      return "leg_kick" as const;
+    if (["arm", "reach", "shoulder", "trunk", "sidelying", "pnf"].includes(slug)) return "arm_raise" as const;
+    return "arm_raise" as const;
+  }
+
+  async function saveSession() {
+    if (!childId) {
+      console.warn("No childId provided — cannot save session");
+      return;
+    }
+    const history = recorderRef.current.getHistory();
+    if (!history || history.length === 0) {
+      console.warn("No recorded samples — skipping save");
+      return;
+    }
+
+    const first = history[0].t;
+    const last = history[history.length - 1].t;
+    const durationSeconds = Math.max(1, Math.round((last - first) / 1000));
+    const angles = history.map((h) => h.angle).filter((a) => typeof a === "number");
+    const avgAngle = angles.length ? Math.round(angles.reduce((s, v) => s + v, 0) / angles.length) : null;
+
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const caregiverId = userData?.user?.id ?? null;
+
+      const payload: any = {
+        patient_id: childId,
+        caregiver_id: caregiverId,
+        exercise: exerciseEnum(exerciseSlug) as any,
+        exercise_slug: exerciseSlug ?? null,
+        started_at: new Date(first).toISOString(),
+        duration_seconds: durationSeconds,
+        reps_completed: 0,
+        reps_target: 0,
+        completion_pct: 0,
+        difficulty_level: 1,
+      };
+      if (avgAngle !== null) payload.avg_range_of_motion_deg = avgAngle;
+
+      const { data, error } = await supabase.from("sessions").insert(payload).select().single();
+      if (error) throw error;
+      console.info("Session saved", data);
+      // Clear recorder after successful save
+      recorderRef.current.reset();
+      setMaxAngle(null);
+    } catch (e) {
+      console.error("Failed to save session:", e);
+    }
+  }
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -208,6 +298,11 @@ export function LiveTrackingSession({
           <button onClick={resetRecording} style={{ marginTop: 8 }}>
             Reset recording
           </button>
+          <div style={{ marginTop: 12 }}>
+            <button onClick={saveSession} style={{ marginRight: 8 }}>
+              Finish session & save
+            </button>
+          </div>
         </div>
       )}
     </div>
