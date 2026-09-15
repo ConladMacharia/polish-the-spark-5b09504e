@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ProgressGraph from "./ProgressGraph";
+import ProgressGraph from "@/components/ProgressGraph";
 import { Button } from "@/components/ui/button";
 
 interface ProgressIconProps {

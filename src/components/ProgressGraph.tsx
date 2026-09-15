@@ -9,7 +9,7 @@ interface Sample {
 interface ProgressGraphProps {
   childId?: string;
   exercise?: string;
-  liveHistory: Sample[];
+  liveHistory?: Sample[];
   targetAngle?: number | null;
 }
 
@@ -55,7 +55,7 @@ export default function ProgressGraph({ childId, exercise, liveHistory, targetAn
     // Merge past session points and liveHistory (liveHistory may have many samples)
     const items: { t: number; angle: number | null; source: "past" | "live" }[] = [];
     pastPoints.forEach((p) => items.push({ ...p, source: "past" }));
-    liveHistory.forEach((p) => items.push({ t: p.t, angle: p.angle ?? null, source: "live" }));
+    (liveHistory ?? []).forEach((p) => items.push({ t: p.t, angle: p.angle ?? null, source: "live" }));
     items.sort((a, b) => a.t - b.t);
     return items;
   }, [pastPoints, liveHistory]);

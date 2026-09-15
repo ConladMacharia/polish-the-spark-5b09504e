@@ -9,7 +9,7 @@ import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { RafikiIsland } from "@/components/child/RafikiIsland";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
-import ProgressIcon from "@/components/ProgressIcon";
+import ProgressIcon from "@/routes/_authenticated/app.caregiver/components/ProgressIcon";
 
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
