@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, PlayCircle, Flame, ShieldAlert, Rocket } from "lucide-react";
+import { LogOut, PlayCircle, ShieldAlert, Rocket } from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,7 @@ import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { RafikiIsland } from "@/components/child/RafikiIsland";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
-import ProgressIcon from "@/routes/_authenticated/app.caregiver/components/ProgressIcon";
+import ProgressGraph from "@/components/ProgressGraph";
 
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
@@ -37,6 +37,7 @@ function CaregiverHome() {
   const { t } = useLanguage();
   const [uxMode, setUxMode] = useState<"caregiver" | "child">("caregiver");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [progressOpen, setProgressOpen] = useState(false);
 
 
   const { data: profile } = useQuery({
