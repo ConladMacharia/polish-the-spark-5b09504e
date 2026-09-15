@@ -163,7 +163,6 @@ function CaregiverHome() {
 
               <div className="flex items-center gap-1">
                 <LanguageSettings />
-                <ProgressIcon childId={patient?.id ?? ""} />
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" /> {t("signOut")}
                 </Button>
@@ -247,20 +246,24 @@ function CaregiverHome() {
                 </p>
               </button>
 
-              <div className="sm:col-span-2 flex items-center gap-4 rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 shadow-[4px_4px_0px_#0f172a]">
+              <button
+                type="button"
+                onClick={() => setProgressOpen(true)}
+                className="sm:col-span-2 flex items-center gap-4 rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5 text-left"
+              >
                 <div className="flex items-center gap-1.5 font-display text-3xl font-bold text-pink-600">
-                  <Flame className="h-7 w-7 text-pink-500 fill-pink-500" /> 5
+                  <span>📈</span>
                 </div>
                 <div className="h-10 w-0.5 bg-slate-300" />
                 <div>
                   <p className="text-xs font-extrabold uppercase text-slate-500">
-                    {t("lastSession")}
+                    Progress
                   </p>
                   <p className="font-display text-base text-slate-900 font-bold">
-                    {t("lastSessionValue")}
+                    See how your child is improving
                   </p>
                 </div>
-              </div>
+              </button>
             </div>
 
             {/* Tip Card (Dashed Border) */}
