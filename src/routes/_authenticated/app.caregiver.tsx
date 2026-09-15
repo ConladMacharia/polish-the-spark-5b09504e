@@ -292,6 +292,28 @@ function CaregiverHome() {
         <RafikiIsland childName={childName} />
       )}
 
+      {progressOpen && patient?.id && (
+        <div
+          className="fixed inset-0 z-60 grid place-items-center bg-black/40 p-4"
+          onClick={() => setProgressOpen(false)}
+        >
+          <div
+            className="w-full max-w-2xl rounded-2xl border-4 border-slate-950 bg-white p-4 shadow-[6px_6px_0px_#0f172a]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-display text-xl font-bold text-slate-900">
+                {childName}'s progress
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => setProgressOpen(false)}>
+                Close
+              </Button>
+            </div>
+            <ProgressGraph childId={patient.id} />
+          </div>
+        </div>
+      )}
+
       <ChildProfileSheet
         open={profileOpen}
         onOpenChange={setProfileOpen}
