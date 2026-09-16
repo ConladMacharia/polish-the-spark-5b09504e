@@ -13,8 +13,7 @@ import {
   type Point2D,
   type Side,
 } from "@/lib/pose/angleUtils";
-import { supabase } from "@/integrations/supabase/client";
-import { resolveTargetSlug } from "@/lib/exercise-targets";
+import { saveTrackedSession } from "@/lib/sessions.data";
 
 type TrackedMovement = "elbow" | "shoulderFlexion";
 
@@ -92,51 +91,19 @@ export function LiveTrackingSession({
   }
 
   async function saveSession() {
-    if (!childId) {
-      console.warn("No childId provided — cannot save session");
-      return;
-    }
     const history = recorderRef.current.getHistory();
     if (!history || history.length === 0) {
       console.warn("No recorded samples — skipping save");
       return;
     }
-
-    const first = history[0].t;
-    const last = history[history.length - 1].t;
-    const durationSeconds = Math.max(1, Math.round((last - first) / 1000));
-    const angles = history.map((h) => h.angle).filter((a) => typeof a === "number");
-    const avgAngle = angles.length ? Math.round(angles.reduce((s, v) => s + v, 0) / angles.length) : null;
-
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      const caregiverId = userData?.user?.id ?? null;
-
-      const payload: any = {
-        patient_id: childId,
-        caregiver_id: caregiverId,
-        exercise: exerciseEnum(exerciseSlug) as any,
-        exercise_slug: resolveTargetSlug(
-          exerciseSlug ?? (movement === "elbow" ? "bend-and-straighten" : "forward-reach"),
-        ),
-        started_at: new Date(first).toISOString(),
-        duration_seconds: durationSeconds,
-        reps_completed: 0,
-        reps_target: 0,
-        completion_pct: 0,
-        difficulty_level: 1,
-      };
-      if (avgAngle !== null) payload.avg_range_of_motion_deg = avgAngle;
-
-      const { data, error } = await supabase.from("sessions").insert(payload).select().single();
-      if (error) throw error;
-      console.info("Session saved", data);
-      // Clear recorder after successful save
-      recorderRef.current.reset();
-      setMaxAngle(null);
-    } catch (e) {
-      console.error("Failed to save session:", e);
-    }
+    await saveTrackedSession({
+      history: history as { t: number; angle: number }[],
+      exerciseSlug: exerciseSlug ?? (movement === "elbow" ? "bend-and-straighten" : "forward-reach"),
+      side,
+      patientId: childId ?? null,
+    });
+    recorderRef.current.reset();
+    setMaxAngle(null);
   }
 
   useEffect(() => {

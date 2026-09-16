@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.user_can_access_patient(uuid, uuid) TO authenticated, service_role;
