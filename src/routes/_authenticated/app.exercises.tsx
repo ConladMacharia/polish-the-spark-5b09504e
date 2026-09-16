@@ -16,6 +16,7 @@ import { LanguageSettings } from "@/components/LanguageSettings";
 import { TargetBadge } from "@/components/ExerciseTargetDisplay";
 
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { saveTrackedSession } from "@/lib/sessions.data";
 
 
 export const Route = createFileRoute("/_authenticated/app/exercises")({
