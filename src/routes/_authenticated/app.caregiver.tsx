@@ -309,7 +309,7 @@ function CaregiverHome() {
                 Close
               </Button>
             </div>
-            <ProgressGraph childId={patient.id} />
+            <ProgressGraph childId={patient?.id} />
           </div>
         </div>
       )}
