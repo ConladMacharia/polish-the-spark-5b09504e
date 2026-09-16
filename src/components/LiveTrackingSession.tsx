@@ -13,8 +13,7 @@ import {
   type Point2D,
   type Side,
 } from "@/lib/pose/angleUtils";
-import { supabase } from "@/integrations/supabase/client";
-import { resolveTargetSlug } from "@/lib/exercise-targets";
+import { saveTrackedSession } from "@/lib/sessions.data";
 
 type TrackedMovement = "elbow" | "shoulderFlexion";
 
