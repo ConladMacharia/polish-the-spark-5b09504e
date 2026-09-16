@@ -38,10 +38,10 @@ export const EN_STRINGS = {
   gmfcsBadge: "GMFCS II",
   beginSession: "Begin session",
   yourToolkit: "Your toolkit",
-  exerciseLibrary: "Live session",
-  exerciseLibrarySub: "Do the move",
+  exerciseLibrary: "Exercise Tracking",
+  exerciseLibrarySub: "AI-tracked, in real time",
   trainingFilms: "Training videos",
-  trainingFilmsSub: "Learn the move",
+  trainingFilmsSub: "Watch the correct form",
   lastSession: "Last session",
   lastSessionValue: "Yesterday · 4/5 · Great form",
   tip: "Tip",
@@ -63,8 +63,8 @@ export const EN_STRINGS = {
   gameStatueSub: "Hold steady like a magic statue",
 
   // --- Exercise library ---
-  libraryEyebrow: "Library",
-  libraryTitle: "Exercise library",
+  libraryEyebrow: "Tracking",
+  libraryTitle: "Exercise Tracking",
   librarySubtitle:
     "Full CP reference catalog ({pt} physiotherapy + {ot} occupational therapy exercises).",
   filterAll: "All ({count})",

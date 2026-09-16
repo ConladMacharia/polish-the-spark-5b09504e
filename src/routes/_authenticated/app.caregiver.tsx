@@ -1,14 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, PlayCircle, Flame, ShieldAlert, Rocket } from "lucide-react";
+import { LogOut, PlayCircle, Flame, ShieldAlert, Rocket, Home, Dumbbell, Video, User, Globe } from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { RafikiIsland } from "@/components/child/RafikiIsland";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
+import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
 
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
@@ -29,6 +29,8 @@ export const Route = createFileRoute("/_authenticated/app/caregiver")({
   }),
   component: CaregiverHome,
 });
+
+type NavId = "home" | "library" | "videos" | "profile";
 
 function CaregiverHome() {
   const navigate = useNavigate();
@@ -103,187 +105,157 @@ function CaregiverHome() {
     navigate({ to: "/app/exercises" });
   }
 
+  function handleNav(id: NavId) {
+    if (id === "library") return navigate({ to: "/app/exercises" });
+    if (id === "videos") return navigate({ to: "/app/training" });
+    if (id === "profile") return setProfileOpen(true);
+    // "home" — already here, no-op
+  }
+
   const firstName = profile?.full_name?.split(" ")[0] ?? "Caregiver";
   const childName = patient?.child_name ?? "Amani";
 
   return (
-    <div
-      className={`min-h-screen ${uxMode === "child" ? "bg-amber-50 text-slate-900" : "bg-background"}`}
-    >
-      {/* Dual Mode Bar */}
-      <div className="bg-slate-900 text-white px-6 py-2.5 flex items-center justify-between text-xs font-semibold">
-        <span className="tracking-wide">NEURO-BRIDGE</span>
-        <div className="inline-flex rounded-full bg-white/10 p-1 gap-1">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-emerald-950 via-[#05100c] to-emerald-950 text-stone-50">
+      <AmbientBlobs />
+
+      {/* Caregiver / child mode switch */}
+      <div className="relative z-10 mx-auto max-w-4xl px-6 pt-5">
+        <div className="flex rounded-full border border-white/15 bg-white/10 p-1 backdrop-blur-xl sm:inline-flex">
           <button
             type="button"
             onClick={() => setUxMode("caregiver")}
-            className={`rounded-full px-3 py-1 transition ${uxMode === "caregiver"
-                ? "bg-amber-400 text-slate-950 font-bold"
-                : "text-white hover:text-amber-200"
-              }`}
+            className={`flex-1 rounded-full px-4 py-1.5 font-display text-[13px] font-semibold transition-colors sm:flex-none ${
+              uxMode === "caregiver" ? "bg-emerald-300 text-emerald-950" : "text-stone-200"
+            }`}
           >
             {t("caregiverUx")}
           </button>
           <button
             type="button"
             onClick={() => setUxMode("child")}
-            className={`rounded-full px-3 py-1 transition flex items-center gap-1 ${uxMode === "child"
-                ? "bg-purple-600 text-white font-bold"
-                : "text-white hover:text-purple-300"
-              }`}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-1.5 font-display text-[13px] font-semibold transition-colors sm:flex-none ${
+              uxMode === "child" ? "bg-emerald-300 text-emerald-950" : "text-stone-200"
+            }`}
           >
-            <Rocket className="h-3 w-3" /> {t("childUx")} 🚀
+            <Rocket className="h-3.5 w-3.5" /> {t("childUx")}
           </button>
         </div>
       </div>
 
       {uxMode === "caregiver" ? (
-        /* CAREGIVER BROWSE MODE */
-        <div>
-          <header className="border-b border-border bg-card/60 backdrop-blur">
-            <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setProfileOpen(true)}
-                  aria-label="Open child profile"
-                  className="flex items-center gap-2 rounded-full border-2 border-slate-900 bg-amber-100 px-3 py-1 shadow-[2px_2px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
-                >
-                  <span className="grid h-7 w-7 place-items-center rounded-full bg-pink-500 text-white font-bold text-xs">
-                    {childName.charAt(0)}
-                  </span>
-                  <span className="text-xs font-extrabold text-slate-900">
-                    {childName}
-                    {patient?.age_years ? `, ${patient.age_years}` : `, ${t("ageLabel")}`} ▾
-                  </span>
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1">
-                <LanguageSettings />
-                <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" /> {t("signOut")}
-                </Button>
-              </div>
-            </div>
-          </header>
-
-          <main className="mx-auto max-w-4xl px-6 py-8">
-            <div className="mb-6">
-              <h1 className="font-display text-4xl text-slate-900 tracking-tight flex items-center gap-2">
-                {t("greeting", { name: firstName })}{" "}
-                <span className="inline-block animate-bounce">👋</span>
+        <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-4xl flex-col px-6 pb-4 pt-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-display text-2xl font-bold tracking-tight text-stone-50">
+                {t("greeting", { name: firstName })} <span className="inline-block animate-bounce">👋</span>
               </h1>
-              <p className="mt-1 text-sm font-semibold text-slate-600">
-                {t("todayPlanReady")} —{" "}
-                <span className="text-blue-600 font-bold">{t("planSummary")}</span>
-              </p>
             </div>
+            <div className="flex items-center gap-2">
+              <LanguageSettings />
+              <button
+                type="button"
+                onClick={handleSignOut}
+                aria-label={t("signOut")}
+                className="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-white/10 backdrop-blur-xl"
+              >
+                <LogOut className="h-4 w-4 text-emerald-200" />
+              </button>
+            </div>
+          </div>
 
-            {/* Primary Action Card (Dominant) */}
-            <div
-              onClick={goToExercises}
-              className="relative overflow-hidden rounded-3xl border-4 border-slate-950 bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-white shadow-[6px_6px_0px_#0f172a] cursor-pointer transition-transform active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0px_#0f172a] mb-6"
-            >
-              <span className="inline-block rounded-lg bg-white/20 px-3 py-1 font-display text-xs tracking-wider uppercase mb-3">
+          {/* Today's mission — hero card */}
+          <GlassCard tint="emerald" className="mt-5" onClick={goToExercises} as="button">
+            <div className="p-5 text-left">
+              <span className="inline-block rounded-full bg-white/10 px-3 py-1 font-display text-[11px] font-semibold tracking-wide text-emerald-200">
                 {t("todaysMission")}
               </span>
-              <h2 className="font-display text-3xl font-bold">{t("startTodaySession")}</h2>
-              <p className="mt-1 text-sm opacity-90 font-medium">{t("sessionDescription")}</p>
-              <div className="mt-4 flex flex-wrap gap-4 text-xs font-extrabold opacity-95">
+              <h2 className="mt-3 font-display text-2xl font-bold leading-snug text-stone-50">
+                {t("startTodaySession")}
+              </h2>
+              <p className="mt-1.5 text-[13px] font-medium text-stone-300">{t("sessionDescription")}</p>
+              <div className="mt-3 flex flex-wrap gap-3 text-[12px] font-semibold text-stone-300">
                 <span>🎯 {t("threeExercises")}</span>
                 <span>⏱ {t("twelveMinutes")}</span>
                 <span>📶 {t("gmfcsBadge")}</span>
               </div>
-              <div className="mt-6 inline-flex items-center gap-2 rounded-xl border-2 border-slate-950 bg-yellow-400 px-5 py-3 font-display font-extrabold text-slate-950 shadow-[3px_3px_0px_rgba(0,0,0,0.3)]">
-                <PlayCircle className="h-5 w-5 fill-slate-950 text-yellow-400" />{" "}
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-300 px-5 py-2.5 font-display text-sm font-bold text-emerald-950">
+                <PlayCircle className="h-4 w-4" />
                 {t("beginSession")}
               </div>
             </div>
+          </GlassCard>
 
-            {/* Toolkit Grid (2-column) */}
-            <div className="mb-3">
-              <h3 className="font-display text-sm uppercase tracking-wider text-slate-500 font-bold">
-                {t("yourToolkit")}
-              </h3>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 mb-6">
-              <button
-                type="button"
-                onClick={() => navigate({ to: "/app/exercises" })}
-                className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
-              >
-                <div className="flex h-16 w-16 flex-col justify-center rounded-xl border-2 border-slate-950 bg-lime-400 p-1.5 text-[6px] font-black uppercase leading-3 text-slate-900">
-                  <span>{"\n"}</span>
-                  <span className="ml-1 mt-0.5 text-[5px] font-semibold normal-case leading-3">
-                    {"\n"}
-                  </span>
-                  <span className="mt-1">{"\n"}</span>
-                </div>
-                <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
-                  {t("exerciseLibrary")}
-                </h4>
-                <p className="mt-0.5 text-xs text-slate-600 font-semibold">
-                  {t("exerciseLibrarySub")}
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => navigate({ to: "/app/training" })}
-                className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
-              >
-                <div className="grid h-16 w-16 place-items-center rounded-xl border-2 border-slate-950 bg-sky-300 text-3xl">
-                  🎬
-                </div>
-                <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
-                  Training videos
-                </h4>
-                <p className="mt-0.5 text-xs text-slate-600 font-semibold">
-                  Short guided demos for every exercise
-                </p>
-              </button>
-
-              <div className="sm:col-span-2 flex items-center gap-4 rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 shadow-[4px_4px_0px_#0f172a]">
-                <div className="flex items-center gap-1.5 font-display text-3xl font-bold text-pink-600">
-                  <Flame className="h-7 w-7 text-pink-500 fill-pink-500" /> 5
-                </div>
-                <div className="h-10 w-0.5 bg-slate-300" />
-                <div>
-                  <p className="text-xs font-extrabold uppercase text-slate-500">
-                    {t("lastSession")}
-                  </p>
-                  <p className="font-display text-base text-slate-900 font-bold">
-                    {t("lastSessionValue")}
-                  </p>
-                </div>
+          {/* Toolkit grid */}
+          <p className="mt-6 font-display text-[13px] font-semibold uppercase tracking-wide text-emerald-300">
+            {t("yourToolkit")}
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <GlassCard tint="emerald" as="button" onClick={goToExercises} className="p-4 text-left">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-300/90">
+                <Dumbbell className="h-5 w-5 text-emerald-950" />
               </div>
-            </div>
+              <h4 className="mt-3 font-display text-base font-bold text-stone-50">{t("exerciseLibrary")}</h4>
+              <p className="mt-0.5 text-[12px] font-medium text-stone-300">{t("exerciseLibrarySub")}</p>
+            </GlassCard>
 
-            {/* Tip Card (Dashed Border) */}
-            <div className="rounded-2xl border-3 border-dashed border-slate-950 bg-amber-100/70 p-5 flex gap-3 items-start">
-              <ShieldAlert className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />
+            <GlassCard
+              tint="neutral"
+              as="button"
+              onClick={() => navigate({ to: "/app/training" })}
+              className="p-4 text-left"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-300/90">
+                <Video className="h-5 w-5 text-emerald-950" />
+              </div>
+              <h4 className="mt-3 font-display text-base font-bold text-stone-50">{t("trainingFilms")}</h4>
+              <p className="mt-0.5 text-[12px] font-medium text-stone-300">{t("trainingFilmsSub")}</p>
+            </GlassCard>
+
+            <GlassCard tint="dark" className="flex items-center gap-4 p-4 sm:col-span-2">
+              <div className="flex items-center gap-1.5 font-display text-2xl font-bold text-emerald-200">
+                <Flame className="h-6 w-6 fill-emerald-300 text-emerald-300" /> 5
+              </div>
+              <div className="h-9 w-px bg-white/10" />
               <div>
-                <p className="font-display text-xs uppercase tracking-wider text-amber-800 font-extrabold">
-                  {t("tip")}
-                </p>
-                <h5 className="font-display text-base text-slate-900 font-bold mt-0.5">
-                  {t("tipTitle")}
-                </h5>
-                <p className="mt-1 text-xs font-semibold text-slate-700 leading-relaxed">
-                  {t("tipBody")}
-                </p>
+                <p className="text-[11px] font-semibold uppercase text-stone-400">{t("lastSession")}</p>
+                <p className="font-display text-sm font-bold text-stone-50">{t("lastSessionValue")}</p>
               </div>
+            </GlassCard>
+          </div>
+
+          {/* Tip card */}
+          <GlassCard tint="neutral" className="mt-3 flex items-start gap-3 p-4">
+            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
+            <div>
+              <p className="font-display text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
+                {t("tip")}
+              </p>
+              <h5 className="mt-0.5 font-display text-sm font-bold text-stone-50">{t("tipTitle")}</h5>
+              <p className="mt-1 text-[12px] font-medium leading-relaxed text-stone-300">{t("tipBody")}</p>
             </div>
+          </GlassCard>
 
-            {/* Child details moved to the landing page profile icon */}
-
-
-          </main>
+          <div className="mt-auto" />
         </div>
       ) : (
         /* CHILD UX MODE — Rafiki's Island */
         <RafikiIsland childName={childName} />
+      )}
+
+      {uxMode === "caregiver" && (
+        <div className="sticky bottom-0 z-10">
+          <BottomNav<NavId>
+            items={[
+              { id: "home", icon: Home, label: t("home") },
+              { id: "library", icon: Dumbbell, label: "Tracking" },
+              { id: "videos", icon: Video, label: "Videos" },
+              { id: "profile", icon: User, label: "You" },
+            ]}
+            active="home"
+            onChange={handleNav}
+          />
+        </div>
       )}
 
       <ChildProfileSheet
@@ -291,7 +263,6 @@ function CaregiverHome() {
         onOpenChange={setProfileOpen}
         patient={patient as never}
       />
-
     </div>
   );
 }
