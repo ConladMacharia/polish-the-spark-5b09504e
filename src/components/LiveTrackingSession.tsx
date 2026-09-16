@@ -13,12 +13,19 @@ import {
   type Point2D,
   type Side,
 } from "@/lib/pose/angleUtils";
+import { saveTrackedSession } from "@/lib/sessions.data";
 
 type TrackedMovement = "elbow" | "shoulderFlexion";
 
 interface LiveTrackingSessionProps {
   movement: TrackedMovement;
   side?: Side;
+  /** Optional: patient id (from patients.id) to save session results */
+  childId?: string;
+  /** Optional: exercise slug to annotate saved session */
+  exerciseSlug?: string;
+  /** Optional: therapist-set target overrides (accepted for API compatibility) */
+  overrides?: unknown[];
 }
 
 // Downscaled processing resolution — the model runs on this size regardless
@@ -29,6 +36,9 @@ const PROCESS_HEIGHT = 480;
 export function LiveTrackingSession({
   movement,
   side = "right",
+  childId,
+  exerciseSlug,
+  overrides = [],
 }: LiveTrackingSessionProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -43,6 +53,58 @@ export function LiveTrackingSession({
   const [maxAngle, setMaxAngle] = useState<number | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [statusMessage, setStatusMessage] = useState("Starting camera...");
+
+  function exerciseEnum(slug?: string) {
+    if (!slug) return "arm_raise" as const;
+    if (slug === "gait") return "gait" as const;
+    if (["balance", "head", "stretch", "ball-throw"].includes(slug)) return "balance_hold" as const;
+    if (
+      [
+        "prone",
+        "rolling",
+        "kneeling",
+        "half-kneel",
+        "wall-stand",
+        "horse",
+        "breathing",
+      ].includes(slug)
+    )
+      return "postural_control" as const;
+    if (
+      [
+        "leg",
+        "march",
+        "squat",
+        "sitstand",
+        "bridge",
+        "ankle",
+        "crawl",
+        "heel-raise",
+        "step-up",
+        "obstacle",
+        "aquatic",
+      ].includes(slug)
+    )
+      return "leg_kick" as const;
+    if (["arm", "reach", "shoulder", "trunk", "sidelying", "pnf"].includes(slug)) return "arm_raise" as const;
+    return "arm_raise" as const;
+  }
+
+  async function saveSession() {
+    const history = recorderRef.current.getHistory();
+    if (!history || history.length === 0) {
+      console.warn("No recorded samples — skipping save");
+      return;
+    }
+    await saveTrackedSession({
+      history: history as { t: number; angle: number }[],
+      exerciseSlug: exerciseSlug ?? (movement === "elbow" ? "bend-and-straighten" : "forward-reach"),
+      side,
+      patientId: childId ?? null,
+    });
+    recorderRef.current.reset();
+    setMaxAngle(null);
+  }
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -208,6 +270,11 @@ export function LiveTrackingSession({
           <button onClick={resetRecording} style={{ marginTop: 8 }}>
             Reset recording
           </button>
+          <div style={{ marginTop: 12 }}>
+            <button onClick={saveSession} style={{ marginRight: 8 }}>
+              Finish session & save
+            </button>
+          </div>
         </div>
       )}
     </div>
