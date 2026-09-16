@@ -292,7 +292,7 @@ function CaregiverHome() {
         <RafikiIsland childName={childName} />
       )}
 
-      {progressOpen && patient?.id && (
+      {progressOpen && (
         <div
           className="fixed inset-0 z-60 grid place-items-center bg-black/40 p-4"
           onClick={() => setProgressOpen(false)}
