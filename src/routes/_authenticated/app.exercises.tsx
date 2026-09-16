@@ -247,7 +247,20 @@ function LiveSessionPage() {
   }, [selectedExercise, stream, poseLandmarker, trackedMovement, trackedSide]);
 
 
+  // Persist the attempt that just ended so the caregiver's progress graph
+  // has a data point for today.
+  function recordAttempt() {
+    const history = recorderRef.current.getHistory();
+    if (!history || history.length === 0) return;
+    void saveTrackedSession({
+      history: history as { t: number; angle: number }[],
+      exerciseSlug: selectedExercise?.slug,
+      side: trackedSide,
+    });
+  }
+
   function closeCamera() {
+    recordAttempt();
     setSelectedExercise(null);
     setPendingExercise(null);
     setPoseDetected(false);
@@ -263,6 +276,7 @@ function LiveSessionPage() {
 
   // Stop the camera and return to the arm picker for the same exercise
   function changeSide() {
+    recordAttempt();
     const current = selectedExercise;
     setSelectedExercise(null);
     setPoseDetected(false);
