@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useRef, useState, useEffect } from "react";
-import { PlayCircle, ArrowLeft } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { PlayCircle, ArrowLeft, Home, Dumbbell, Video, User, X } from "lucide-react";
 import { PoseLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
 
+import { supabase } from "@/integrations/supabase/client";
 import { getPoseLandmarker } from "@/lib/pose/poseLandmarker";
 import {
   LandmarkSmoother,
@@ -14,9 +16,10 @@ import {
 import { EXERCISES, translateExercise, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { TargetBadge } from "@/components/ExerciseTargetDisplay";
+import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
+import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
 
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
-import { saveTrackedSession } from "@/lib/sessions.data";
 
 
 export const Route = createFileRoute("/_authenticated/app/exercises")({
@@ -46,6 +49,7 @@ function LiveSessionPage() {
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [pendingExercise, setPendingExercise] = useState<Exercise | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -248,20 +252,7 @@ function LiveSessionPage() {
   }, [selectedExercise, stream, poseLandmarker, trackedMovement, trackedSide]);
 
 
-  // Persist the attempt that just ended so the caregiver's progress graph
-  // has a data point for today.
-  function recordAttempt() {
-    const history = recorderRef.current.getHistory();
-    if (!history || history.length === 0) return;
-    void saveTrackedSession({
-      history: history as { t: number; angle: number }[],
-      exerciseSlug: selectedExercise?.slug,
-      side: trackedSide,
-    });
-  }
-
   function closeCamera() {
-    recordAttempt();
     setSelectedExercise(null);
     setPendingExercise(null);
     setPoseDetected(false);
@@ -277,7 +268,6 @@ function LiveSessionPage() {
 
   // Stop the camera and return to the arm picker for the same exercise
   function changeSide() {
-    recordAttempt();
     const current = selectedExercise;
     setSelectedExercise(null);
     setPoseDetected(false);
@@ -302,6 +292,31 @@ function LiveSessionPage() {
 
   function limbLabel(side: Side, limb: string) {
     return `${side === "left" ? t("sideLeft") : t("sideRight")} ${limb}`;
+  }
+
+  const { data: patient } = useQuery({
+    queryKey: ["my-patient"],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) return null;
+      const { data } = await supabase
+        .from("patients")
+        .select("*")
+        .eq("claimed_by_caregiver_id", uid)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  type NavId = "home" | "library" | "videos" | "profile";
+  function handleNav(id: NavId) {
+    if (id === "home") return navigate({ to: "/app/caregiver" });
+    if (id === "videos") return navigate({ to: "/app/training" });
+    if (id === "profile") return setProfileOpen(true);
+    // "library" — already here, no-op
   }
 
   const categories = useMemo(
@@ -406,37 +421,37 @@ function LiveSessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-12">
-      <header className="border-b border-border bg-card/60 backdrop-blur sticky top-0 z-40">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-emerald-950 via-[#05100c] to-emerald-950 pb-4 text-stone-50">
+      <AmbientBlobs />
+
+      <header className="sticky top-0 z-30 border-b border-white/10 bg-emerald-950/70 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate({ to: "/app/caregiver" })}
               aria-label="Back to dashboard"
-              className="rounded-full bg-white/90 hover:bg-white p-2 shadow-sm"
+              className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-white/10 backdrop-blur-xl"
             >
-              <ArrowLeft className="h-4 w-4 text-slate-900" />
+              <ArrowLeft className="h-4 w-4 text-stone-50" />
             </button>
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
-                {t("exerciseLibrary")}
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
+                {t("trackingEyebrow")}
               </p>
-              <p className="font-display text-lg font-bold text-slate-900">{t("yourToolkit")}</p>
+              <p className="font-display text-lg font-bold text-stone-50">{t("libraryTitle")}</p>
             </div>
           </div>
           <LanguageSettings />
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-8 space-y-10">
+      <main className="relative z-10 mx-auto max-w-5xl space-y-10 px-6 py-8">
         {categories.map((cat) => (
           <section key={cat.id}>
-            <div className="mb-4 flex items-center gap-3 border-b-3 border-dashed border-slate-900 pb-2">
-              <span className="text-3xl">{cat.icon}</span>
-              <h2 className="font-display text-2xl font-bold uppercase tracking-wide text-slate-900">
-                {cat.label}
-              </h2>
-              <span className="ml-auto rounded-full bg-slate-900 px-3 py-1 text-xs font-extrabold text-white">
+            <div className="mb-4 flex items-center gap-3 border-b border-white/10 pb-3">
+              <span className="text-2xl">{cat.icon}</span>
+              <h2 className="font-display text-lg font-bold text-stone-50">{cat.label}</h2>
+              <span className="ml-auto rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold text-emerald-200 backdrop-blur-xl">
                 {cat.subcats.reduce(
                   (n: number, s: any) => n + exercisesForSubcat(cat.id, s.id).length,
                   0,
@@ -451,18 +466,19 @@ function LiveSessionPage() {
                 return (
                   <div key={sub.id}>
                     <div className="mb-3 flex items-center gap-2">
-                      <span className="text-xl">{sub.icon}</span>
-                      <h3 className="text-xs font-extrabold uppercase tracking-widest text-slate-600">
+                      <span className="text-lg">{sub.icon}</span>
+                      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-stone-300">
                         {sub.label}
                       </h3>
-                      <span className="text-xs font-bold text-slate-400">· {items.length}</span>
+                      <span className="text-[11px] font-semibold text-stone-500">· {items.length}</span>
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {items.map((ex: Exercise) => (
-                        <button
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {items.map((ex: Exercise, i: number) => (
+                        <GlassCard
                           key={`${sub.id}-${ex.slug}`}
-                          type="button"
+                          as="button"
+                          tint={i % 2 === 0 ? "emerald" : "neutral"}
                           onClick={() => {
                             const label = String(sub.label).toLowerCase();
                             setPendingLimb(
@@ -474,31 +490,31 @@ function LiveSessionPage() {
                             );
                             setPendingExercise(ex);
                           }}
-                          className="flex flex-col overflow-hidden rounded-2xl border-3 border-slate-950 bg-card text-left shadow-[4px_4px_0px_#0f172a] transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+                          className="flex flex-col text-left"
                         >
-                          <div className="relative flex h-24 items-center justify-center bg-gradient-to-br from-indigo-100 to-blue-200 text-4xl">
-                            <span className="absolute left-2 top-2 rounded-md border border-slate-950 bg-lime-400 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-950">
+                          <div className="relative flex h-24 items-center justify-center bg-black/25 text-4xl">
+                            <span className="absolute left-2 top-2 rounded-md border border-white/15 bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-200 backdrop-blur-xl">
                               {t("aiTracked")}
                             </span>
                             {ex.icon}
-                            <div className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-slate-900/80">
-                              <PlayCircle className="h-4 w-4 fill-white text-slate-900" />
+                            <div className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-emerald-300/90">
+                              <PlayCircle className="h-4 w-4 text-emerald-950" />
                             </div>
                           </div>
                           <div className="flex flex-1 flex-col justify-between p-4">
                             <div>
-                              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                              <p className="text-[10px] font-bold uppercase tracking-wide text-stone-400">
                                 {ex.focus}
                               </p>
-                              <h4 className="mt-1 font-display text-lg font-bold leading-tight text-slate-900">
+                              <h4 className="mt-1 font-display text-base font-bold leading-tight text-stone-50">
                                 {ex.name}
                               </h4>
                             </div>
-                            <span className="mt-4 border-t border-border pt-3 text-xs font-bold text-blue-600">
-                              ai tracked exercise
+                            <span className="mt-3 border-t border-white/10 pt-2.5 text-[12px] font-bold text-emerald-300">
+                              AI tracked exercise
                             </span>
                           </div>
-                        </button>
+                        </GlassCard>
                       ))}
                     </div>
                   </div>
@@ -509,26 +525,41 @@ function LiveSessionPage() {
         ))}
       </main>
 
+      <div className="sticky bottom-0 z-10">
+        <BottomNav<NavId>
+          items={[
+            { id: "home", icon: Home, label: t("home") },
+            { id: "library", icon: Dumbbell, label: "Tracking" },
+            { id: "videos", icon: Video, label: "Videos" },
+            { id: "profile", icon: User, label: "You" },
+          ]}
+          active="library"
+          onChange={handleNav}
+        />
+      </div>
+
+      <ChildProfileSheet open={profileOpen} onOpenChange={setProfileOpen} patient={patient as never} />
+
       {pendingExercise ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 px-4 text-white">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-6 text-center">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Before we start</p>
-            <h2 className="mt-1 text-2xl font-bold">{pendingExercise.name}</h2>
-            <p className="mt-2 text-sm text-slate-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-emerald-950/95 px-4 text-stone-50 backdrop-blur-sm">
+          <GlassCard tint="emerald" className="w-full max-w-md p-6 text-center">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">Before we start</p>
+            <h2 className="mt-1 font-display text-2xl font-bold text-stone-50">{pendingExercise.name}</h2>
+            <p className="mt-2 text-sm text-stone-300">
               Which {pendingLimb} is being exercised? Tracking will measure that side only.
             </p>
             <div className="mt-6 grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => startWithSide("left")}
-                className="rounded-2xl bg-emerald-500 px-4 py-4 text-base font-semibold capitalize text-slate-950 transition hover:bg-emerald-400"
+                className="rounded-2xl bg-emerald-300 px-4 py-4 font-display text-base font-bold capitalize text-emerald-950 transition hover:bg-emerald-200"
               >
                 {limbLabel("left", pendingLimb)}
               </button>
               <button
                 type="button"
                 onClick={() => startWithSide("right")}
-                className="rounded-2xl bg-sky-400 px-4 py-4 text-base font-semibold capitalize text-slate-950 transition hover:bg-sky-300"
+                className="rounded-2xl bg-white/15 px-4 py-4 font-display text-base font-bold capitalize text-stone-50 backdrop-blur-xl transition hover:bg-white/20"
               >
                 {limbLabel("right", pendingLimb)}
               </button>
@@ -536,32 +567,32 @@ function LiveSessionPage() {
             <button
               type="button"
               onClick={() => setPendingExercise(null)}
-              className="mt-4 text-sm font-semibold text-slate-400 underline"
+              className="mt-4 text-sm font-semibold text-stone-400 underline"
             >
               Cancel
             </button>
-          </div>
+          </GlassCard>
         </div>
       ) : null}
 
       {selectedExercise ? (
-        <div className="fixed inset-0 z-50 bg-slate-950/95 text-white px-4 py-5 sm:px-6">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-emerald-950/95 px-4 py-5 text-stone-50 backdrop-blur-sm sm:px-6">
           <div className="mx-auto flex max-w-5xl flex-col gap-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-wide text-slate-400">Live tracking</p>
-                <h2 className="text-2xl font-bold">{selectedExercise.name}</h2>
-                <p className="text-sm text-slate-300">{selectedExercise.focus}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">Live tracking</p>
+                <h2 className="font-display text-2xl font-bold text-stone-50">{selectedExercise.name}</h2>
+                <p className="text-sm text-stone-300">{selectedExercise.focus}</p>
               </div>
               <button
                 type="button"
                 onClick={closeCamera}
-                className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-white/10 backdrop-blur-xl transition hover:bg-white/20"
               >
-                Close
+                <X className="h-4 w-4 text-stone-50" />
               </button>
             </div>
-            <div className="relative overflow-hidden rounded-[2rem] bg-black shadow-2xl flex items-center justify-center min-h-[400px]">
+            <div className="relative flex min-h-[400px] items-center justify-center overflow-hidden rounded-[2rem] bg-black shadow-2xl">
               <video
                 ref={videoRef}
                 className="h-[70vh] w-full object-cover"
@@ -571,33 +602,33 @@ function LiveSessionPage() {
               />
               <canvas
                 ref={canvasRef}
-                className="absolute inset-0 h-full w-full object-cover pointer-events-none z-10"
+                className="absolute inset-0 z-10 h-full w-full object-cover pointer-events-none"
               />
 
               {/* Pose tracking status badges */}
-              <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-20">
+              <div className="absolute left-4 top-4 z-20 flex flex-wrap gap-2">
                 {stream && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/80 px-3 py-1 text-xs font-semibold text-white backdrop-blur border border-white/10">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-emerald-950/80 px-3 py-1 text-xs font-semibold text-stone-50 backdrop-blur-xl">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
                     Camera active
                   </span>
                 )}
                 {isPoseLoading && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/80 px-3 py-1 text-xs font-semibold text-slate-950 backdrop-blur">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/90 px-3 py-1 text-xs font-semibold text-emerald-950 backdrop-blur-xl">
                     Loading MediaPipe Pose…
                   </span>
                 )}
                 {poseLandmarker && (
                   <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold backdrop-blur ${
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-xl ${
                       poseDetected
-                        ? "bg-emerald-500/90 text-white shadow-lg"
-                        : "bg-slate-900/80 text-slate-300 border border-white/10"
+                        ? "bg-emerald-300/90 text-emerald-950 shadow-lg"
+                        : "border border-white/10 bg-emerald-950/80 text-stone-300"
                     }`}
                   >
                     <span
                       className={`h-2 w-2 rounded-full ${
-                        poseDetected ? "bg-white animate-ping" : "bg-amber-400"
+                        poseDetected ? "animate-ping bg-emerald-950" : "bg-amber-400"
                       }`}
                     />
                     {poseDetected ? "Body skeleton tracked" : "Searching for person…"}
@@ -606,37 +637,37 @@ function LiveSessionPage() {
               </div>
 
               {!stream && !cameraError ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 text-sm text-slate-200 z-30">
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-emerald-950/70 text-sm text-stone-200">
                   Requesting camera access…
                 </div>
               ) : null}
               {cameraError ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 px-4 text-center text-sm text-red-300 z-30">
+                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-emerald-950/80 px-4 text-center text-sm text-red-300">
                   <p>{cameraError}</p>
-                  <p className="mt-2 text-xs text-slate-400">
+                  <p className="mt-2 text-xs text-stone-400">
                     Please allow camera access in your browser settings.
                   </p>
                 </div>
               ) : null}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+            <GlassCard tint="dark" className="flex flex-wrap items-center justify-between gap-4 p-5">
               <div>
-                <p className="text-xs uppercase tracking-wide text-slate-400">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">
                   Tracking: {limbLabel(trackedSide, trackedLimb)}
                   <button
                     type="button"
                     onClick={changeSide}
-                    className="ml-2 rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-white transition hover:bg-white/20"
+                    className="ml-2 rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-stone-50 backdrop-blur-xl transition hover:bg-white/20"
                   >
                     Change side
                   </button>
                 </p>
-                <p className="text-4xl font-bold tabular-nums">
+                <p className="font-display text-4xl font-bold tabular-nums text-stone-50">
                   {liveAngle !== null ? `${liveAngle}°` : "—"}
                 </p>
               </div>
-              <div className="text-slate-300">
+              <div className="text-stone-300">
                 <TargetBadge
                   liveAngle={liveAngle}
                   exerciseSlug={selectedExercise.slug}
@@ -646,13 +677,12 @@ function LiveSessionPage() {
                 />
               </div>
               <div className="text-right">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Best this session</p>
-                <p className="text-2xl font-semibold tabular-nums text-emerald-300">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">Best this session</p>
+                <p className="font-display text-2xl font-bold tabular-nums text-emerald-300">
                   {maxAngle !== null ? `${maxAngle}°` : "Not yet recorded"}
                 </p>
               </div>
-            </div>
-
+            </GlassCard>
           </div>
         </div>
       ) : null}

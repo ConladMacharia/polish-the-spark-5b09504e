@@ -42,6 +42,7 @@ export const EN_STRINGS = {
   exerciseLibrarySub: "AI-tracked, in real time",
   trainingFilms: "Training videos",
   trainingFilmsSub: "Watch the correct form",
+  trainingEyebrow: "Training",
   lastSession: "Last session",
   lastSessionValue: "Yesterday · 4/5 · Great form",
   tip: "Tip",
@@ -65,6 +66,7 @@ export const EN_STRINGS = {
   // --- Exercise library ---
   libraryEyebrow: "Tracking",
   libraryTitle: "Exercise Tracking",
+  trackingEyebrow: "Tracking",
   librarySubtitle:
     "Full CP reference catalog ({pt} physiotherapy + {ot} occupational therapy exercises).",
   filterAll: "All ({count})",

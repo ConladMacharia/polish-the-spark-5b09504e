@@ -379,13 +379,13 @@ export function ChildGameScreen({
         type="button"
         onClick={onExit}
         aria-label="Leave the game"
-        className="absolute left-4 top-4 z-30 grid h-11 w-11 place-items-center rounded-full bg-white/70 text-slate-800 shadow"
+        className="absolute left-4 top-4 z-30 grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-white/20 text-slate-900 shadow backdrop-blur-xl"
       >
         <X className="h-5 w-5" />
       </button>
 
       <div className="pointer-events-none absolute inset-x-0 top-5 z-20 text-center">
-        <p className="font-display text-2xl text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.35)]">
+        <p className="font-playful text-2xl text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.35)]">
           {game.region}
         </p>
         <p className="mt-1 text-xs font-bold uppercase tracking-widest text-white/80">
@@ -440,7 +440,7 @@ export function ChildGameScreen({
       {/* Mechanic E — which finger to touch next */}
       {game.mechanic === "thumbSequence" && (
         <div className="pointer-events-none absolute inset-x-0 top-24 z-20 text-center">
-          <span className="rounded-full bg-white/90 px-5 py-2 font-display text-2xl text-emerald-900">
+          <span className="rounded-full bg-white/90 px-5 py-2 font-playful text-2xl text-emerald-900">
             Thumb ➜ {FINGER_NAMES[nextFinger]}
           </span>
         </div>
@@ -449,7 +449,7 @@ export function ChildGameScreen({
       {/* Mechanic F — gentle reminder both hands are needed */}
       {game.mechanic === "twoWrist" && !bothHands && (
         <div className="pointer-events-none absolute inset-x-0 top-24 z-20 text-center">
-          <span className="rounded-full bg-white/90 px-5 py-2 font-display text-xl text-amber-900">
+          <span className="rounded-full bg-white/90 px-5 py-2 font-playful text-xl text-amber-900">
             Show Rafiki both hands 🙌
           </span>
         </div>
@@ -494,7 +494,7 @@ export function ChildGameScreen({
 
       {/* Rafiki */}
       <div className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2 text-center">
-        <div className="mb-2 inline-block max-w-[18rem] rounded-3xl bg-white/90 px-5 py-2 font-display text-xl text-purple-900 shadow-lg">
+        <div className="mb-2 inline-block max-w-[18rem] rounded-3xl border border-white/20 bg-white/85 px-5 py-2 font-playful text-xl text-emerald-900 shadow-lg backdrop-blur-xl">
           {ready ? mascotSays : t("rafikiWakingUp")}
         </div>
         <Rafiki mood={mascotMood} size={96} />
@@ -549,22 +549,22 @@ function RewardOverlay({
     balloon: "🎈🎉",
   };
   return (
-    <div className="absolute inset-0 z-40 grid place-items-center bg-purple-950/70 backdrop-blur-sm">
+    <div className="absolute inset-0 z-40 grid place-items-center bg-emerald-950/75 backdrop-blur-sm">
       <div className="mx-6 rounded-[2rem] bg-white px-8 py-10 text-center shadow-2xl">
         <div className="animate-bounce text-7xl">{art[game.reward]}</div>
-        <p className="mt-4 font-display text-3xl text-purple-900">You did it!</p>
+        <p className="mt-4 font-playful text-3xl text-emerald-900">You did it!</p>
         <div className="mt-6 flex flex-col gap-3">
           <button
             type="button"
             onClick={onDone}
-            className="rounded-2xl bg-orange-500 px-8 py-4 font-display text-2xl text-white shadow-[0_4px_0_#9a3412]"
+            className="rounded-2xl bg-emerald-400 px-8 py-4 font-playful text-2xl text-emerald-950 shadow-[0_4px_0_#047857]"
           >
             Play again
           </button>
           <button
             type="button"
             onClick={onLeave}
-            className="rounded-2xl bg-purple-100 px-8 py-3 font-display text-xl text-purple-900"
+            className="rounded-2xl bg-emerald-50 px-8 py-3 font-playful text-xl text-emerald-900"
           >
             Back to the island
           </button>

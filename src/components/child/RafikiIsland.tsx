@@ -31,6 +31,7 @@ import { SpaceExplorerGame } from "@/components/SpaceExplorerGame";
 import { CampZiplineGame } from "@/components/CampZiplineGame";
 import { BalloonFairGame } from "@/components/BalloonFairGame";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { AmbientBlobs, GlassCard } from "@/components/ui/glass";
 
 /** Converts a game id ("cloud-squeeze") into the camelCase suffix used by
  *  the gameRegion_/gameTitle_/gameInvite_/gameCaption_ translation keys. */
@@ -85,14 +86,15 @@ function GameFrame({
 }) {
   const { t } = useLanguage();
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-5 py-6">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-emerald-950 via-[#05100c] to-emerald-950">
+      <AmbientBlobs />
+      <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center gap-4 px-5 py-6">
         <div className="flex w-full items-center justify-between">
-          <h1 className="font-display text-xl font-extrabold text-foreground">{title}</h1>
+          <h1 className="font-display text-xl font-extrabold text-stone-50">{title}</h1>
           <button
             type="button"
             onClick={onExit}
-            className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted"
+            className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-stone-200 backdrop-blur-xl transition-colors hover:bg-white/15"
           >
             {t("backToIsland")}
           </button>
@@ -205,27 +207,32 @@ export function RafikiIsland({ childName }: { childName?: string }) {
 
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-5xl px-5 pb-24 pt-8">
-        <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-5">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-emerald-950 via-[#05100c] to-emerald-950">
+      <AmbientBlobs />
+      <div className="relative z-10 mx-auto max-w-5xl px-5 pb-24 pt-8">
+        <header className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 pb-5">
           <div className="flex items-center gap-3">
-            <Rafiki size={56} />
+            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-emerald-300 to-emerald-500 shadow-lg shadow-emerald-500/30">
+              <Rafiki size={40} />
+            </div>
             <div>
-              <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground">
+              <h1 className="font-playful text-2xl font-extrabold tracking-tight text-stone-50">
                 {t("worldMapTitle")}
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm font-medium text-stone-300">
                 {childName
                   ? t("comeAndPlayNamed", { name: childName.split(" ")[0] })
                   : t("comeAndPlay")}
               </p>
             </div>
           </div>
-          <span className="text-sm text-muted-foreground">{t("gatedByMacs")}</span>
+          <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[12px] font-semibold text-emerald-200 backdrop-blur-xl">
+            {t("gatedByMacs")}
+          </span>
         </header>
 
-        <ul className="mt-8 grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
-          {regions.map(({ region, games, playable }) => {
+        <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {regions.map(({ region, games, playable }, i) => {
             const chip = macsLabel(games, t);
             const regionLabel =
               t(`gameRegion_${gameKeySuffix(games[0].id)}` as any) || region;
@@ -238,42 +245,39 @@ export function RafikiIsland({ childName }: { childName?: string }) {
 
             return (
               <li key={region}>
-                <button
-                  type="button"
+                <GlassCard
+                  as="button"
+                  tint={locked ? "dark" : i % 2 === 0 ? "emerald" : "neutral"}
                   disabled={locked}
-                  onClick={() => playable && setActive(playable)}
-                  className={`group w-full rounded-2xl border border-transparent p-3 text-left transition-colors ${
-                    locked
-                      ? "cursor-not-allowed opacity-45"
-                      : "hover:border-border hover:bg-muted/50"
+                  className={`w-full p-4 text-left transition-transform ${
+                    locked ? "cursor-not-allowed opacity-50" : "active:scale-[0.98]"
                   }`}
+                  onClick={() => playable && setActive(playable)}
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="flex items-center gap-1.5">
                       {games.map((g) => {
                         const GameIcon = ICONS[g.id] ?? Sparkles;
-                        return <GameIcon key={g.id} className="h-6 w-6 text-primary" />;
+                        return <GameIcon key={g.id} className="h-5 w-5 text-emerald-300" />;
                       })}
                     </span>
-                    <h2 className="text-lg font-semibold text-muted-foreground group-hover:text-foreground">
-                      {regionLabel}
-                    </h2>
+                    <h2 className="font-playful text-base font-bold text-stone-50">{regionLabel}</h2>
                   </div>
-                  <p className="mt-2 text-base leading-snug text-foreground/85">
+                  <p className="mt-2 text-[13px] leading-snug text-stone-300">
                     {title} — {caption}
                   </p>
                   <p
-                    className={`mt-2 text-sm font-medium ${
+                    className={`mt-2 text-[12.5px] font-semibold ${
                       chip.tone === "ok"
-                        ? "text-emerald-600"
+                        ? "text-emerald-300"
                         : chip.tone === "warn"
-                          ? "text-amber-600"
-                          : "text-primary"
+                          ? "text-amber-300"
+                          : "text-emerald-200"
                     }`}
                   >
                     {chip.text}
                   </p>
-                </button>
+                </GlassCard>
               </li>
             );
           })}
