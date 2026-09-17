@@ -1,10 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-<<<<<<< HEAD
-import { LogOut, PlayCircle, Flame, ShieldAlert, Rocket, Home, Dumbbell, Video, User, Globe } from "lucide-react";
-=======
-import { LogOut, PlayCircle, ShieldAlert, Rocket } from "lucide-react";
->>>>>>> 81418bf88141622da0266e0c814bece31716b078
+import { LogOut, PlayCircle, ShieldAlert, Rocket, Home, Dumbbell, Video, User } from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -12,11 +8,8 @@ import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { RafikiIsland } from "@/components/child/RafikiIsland";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
-<<<<<<< HEAD
 import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
-=======
 import ProgressGraph from "@/components/ProgressGraph";
->>>>>>> 81418bf88141622da0266e0c814bece31716b078
 
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
@@ -195,7 +188,6 @@ function CaregiverHome() {
             </div>
           </GlassCard>
 
-<<<<<<< HEAD
           {/* Toolkit grid */}
           <p className="mt-6 font-display text-[13px] font-semibold uppercase tracking-wide text-emerald-300">
             {t("yourToolkit")}
@@ -208,70 +200,6 @@ function CaregiverHome() {
               <h4 className="mt-3 font-display text-base font-bold text-stone-50">{t("exerciseLibrary")}</h4>
               <p className="mt-0.5 text-[12px] font-medium text-stone-300">{t("exerciseLibrarySub")}</p>
             </GlassCard>
-=======
-            {/* Toolkit Grid (2-column) */}
-            <div className="mb-3">
-              <h3 className="font-display text-sm uppercase tracking-wider text-slate-500 font-bold">
-                {t("yourToolkit")}
-              </h3>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 mb-6">
-              <button
-                type="button"
-                onClick={() => navigate({ to: "/app/exercises" })}
-                className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
-              >
-                <div className="flex h-16 w-16 flex-col justify-center rounded-xl border-2 border-slate-950 bg-lime-400 p-1.5 text-[6px] font-black uppercase leading-3 text-slate-900">
-                  <span>{"\n"}</span>
-                  <span className="ml-1 mt-0.5 text-[5px] font-semibold normal-case leading-3">
-                    {"\n"}
-                  </span>
-                  <span className="mt-1">{"\n"}</span>
-                </div>
-                <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
-                  {t("exerciseLibrary")}
-                </h4>
-                <p className="mt-0.5 text-xs text-slate-600 font-semibold">
-                  {t("exerciseLibrarySub")}
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => navigate({ to: "/app/training" })}
-                className="rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 text-left shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5"
-              >
-                <div className="grid h-16 w-16 place-items-center rounded-xl border-2 border-slate-950 bg-sky-300 text-3xl">
-                  🎬
-                </div>
-                <h4 className="mt-3 font-display text-lg font-bold text-slate-900">
-                  Training videos
-                </h4>
-                <p className="mt-0.5 text-xs text-slate-600 font-semibold">
-                  Short guided demos for every exercise
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setProgressOpen(true)}
-                className="sm:col-span-2 flex items-center gap-4 rounded-2xl border-3 border-slate-950 bg-amber-50 p-5 shadow-[4px_4px_0px_#0f172a] transition-transform active:translate-x-0.5 active:translate-y-0.5 text-left"
-              >
-                <div className="flex items-center gap-1.5 font-display text-3xl font-bold text-pink-600">
-                  <span>📈</span>
-                </div>
-                <div className="h-10 w-0.5 bg-slate-300" />
-                <div>
-                  <p className="text-xs font-extrabold uppercase text-slate-500">
-                    Progress
-                  </p>
-                  <p className="font-display text-base text-slate-900 font-bold">
-                    See how your child is improving
-                  </p>
-                </div>
-              </button>
-            </div>
->>>>>>> 81418bf88141622da0266e0c814bece31716b078
 
             <GlassCard
               tint="neutral"
@@ -286,14 +214,19 @@ function CaregiverHome() {
               <p className="mt-0.5 text-[12px] font-medium text-stone-300">{t("trainingFilmsSub")}</p>
             </GlassCard>
 
-            <GlassCard tint="dark" className="flex items-center gap-4 p-4 sm:col-span-2">
-              <div className="flex items-center gap-1.5 font-display text-2xl font-bold text-emerald-200">
-                <Flame className="h-6 w-6 fill-emerald-300 text-emerald-300" /> 5
-              </div>
+            <GlassCard
+              tint="dark"
+              as="button"
+              onClick={() => setProgressOpen(true)}
+              className="flex items-center gap-4 p-4 text-left sm:col-span-2"
+            >
+              <div className="font-display text-2xl font-bold text-emerald-200">📈</div>
               <div className="h-9 w-px bg-white/10" />
               <div>
-                <p className="text-[11px] font-semibold uppercase text-stone-400">{t("lastSession")}</p>
-                <p className="font-display text-sm font-bold text-stone-50">{t("lastSessionValue")}</p>
+                <p className="text-[11px] font-semibold uppercase text-stone-400">Progress</p>
+                <p className="font-display text-sm font-bold text-stone-50">
+                  See how your child is improving
+                </p>
               </div>
             </GlassCard>
           </div>
@@ -317,7 +250,6 @@ function CaregiverHome() {
         <RafikiIsland childName={childName} />
       )}
 
-<<<<<<< HEAD
       {uxMode === "caregiver" && (
         <div className="sticky bottom-0 z-10">
           <BottomNav<NavId>
@@ -330,27 +262,30 @@ function CaregiverHome() {
             active="home"
             onChange={handleNav}
           />
-=======
+        </div>
+      )}
+
       {progressOpen && (
         <div
-          className="fixed inset-0 z-60 grid place-items-center bg-black/40 p-4"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
           onClick={() => setProgressOpen(false)}
         >
           <div
-            className="w-full max-w-2xl rounded-2xl border-4 border-slate-950 bg-white p-4 shadow-[6px_6px_0px_#0f172a]"
+            className="w-full max-w-2xl rounded-3xl border border-white/15 bg-emerald-950/95 p-4 backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-display text-xl font-bold text-slate-900">
-                {childName}'s progress
-              </h3>
-              <Button variant="ghost" size="sm" onClick={() => setProgressOpen(false)}>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-display text-xl font-bold text-stone-50">{childName}&apos;s progress</h3>
+              <button
+                type="button"
+                onClick={() => setProgressOpen(false)}
+                className="rounded-full border border-white/15 bg-white/10 px-3 py-1 font-display text-[12px] font-semibold text-stone-200"
+              >
                 Close
-              </Button>
+              </button>
             </div>
             <ProgressGraph childId={patient?.id} />
           </div>
->>>>>>> 81418bf88141622da0266e0c814bece31716b078
         </div>
       )}
 
