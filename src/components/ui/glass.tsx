@@ -23,18 +23,21 @@ export function GlassCard({
   tint = "neutral",
   as: Comp = "div",
   onClick,
+  disabled,
   children,
 }: {
   className?: string;
   tint?: GlassTint;
   as?: "div" | "button";
-  onClick?: () => void;
+  onClick?: (() => void) | null;
+  disabled?: boolean;
   children: ReactNode;
 }) {
   return (
     <Comp
-      onClick={onClick}
+      onClick={onClick ?? undefined}
       type={Comp === "button" ? "button" : undefined}
+      disabled={Comp === "button" ? disabled : undefined}
       className={`relative overflow-hidden rounded-3xl border backdrop-blur-2xl shadow-lg shadow-black/30 ${TINTS[tint]} ${className}`}
     >
       {/* faint top sheen so the glass reads as curved/lit, not a flat tint */}
