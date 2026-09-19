@@ -35,11 +35,14 @@ export async function getPoseLandmarker(): Promise<PoseLandmarker> {
     const landmarker = await PoseLandmarker.createFromOptions(vision, {
       baseOptions: {
         modelAssetPath:
-          "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
+          "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
         delegate: "GPU", // config change, not a model change — significant speed gain
       },
       runningMode: "VIDEO", // required for correct real-time tracking
       numPoses: 1,
+      minPoseDetectionConfidence: 0.5,
+      minPosePresenceConfidence: 0.5,
+      minTrackingConfidence: 0.5,
     });
 
     poseLandmarkerInstance = landmarker;

@@ -11,6 +11,8 @@ import {
   AngleRecorder,
   getElbowAngle,
   getShoulderFlexionAngle,
+  landmarksAreReliable,
+  landmarksForMovement,
   type Side,
 } from "@/lib/pose/angleUtils";
 import { EXERCISES, translateExercise, type Exercise } from "@/lib/exercise-catalog";
@@ -151,7 +153,12 @@ function LiveSessionPage() {
       setCameraError(null);
       try {
         localStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user" },
+          video: {
+            facingMode: "user",
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            frameRate: { ideal: 30 },
+          },
           audio: false,
         });
         if (cancelled) {
@@ -245,7 +252,7 @@ function LiveSessionPage() {
                 const rawLandmarks = results.landmarks[0];
                 const smoothedLandmarks = rawLandmarks.map((lm, i) => {
                   if (!smoothersRef.current.has(i)) {
-                    smoothersRef.current.set(i, new LandmarkSmoother(0.3));
+                    smoothersRef.current.set(i, new LandmarkSmoother());
                   }
                   const smoothed = smoothersRef.current.get(i)!.update({ x: lm.x, y: lm.y });
                   return {
@@ -280,11 +287,16 @@ function LiveSessionPage() {
                 // Joint angle from smoothed points, scaled to pixels so the
                 // aspect ratio doesn't skew the measurement
                 const pts = smoothedLandmarks.map((p) => ({ x: p.x * vw, y: p.y * vh }));
+                const requiredJoints = landmarksForMovement(trackedMovement, trackedSide);
+                const confident = landmarksAreReliable(rawLandmarks, requiredJoints);
                 const angle =
                   trackedMovement === "elbow"
                     ? getElbowAngle(pts, trackedSide)
                     : getShoulderFlexionAngle(pts, trackedSide);
-                if (Number.isFinite(angle) && angle > 0) {
+                // Only trust the angle when MediaPipe itself is confident about
+                // the joints involved — an occluded/off-frame joint holds the
+                // last good reading instead of injecting a spike.
+                if (confident && Number.isFinite(angle) && angle > 0) {
                   setLiveAngle(Math.round(angle));
                   recorderRef.current.record(angle);
                   const max = recorderRef.current.getMax();

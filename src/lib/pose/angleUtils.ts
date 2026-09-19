@@ -42,6 +42,38 @@ export function calculateAngle(A: Point2D, B: Point2D, C: Point2D): number {
 
 export type Side = "left" | "right";
 
+/** Below this visibility/presence score, MediaPipe itself is telling us
+ *  the joint is occluded, off-frame, or a guess — not something to trust
+ *  for a coaching angle. */
+export const MIN_LANDMARK_VISIBILITY = 0.5;
+
+/** True only if every given landmark is confident enough to trust for an
+ *  angle calculation this frame. Landmarks with no visibility score at
+ *  all (older/mocked data) are treated as trusted, to stay backward
+ *  compatible with callers that don't provide one. */
+export function landmarksAreReliable(
+  points: Array<{ visibility?: number }>,
+  indices: number[],
+): boolean {
+  return indices.every((i) => {
+    const v = points[i]?.visibility;
+    return v === undefined || v >= MIN_LANDMARK_VISIBILITY;
+  });
+}
+
+/** Which raw landmark indices a given movement's angle depends on —
+ *  used with landmarksAreReliable() before trusting a computed angle. */
+export function landmarksForMovement(movement: "elbow" | "shoulderFlexion", side: Side): number[] {
+  if (movement === "elbow") {
+    return side === "left"
+      ? [POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_ELBOW, POSE_LANDMARKS.LEFT_WRIST]
+      : [POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_ELBOW, POSE_LANDMARKS.RIGHT_WRIST];
+  }
+  return side === "left"
+    ? [POSE_LANDMARKS.LEFT_HIP, POSE_LANDMARKS.LEFT_SHOULDER, POSE_LANDMARKS.LEFT_ELBOW]
+    : [POSE_LANDMARKS.RIGHT_HIP, POSE_LANDMARKS.RIGHT_SHOULDER, POSE_LANDMARKS.RIGHT_ELBOW];
+}
+
 /**
  * Elbow flexion/extension angle.
  * ~180° = fully straight arm. Low angle = fully bent.
@@ -80,30 +112,74 @@ export function getShoulderAbductionAngle(landmarks: Point2D[], side: Side): num
 }
 
 /**
- * Simple exponential moving average smoother — reduces jitter without
- * adding meaningful lag. Keep one instance of this PER landmark point
- * you want to smooth (see usage in LiveTrackingSession.tsx).
+ * One Euro Filter (Casiez, Roussel, Vogel 2012) — one dimension.
+ * The standard adaptive low-pass filter for real-time landmark/cursor
+ * tracking: it increases smoothing when the signal is nearly still
+ * (killing jitter) and decreases smoothing when it's moving fast
+ * (avoiding the lag a fixed-alpha filter would add). This is what makes
+ * the skeleton overlay track a moving limb tightly while staying calm
+ * when the child is holding a position.
+ */
+class OneEuroFilter1D {
+  private xPrev: number | null = null;
+  private dxPrev = 0;
+  private tPrevMs: number | null = null;
+
+  constructor(
+    private minCutoff = 1.2, // Hz — higher = less smoothing at rest
+    private beta = 1.0, // higher = reacts faster to quick movement
+    private dCutoff = 1.0, // Hz — smoothing applied to the velocity estimate itself
+  ) {}
+
+  private alpha(cutoff: number, dtSeconds: number): number {
+    const tau = 1 / (2 * Math.PI * cutoff);
+    return 1 / (1 + tau / dtSeconds);
+  }
+
+  filter(x: number, tMs: number): number {
+    if (this.tPrevMs === null || this.xPrev === null) {
+      this.tPrevMs = tMs;
+      this.xPrev = x;
+      this.dxPrev = 0;
+      return x;
+    }
+    // Floor dt so a dropped/duplicate frame timestamp can't divide-by-~0.
+    const dt = Math.max((tMs - this.tPrevMs) / 1000, 1 / 120);
+    this.tPrevMs = tMs;
+
+    const dx = (x - this.xPrev) / dt;
+    const aD = this.alpha(this.dCutoff, dt);
+    this.dxPrev = aD * dx + (1 - aD) * this.dxPrev;
+
+    const cutoff = this.minCutoff + this.beta * Math.abs(this.dxPrev);
+    const a = this.alpha(cutoff, dt);
+    const xFiltered = a * x + (1 - a) * this.xPrev;
+    this.xPrev = xFiltered;
+    return xFiltered;
+  }
+}
+
+/**
+ * Per-landmark-point smoother, now backed by a One Euro Filter on each
+ * axis. Keep one instance PER landmark index you want to smooth (see
+ * usage in app.exercises.tsx) — mixing multiple points through one
+ * instance would corrupt its velocity estimate.
  */
 export class LandmarkSmoother {
-  private smoothed: Point2D | null = null;
-  private readonly alpha: number;
+  private fx: OneEuroFilter1D;
+  private fy: OneEuroFilter1D;
 
-  constructor(alpha = 0.3) {
-    // alpha closer to 1 = less smoothing (more responsive)
-    // alpha closer to 0 = more smoothing (more lag-resistant but slower to react)
-    this.alpha = alpha;
+  constructor(minCutoff = 1.2, beta = 1.0) {
+    this.fx = new OneEuroFilter1D(minCutoff, beta);
+    this.fy = new OneEuroFilter1D(minCutoff, beta);
   }
 
   update(newPoint: Point2D): Point2D {
-    if (!this.smoothed) {
-      this.smoothed = { ...newPoint };
-      return this.smoothed;
-    }
-    this.smoothed = {
-      x: this.smoothed.x * (1 - this.alpha) + newPoint.x * this.alpha,
-      y: this.smoothed.y * (1 - this.alpha) + newPoint.y * this.alpha,
+    const t = performance.now();
+    return {
+      x: this.fx.filter(newPoint.x, t),
+      y: this.fy.filter(newPoint.y, t),
     };
-    return this.smoothed;
   }
 }
 
@@ -114,15 +190,10 @@ export class LandmarkSmoother {
 export class AngleRecorder {
   private maxAngle = -Infinity;
   private minAngle = Infinity;
-  private history: { t: number; angle: number }[] = [];
-  private readonly maxHistory = 1024;
 
   record(angle: number): void {
     if (angle > this.maxAngle) this.maxAngle = angle;
     if (angle < this.minAngle) this.minAngle = angle;
-    const ts = Date.now();
-    this.history.push({ t: ts, angle });
-    if (this.history.length > this.maxHistory) this.history.shift();
   }
 
   getMax(): number | null {
@@ -136,11 +207,5 @@ export class AngleRecorder {
   reset(): void {
     this.maxAngle = -Infinity;
     this.minAngle = Infinity;
-    this.history = [];
-  }
-
-  /** Return a shallow copy of the recorded history (timestamp ms, angle). */
-  getHistory(): { t: number; angle: number }[] {
-    return this.history.slice();
   }
 }
