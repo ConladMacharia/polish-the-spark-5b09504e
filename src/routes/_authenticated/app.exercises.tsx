@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { PlayCircle, ArrowLeft, Home, Dumbbell, Video, User, X } from "lucide-react";
+import { PlayCircle, ArrowLeft, Home, Dumbbell, Video, User, X, Volume2 } from "lucide-react";
 import { PoseLandmarker, DrawingUtils } from "@mediapipe/tasks-vision";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -15,14 +15,19 @@ import {
 } from "@/lib/pose/angleUtils";
 import { EXERCISES, translateExercise, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
-import { TargetBadge } from "@/components/ExerciseTargetDisplay";
+import { TargetBadge, useExerciseTarget } from "@/components/ExerciseTargetDisplay";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
 import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
+import { useVoicePrompts } from "@/lib/voice/useVoicePrompts";
+import { getLanguage } from "@/lib/i18n/languages";
 
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 
 export const Route = createFileRoute("/_authenticated/app/exercises")({
+  validateSearch: (search: Record<string, unknown>): { guided?: boolean } => ({
+    guided: search.guided === true || search.guided === "true" ? true : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Live session — Neuro-Bridge" },
@@ -43,13 +48,51 @@ export const Route = createFileRoute("/_authenticated/app/exercises")({
   component: LiveSessionPage,
 });
 
+/**
+ * The caregiver's guided daily session — a fixed, ordered sequence of real
+ * catalog exercises, auto-advancing through real tracked reps rather than
+ * a manual "Next" button. Ported from the retired app.session.tsx, which
+ * had this exact plan and copy but no real camera behind it.
+ */
+type GuidedStep = { slug: string; targetReps: number; benefit: string; assist: string };
+const DAILY_SESSION: GuidedStep[] = [
+  {
+    slug: "arm",
+    targetReps: 8,
+    benefit: "Improves shoulder range of motion, upper-limb strength and posture.",
+    assist:
+      "Stand facing the child. Encourage a slow, controlled lift rather than a fast swing. Stop if there is shoulder pain.",
+  },
+  {
+    slug: "leg",
+    targetReps: 8,
+    benefit: "Strengthens hip flexors and improves stepping pattern.",
+    assist:
+      "Support from behind if needed. Make sure the child is holding a rail or your hand before kicking.",
+  },
+  {
+    slug: "balance",
+    targetReps: 3,
+    benefit: "Postural control needed for all upright daily activities.",
+    assist:
+      "Stay close but don't hold — let the child find their own balance. Count aloud together to keep focus.",
+  },
+];
+
 function LiveSessionPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
+  const { guided: guidedRequested } = Route.useSearch();
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [pendingExercise, setPendingExercise] = useState<Exercise | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [guidedActive, setGuidedActive] = useState(false);
+  const [guidedIndex, setGuidedIndex] = useState(0);
+  const [guidedReps, setGuidedReps] = useState(0);
+  const [sessionDone, setSessionDone] = useState(false);
+  const balanceHoldStartRef = useRef<number | null>(null);
+  const guidedAdvancingRef = useRef(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -71,6 +114,27 @@ function LiveSessionPage() {
   const [poseLandmarker, setPoseLandmarker] = useState<PoseLandmarker | null>(null);
   const [isPoseLoading, setIsPoseLoading] = useState(false);
   const [poseDetected, setPoseDetected] = useState(false);
+
+  /* ── recorded voice prompt system ──
+   * Reuses the existing prompt registry / player already built for the
+   * (currently unlinked) guided session page — wired here to the real
+   * pose-angle data this screen already tracks, instead of a mock timer. */
+  const [voiceLine, setVoiceLine] = useState("");
+  const [showVoice, setShowVoice] = useState(false);
+  const voiceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showVoiceBanner = useCallback((text: string, ms: number) => {
+    setVoiceLine(text);
+    setShowVoice(true);
+    if (voiceTimer.current) clearTimeout(voiceTimer.current);
+    voiceTimer.current = setTimeout(() => setShowVoice(false), ms);
+  }, []);
+  const { cue, unlock, stop: stopVoice } = useVoicePrompts(showVoiceBanner);
+
+  const target = useExerciseTarget(selectedExercise?.slug ?? "", "", [], trackedSide);
+  const noPoseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dwellStartRef = useRef<number | null>(null);
+  const holdReachedRef = useRef(false);
+  const lastAngleSampleRef = useRef<{ angle: number; at: number } | null>(null);
 
   // Initialize camera stream
   useEffect(() => {
@@ -251,11 +315,84 @@ function LiveSessionPage() {
     };
   }, [selectedExercise, stream, poseLandmarker, trackedMovement, trackedSide]);
 
+  /* ── voice cue: camera framing ──
+   * If the camera is live but no body has been detected for a few seconds,
+   * ask the caregiver to reposition the phone. */
+  useEffect(() => {
+    if (!selectedExercise || !stream) return;
+    if (poseDetected) return;
+    if (noPoseTimerRef.current) clearTimeout(noPoseTimerRef.current);
+    noPoseTimerRef.current = setTimeout(() => {
+      if (!poseDetected) cue("LS004");
+    }, 4000);
+    return () => {
+      if (noPoseTimerRef.current) clearTimeout(noPoseTimerRef.current);
+    };
+  }, [selectedExercise, stream, poseDetected, cue]);
+
+  /* ── voice cue: angle coaching, driven by the real tracked angle ──
+   * Reuses whatever target this exercise/child/side already resolves to
+   * (the same target shown in the on-screen TargetBadge) rather than a
+   * separate guess — "reached" means the same thing in both places. */
+  useEffect(() => {
+    if (!selectedExercise || liveAngle === null) return;
+    if (!target || target.targetType !== "angle" || !target.angle) return;
+
+    const goal = target.angle.primary;
+    const now = Date.now();
+    const isOt = selectedExercise.category === "ot";
+    const isLeg = selectedExercise.track === "leg";
+    const stallCode = isOt ? "HW002" : isLeg ? "LL002" : "UL002";
+    const returnCode = isOt ? "HW004" : isLeg ? "LL004" : "UL008";
+
+    // Movement speed check (real, derived from consecutive samples).
+    const last = lastAngleSampleRef.current;
+    if (last && now - last.at < 1200) {
+      const degPerSec = (Math.abs(liveAngle - last.angle) / (now - last.at)) * 1000;
+      if (degPerSec > 220) cue("UL006");
+    }
+    lastAngleSampleRef.current = { angle: liveAngle, at: now };
+
+    const nearGoal = liveAngle >= goal * 0.9;
+
+    if (nearGoal) {
+      if (dwellStartRef.current === null) dwellStartRef.current = now;
+      if (!holdReachedRef.current && now - dwellStartRef.current > 600) {
+        holdReachedRef.current = true;
+        cue("RH001");
+      }
+    } else {
+      dwellStartRef.current = null;
+      // Coach toward the target only once a hold hasn't just happened —
+      // avoids nagging immediately after a completed rep.
+      if (!holdReachedRef.current && liveAngle < goal * 0.55) {
+        cue(stallCode);
+      }
+      // Returning back down after a hold = a completed repetition.
+      if (holdReachedRef.current && liveAngle < goal * 0.4) {
+        holdReachedRef.current = false;
+        cue(returnCode);
+        cue("RH003");
+        if (guidedActive) {
+          setGuidedReps((r) => {
+            const total = r + 1;
+            const target = DAILY_SESSION[guidedIndex]?.targetReps ?? Infinity;
+            if (total >= target) {
+              // Let the two cues above actually play before we tear the camera down.
+              setTimeout(() => advanceGuidedSession(), 1800);
+            }
+            return total;
+          });
+        }
+      }
+    }
+  }, [liveAngle, target, selectedExercise, cue, guidedActive, guidedIndex]);
 
   function closeCamera() {
     setSelectedExercise(null);
     setPendingExercise(null);
     setPoseDetected(false);
+    setGuidedActive(false);
     smoothersRef.current.clear();
     recorderRef.current.reset();
     setLiveAngle(null);
@@ -264,6 +401,10 @@ function LiveSessionPage() {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
+    stopVoice();
+    dwellStartRef.current = null;
+    holdReachedRef.current = false;
+    lastAngleSampleRef.current = null;
   }
 
   // Stop the camera and return to the arm picker for the same exercise
@@ -279,16 +420,99 @@ function LiveSessionPage() {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
+    stopVoice();
+    dwellStartRef.current = null;
+    holdReachedRef.current = false;
+    lastAngleSampleRef.current = null;
     setPendingLimb(trackedLimb);
     setPendingExercise(current);
   }
 
   function startWithSide(side: Side) {
+    unlock(); // user gesture — required for audio playback on mobile
     setTrackedSide(side);
     setTrackedLimb(pendingLimb);
     setSelectedExercise(pendingExercise);
     setPendingExercise(null);
+    cue("LS001");
   }
+
+  /** Begin one step of the guided daily session — auto-confirms a default
+   *  side so the caregiver isn't stopped by the manual picker mid-flow. */
+  function startGuidedStep(index: number) {
+    const step = DAILY_SESSION[index];
+    const exercise = EXERCISES.find((e) => e.slug === step.slug);
+    if (!exercise) return; // catalog changed out from under the plan — bail quietly
+    unlock();
+    guidedAdvancingRef.current = false;
+    setGuidedIndex(index);
+    setGuidedReps(0);
+    balanceHoldStartRef.current = null;
+    setTrackedSide("right");
+    setTrackedLimb(exercise.track === "leg" ? "leg" : "arm");
+    setSelectedExercise(exercise);
+    cue("LS001");
+  }
+
+  function advanceGuidedSession() {
+    if (guidedAdvancingRef.current) return; // already advancing — ignore a second trigger
+    guidedAdvancingRef.current = true;
+
+    stopVoice();
+    smoothersRef.current.clear();
+    recorderRef.current.reset();
+    setLiveAngle(null);
+    setMaxAngle(null);
+    setSelectedExercise(null);
+    dwellStartRef.current = null;
+    holdReachedRef.current = false;
+    lastAngleSampleRef.current = null;
+
+    const next = guidedIndex + 1;
+    if (next >= DAILY_SESSION.length) {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+        setStream(null);
+      }
+      setGuidedActive(false);
+      setSessionDone(true);
+      return;
+    }
+    // Small pause between exercises so the last cue/hold isn't cut off.
+    setTimeout(() => startGuidedStep(next), 900);
+  }
+
+  /* Kick off the guided session if the dashboard linked here with ?guided=true. */
+  useEffect(() => {
+    if (guidedRequested && !guidedActive && !selectedExercise && !pendingExercise && !sessionDone) {
+      setGuidedActive(true);
+      startGuidedStep(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guidedRequested]);
+
+  /* Guided-mode completion for the duration-based balance step, since it
+   * has no angle target to hold against. */
+  useEffect(() => {
+    if (!guidedActive || !selectedExercise || selectedExercise.slug !== "balance") return;
+    if (!poseDetected) {
+      balanceHoldStartRef.current = null;
+      return;
+    }
+    if (balanceHoldStartRef.current === null) balanceHoldStartRef.current = Date.now();
+    const holdMs = 10000; // real, if shorter-than-clinical, continuous-hold requirement
+    const remaining = holdMs - (Date.now() - balanceHoldStartRef.current);
+    if (remaining <= 0) {
+      cue("RH003");
+      setTimeout(() => advanceGuidedSession(), 1800);
+      return;
+    }
+    const t = setTimeout(() => {
+      if (balanceHoldStartRef.current !== null) cue("RH001");
+    }, 600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guidedActive, selectedExercise, poseDetected]);
 
   function limbLabel(side: Side, limb: string) {
     return `${side === "left" ? t("sideLeft") : t("sideRight")} ${limb}`;
@@ -310,6 +534,7 @@ function LiveSessionPage() {
       return data;
     },
   });
+  const childNameForCopy = patient?.child_name?.split(" ")[0] ?? "your child";
 
   type NavId = "home" | "library" | "videos" | "profile";
   function handleNav(id: NavId) {
@@ -580,17 +805,25 @@ function LiveSessionPage() {
           <div className="mx-auto flex max-w-5xl flex-col gap-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">Live tracking</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
+                  {guidedActive ? `Guided session · step ${guidedIndex + 1} of ${DAILY_SESSION.length}` : "Live tracking"}
+                </p>
                 <h2 className="font-display text-2xl font-bold text-stone-50">{selectedExercise.name}</h2>
                 <p className="text-sm text-stone-300">{selectedExercise.focus}</p>
               </div>
-              <button
-                type="button"
-                onClick={closeCamera}
-                className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-white/10 backdrop-blur-xl transition hover:bg-white/20"
-              >
-                <X className="h-4 w-4 text-stone-50" />
-              </button>
+              <div className="flex items-center gap-2">
+                <span className="hidden items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-200 backdrop-blur-xl sm:inline-flex">
+                  <Volume2 className="h-3.5 w-3.5" />
+                  {getLanguage(lang).native}
+                </span>
+                <button
+                  type="button"
+                  onClick={closeCamera}
+                  className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-white/10 backdrop-blur-xl transition hover:bg-white/20"
+                >
+                  <X className="h-4 w-4 text-stone-50" />
+                </button>
+              </div>
             </div>
             <div className="relative flex min-h-[400px] items-center justify-center overflow-hidden rounded-[2rem] bg-black shadow-2xl">
               <video
@@ -604,6 +837,16 @@ function LiveSessionPage() {
                 ref={canvasRef}
                 className="absolute inset-0 z-10 h-full w-full object-cover pointer-events-none"
               />
+
+              {/* Voice cue banner — mirrors whatever the audio/TTS just said */}
+              {showVoice && voiceLine ? (
+                <div className="absolute inset-x-0 top-4 z-30 flex justify-center px-4">
+                  <div className="flex items-center gap-2 rounded-2xl border border-white/15 bg-emerald-950/90 px-4 py-2.5 text-center text-sm font-semibold text-stone-50 shadow-xl backdrop-blur-xl">
+                    <Volume2 className="h-4 w-4 shrink-0 text-emerald-300" />
+                    {voiceLine}
+                  </div>
+                </div>
+              ) : null}
 
               {/* Pose tracking status badges */}
               <div className="absolute left-4 top-4 z-20 flex flex-wrap gap-2">
@@ -654,14 +897,20 @@ function LiveSessionPage() {
             <GlassCard tint="dark" className="flex flex-wrap items-center justify-between gap-4 p-5">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">
-                  Tracking: {limbLabel(trackedSide, trackedLimb)}
-                  <button
-                    type="button"
-                    onClick={changeSide}
-                    className="ml-2 rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-stone-50 backdrop-blur-xl transition hover:bg-white/20"
-                  >
-                    Change side
-                  </button>
+                  {guidedActive ? (
+                    `Rep ${Math.min(guidedReps + 1, DAILY_SESSION[guidedIndex]?.targetReps ?? 1)} of ${DAILY_SESSION[guidedIndex]?.targetReps ?? "—"}`
+                  ) : (
+                    <>
+                      Tracking: {limbLabel(trackedSide, trackedLimb)}
+                      <button
+                        type="button"
+                        onClick={changeSide}
+                        className="ml-2 rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-stone-50 backdrop-blur-xl transition hover:bg-white/20"
+                      >
+                        Change side
+                      </button>
+                    </>
+                  )}
                 </p>
                 <p className="font-display text-4xl font-bold tabular-nums text-stone-50">
                   {liveAngle !== null ? `${liveAngle}°` : "—"}
@@ -683,7 +932,42 @@ function LiveSessionPage() {
                 </p>
               </div>
             </GlassCard>
+
+            {guidedActive && DAILY_SESSION[guidedIndex] ? (
+              <GlassCard tint="emerald" className="p-5">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
+                  Why this exercise
+                </p>
+                <p className="mt-1 text-sm text-stone-200">{DAILY_SESSION[guidedIndex].benefit}</p>
+                <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
+                  Helping {childNameForCopy}
+                </p>
+                <p className="mt-1 text-sm text-stone-200">{DAILY_SESSION[guidedIndex].assist}</p>
+              </GlassCard>
+            ) : null}
           </div>
+        </div>
+      ) : null}
+
+      {sessionDone ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-emerald-950/95 px-4 text-center text-stone-50 backdrop-blur-sm">
+          <GlassCard tint="emerald" className="w-full max-w-md p-8">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-300 text-3xl">🎉</div>
+            <h2 className="mt-4 font-display text-2xl font-bold text-stone-50">Session complete!</h2>
+            <p className="mt-2 text-sm text-stone-300">
+              Great work today — {childNameForCopy} finished all {DAILY_SESSION.length} exercises.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSessionDone(false);
+                navigate({ to: "/app/caregiver" });
+              }}
+              className="mt-6 w-full rounded-full bg-emerald-300 py-3 font-display text-sm font-bold text-emerald-950"
+            >
+              Back to dashboard
+            </button>
+          </GlassCard>
         </div>
       ) : null}
     </div>
