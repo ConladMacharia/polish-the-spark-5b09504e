@@ -1,6 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+<<<<<<< HEAD
 import { LogOut, PlayCircle, Flame, ShieldAlert, Rocket, Home, Dumbbell, Video, User, Globe } from "lucide-react";
+=======
+import { LogOut, PlayCircle, ShieldAlert, Rocket, Home, Dumbbell, Video, User } from "lucide-react";
+>>>>>>> 3e030dfc290bfa9780601ecaaaf23c4ca005942a
 import { useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +13,10 @@ import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { RafikiIsland } from "@/components/child/RafikiIsland";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
 import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
+<<<<<<< HEAD
+=======
+import ProgressGraph from "@/components/ProgressGraph";
+>>>>>>> 3e030dfc290bfa9780601ecaaaf23c4ca005942a
 
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
@@ -216,14 +224,19 @@ function CaregiverHome() {
               <p className="mt-0.5 text-[12px] font-medium text-stone-300">{t("trainingFilmsSub")}</p>
             </GlassCard>
 
-            <GlassCard tint="dark" className="flex items-center gap-4 p-4 sm:col-span-2">
-              <div className="flex items-center gap-1.5 font-display text-2xl font-bold text-emerald-200">
-                <Flame className="h-6 w-6 fill-emerald-300 text-emerald-300" /> 5
-              </div>
+            <GlassCard
+              tint="dark"
+              as="button"
+              onClick={() => setProgressOpen(true)}
+              className="flex items-center gap-4 p-4 text-left sm:col-span-2"
+            >
+              <div className="font-display text-2xl font-bold text-emerald-200">📈</div>
               <div className="h-9 w-px bg-white/10" />
               <div>
-                <p className="text-[11px] font-semibold uppercase text-stone-400">{t("lastSession")}</p>
-                <p className="font-display text-sm font-bold text-stone-50">{t("lastSessionValue")}</p>
+                <p className="text-[11px] font-semibold uppercase text-stone-400">Progress</p>
+                <p className="font-display text-sm font-bold text-stone-50">
+                  See how your child is improving
+                </p>
               </div>
             </GlassCard>
           </div>
@@ -259,6 +272,33 @@ function CaregiverHome() {
             active="home"
             onChange={handleNav}
           />
+<<<<<<< HEAD
+=======
+        </div>
+      )}
+
+      {progressOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+          onClick={() => setProgressOpen(false)}
+        >
+          <div
+            className="w-full max-w-2xl rounded-3xl border border-white/15 bg-emerald-950/95 p-4 backdrop-blur-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-display text-xl font-bold text-stone-50">{childName}&apos;s progress</h3>
+              <button
+                type="button"
+                onClick={() => setProgressOpen(false)}
+                className="rounded-full border border-white/15 bg-white/10 px-3 py-1 font-display text-[12px] font-semibold text-stone-200"
+              >
+                Close
+              </button>
+            </div>
+            <ProgressGraph childId={patient?.id} />
+          </div>
+>>>>>>> 3e030dfc290bfa9780601ecaaaf23c4ca005942a
         </div>
       )}
 
