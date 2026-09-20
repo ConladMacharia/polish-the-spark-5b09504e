@@ -81,6 +81,12 @@ const DAILY_SESSION: GuidedStep[] = [
   },
 ];
 
+// Browse-mode (non-guided) sessions don't come with a curated rep target
+// the way the guided daily plan does — these are sensible defaults, not
+// clinical data, matching what the guided plan itself already uses.
+const DEFAULT_TARGET_REPS = 8;
+const DEFAULT_TARGET_HOLDS = 3;
+
 function LiveSessionPage() {
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
@@ -91,9 +97,7 @@ function LiveSessionPage() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [guidedActive, setGuidedActive] = useState(false);
   const [guidedIndex, setGuidedIndex] = useState(0);
-  const [guidedReps, setGuidedReps] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
-  const balanceHoldStartRef = useRef<number | null>(null);
   const guidedAdvancingRef = useRef(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -107,6 +111,16 @@ function LiveSessionPage() {
   // Which limb/joint the picked exercise targets, e.g. "shoulder", "elbow", "hip"
   const [pendingLimb, setPendingLimb] = useState<string>("arm");
   const [trackedLimb, setTrackedLimb] = useState<string>("arm");
+
+  /* ── reps & hold-duration tracking — real, for ANY exercise session ──
+   * Works identically whether this is the guided daily plan or a single
+   * exercise picked from the browse library; guided mode additionally
+   * uses repsCompleted to know when to auto-advance. */
+  const [repsCompleted, setRepsCompleted] = useState(0);
+  const [holdSeconds, setHoldSeconds] = useState(0); // live, updates while actively holding
+  const [bestHoldSeconds, setBestHoldSeconds] = useState<number | null>(null);
+  const [repLog, setRepLog] = useState<{ heldSeconds: number; angle?: number }[]>([]);
+  const durationHoldStartRef = useRef<number | null>(null);
 
   // Which joint angle to report for the selected exercise
   const ELBOW_SLUGS = new Set(["reach", "shoulder", "draw", "tracing", "page-turn"]);
@@ -133,7 +147,18 @@ function LiveSessionPage() {
   const { cue, unlock, stop: stopVoice } = useVoicePrompts(showVoiceBanner);
 
   const target = useExerciseTarget(selectedExercise?.slug ?? "", "", [], trackedSide);
+  const isDurationTarget = target?.targetType === "duration";
+  const repsTarget = guidedActive
+    ? DAILY_SESSION[guidedIndex]?.targetReps ?? 1
+    : isDurationTarget
+      ? DEFAULT_TARGET_HOLDS
+      : DEFAULT_TARGET_REPS;
   const noPoseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Live angle (always updates, for instant visual feedback) vs. the
+  // confidence-gated angle the coaching/rep-counting logic actually acts
+  // on — separating these fixed the "lag before the number appears" issue
+  // without weakening the protection against acting on a bad reading.
+  const [confidentAngle, setConfidentAngle] = useState<number | null>(null);
   const dwellStartRef = useRef<number | null>(null);
   const holdReachedRef = useRef(false);
   const lastAngleSampleRef = useRef<{ angle: number; at: number } | null>(null);
@@ -293,14 +318,20 @@ function LiveSessionPage() {
                   trackedMovement === "elbow"
                     ? getElbowAngle(pts, trackedSide)
                     : getShoulderFlexionAngle(pts, trackedSide);
-                // Only trust the angle when MediaPipe itself is confident about
-                // the joints involved — an occluded/off-frame joint holds the
-                // last good reading instead of injecting a spike.
-                if (confident && Number.isFinite(angle) && angle > 0) {
+                if (Number.isFinite(angle) && angle > 0) {
+                  // Always show the number immediately — instant feedback,
+                  // no waiting on confidence to ramp up after lock-on.
                   setLiveAngle(Math.round(angle));
-                  recorderRef.current.record(angle);
-                  const max = recorderRef.current.getMax();
-                  setMaxAngle(max !== null ? Math.round(max) : null);
+                  // Only trust it for recording/coaching once MediaPipe is
+                  // actually confident about the joints involved — an
+                  // occluded/off-frame joint holds the last good reading
+                  // here instead of injecting a spike into a rep count.
+                  if (confident) {
+                    setConfidentAngle(angle);
+                    recorderRef.current.record(angle);
+                    const max = recorderRef.current.getMax();
+                    setMaxAngle(max !== null ? Math.round(max) : null);
+                  }
                 }
               } else {
                 setPoseDetected(false);
@@ -342,12 +373,34 @@ function LiveSessionPage() {
     };
   }, [selectedExercise, stream, poseDetected, cue]);
 
-  /* ── voice cue: angle coaching, driven by the real tracked angle ──
+  /** Records one finished rep/hold — shared by both the angle path and the
+   *  duration path below, so "what counts as done" and "what happens when
+   *  the guided plan's target is hit" only exist in one place. */
+  function completeRep(heldForSeconds: number, angle?: number) {
+    const rounded = Math.round(heldForSeconds * 10) / 10;
+    setRepsCompleted((r) => {
+      const total = r + 1;
+      if (guidedActive) {
+        const repGoal = DAILY_SESSION[guidedIndex]?.targetReps ?? Infinity;
+        if (total >= repGoal) {
+          // Let the cues already queued actually play before tearing the camera down.
+          setTimeout(() => advanceGuidedSession(), 1800);
+        }
+      }
+      return total;
+    });
+    setRepLog((log) => [...log, { heldSeconds: rounded, angle: angle !== undefined ? Math.round(angle) : undefined }]);
+    setBestHoldSeconds((b) => (b === null ? rounded : Math.max(b, rounded)));
+    setHoldSeconds(0);
+  }
+
+  /* ── voice cue + rep/hold tracking, driven by the real tracked angle ──
    * Reuses whatever target this exercise/child/side already resolves to
    * (the same target shown in the on-screen TargetBadge) rather than a
-   * separate guess — "reached" means the same thing in both places. */
+   * separate guess — "reached" means the same thing in both places.
+   * Runs for ANY session (guided or browse), not just the guided plan. */
   useEffect(() => {
-    if (!selectedExercise || liveAngle === null) return;
+    if (!selectedExercise || confidentAngle === null) return;
     if (!target || target.targetType !== "angle" || !target.angle) return;
 
     const goal = target.angle.primary;
@@ -357,48 +410,43 @@ function LiveSessionPage() {
     const stallCode = isOt ? "HW002" : isLeg ? "LL002" : "UL002";
     const returnCode = isOt ? "HW004" : isLeg ? "LL004" : "UL008";
 
-    // Movement speed check (real, derived from consecutive samples).
+    // Movement speed check (real, derived from consecutive confident samples).
     const last = lastAngleSampleRef.current;
     if (last && now - last.at < 1200) {
-      const degPerSec = (Math.abs(liveAngle - last.angle) / (now - last.at)) * 1000;
+      const degPerSec = (Math.abs(confidentAngle - last.angle) / (now - last.at)) * 1000;
       if (degPerSec > 220) cue("UL006");
     }
-    lastAngleSampleRef.current = { angle: liveAngle, at: now };
+    lastAngleSampleRef.current = { angle: confidentAngle, at: now };
 
-    const nearGoal = liveAngle >= goal * 0.9;
+    const nearGoal = confidentAngle >= goal * 0.9;
 
     if (nearGoal) {
       if (dwellStartRef.current === null) dwellStartRef.current = now;
-      if (!holdReachedRef.current && now - dwellStartRef.current > 600) {
+      const dwellSeconds = (now - dwellStartRef.current) / 1000;
+      setHoldSeconds(dwellSeconds);
+      if (!holdReachedRef.current && dwellSeconds > 2) {
         holdReachedRef.current = true;
         cue("RH001");
       }
-    } else {
-      dwellStartRef.current = null;
-      // Coach toward the target only once a hold hasn't just happened —
-      // avoids nagging immediately after a completed rep.
-      if (!holdReachedRef.current && liveAngle < goal * 0.55) {
-        cue(stallCode);
-      }
-      // Returning back down after a hold = a completed repetition.
-      if (holdReachedRef.current && liveAngle < goal * 0.4) {
+    } else if (holdReachedRef.current) {
+      // Mid-return from a real hold — wait for a clear drop before counting
+      // the rep, so natural angle wobble right at the top doesn't end it early.
+      if (confidentAngle < goal * 0.4) {
+        const heldFor = dwellStartRef.current ? (now - dwellStartRef.current) / 1000 : 0;
         holdReachedRef.current = false;
+        dwellStartRef.current = null;
         cue(returnCode);
         cue("RH003");
-        if (guidedActive) {
-          setGuidedReps((r) => {
-            const total = r + 1;
-            const target = DAILY_SESSION[guidedIndex]?.targetReps ?? Infinity;
-            if (total >= target) {
-              // Let the two cues above actually play before we tear the camera down.
-              setTimeout(() => advanceGuidedSession(), 1800);
-            }
-            return total;
-          });
-        }
+        completeRep(heldFor, goal);
       }
+    } else {
+      // Never reached a hold on this attempt — reset and, if clearly short
+      // of target, nudge toward it.
+      dwellStartRef.current = null;
+      setHoldSeconds(0);
+      if (confidentAngle < goal * 0.55) cue(stallCode);
     }
-  }, [liveAngle, target, selectedExercise, cue, guidedActive, guidedIndex]);
+  }, [confidentAngle, target, selectedExercise, cue, guidedActive, guidedIndex]);
 
   function closeCamera() {
     setSelectedExercise(null);
@@ -409,6 +457,12 @@ function LiveSessionPage() {
     recorderRef.current.reset();
     setLiveAngle(null);
     setMaxAngle(null);
+    setConfidentAngle(null);
+    setRepsCompleted(0);
+    setHoldSeconds(0);
+    setBestHoldSeconds(null);
+    setRepLog([]);
+    durationHoldStartRef.current = null;
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
@@ -428,6 +482,12 @@ function LiveSessionPage() {
     recorderRef.current.reset();
     setLiveAngle(null);
     setMaxAngle(null);
+    setConfidentAngle(null);
+    setRepsCompleted(0);
+    setHoldSeconds(0);
+    setBestHoldSeconds(null);
+    setRepLog([]);
+    durationHoldStartRef.current = null;
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
@@ -446,6 +506,11 @@ function LiveSessionPage() {
     setTrackedLimb(pendingLimb);
     setSelectedExercise(pendingExercise);
     setPendingExercise(null);
+    setRepsCompleted(0);
+    setHoldSeconds(0);
+    setBestHoldSeconds(null);
+    setRepLog([]);
+    durationHoldStartRef.current = null;
     cue("LS001");
   }
 
@@ -458,8 +523,11 @@ function LiveSessionPage() {
     unlock();
     guidedAdvancingRef.current = false;
     setGuidedIndex(index);
-    setGuidedReps(0);
-    balanceHoldStartRef.current = null;
+    setRepsCompleted(0);
+    setHoldSeconds(0);
+    setBestHoldSeconds(null);
+    setRepLog([]);
+    durationHoldStartRef.current = null;
     setTrackedSide("right");
     setTrackedLimb(exercise.track === "leg" ? "leg" : "arm");
     setSelectedExercise(exercise);
@@ -475,6 +543,7 @@ function LiveSessionPage() {
     recorderRef.current.reset();
     setLiveAngle(null);
     setMaxAngle(null);
+    setConfidentAngle(null);
     setSelectedExercise(null);
     dwellStartRef.current = null;
     holdReachedRef.current = false;
@@ -503,28 +572,40 @@ function LiveSessionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [guidedRequested]);
 
-  /* Guided-mode completion for the duration-based balance step, since it
-   * has no angle target to hold against. */
+  /* ── duration-type hold tracking (Standing Balance, Bridge, Single-Leg
+   * Stand, ...) — there's no angle apex/return cycle here, just "did they
+   * stay in position for the real clinical target duration." Runs for any
+   * session, guided or browse, using whatever durationSeconds the target
+   * system resolves for this exercise/child/side. */
   useEffect(() => {
-    if (!guidedActive || !selectedExercise || selectedExercise.slug !== "balance") return;
+    if (!selectedExercise || !target || target.targetType !== "duration" || !target.durationSeconds) {
+      durationHoldStartRef.current = null;
+      return;
+    }
     if (!poseDetected) {
-      balanceHoldStartRef.current = null;
+      durationHoldStartRef.current = null;
+      setHoldSeconds(0);
       return;
     }
-    if (balanceHoldStartRef.current === null) balanceHoldStartRef.current = Date.now();
-    const holdMs = 10000; // real, if shorter-than-clinical, continuous-hold requirement
-    const remaining = holdMs - (Date.now() - balanceHoldStartRef.current);
-    if (remaining <= 0) {
-      cue("RH003");
-      setTimeout(() => advanceGuidedSession(), 1800);
+    if (durationHoldStartRef.current === null) durationHoldStartRef.current = Date.now();
+    const goalSeconds = target.durationSeconds;
+    const elapsed = (Date.now() - durationHoldStartRef.current) / 1000;
+    setHoldSeconds(Math.min(elapsed, goalSeconds));
+
+    if (elapsed >= goalSeconds) {
+      durationHoldStartRef.current = null;
+      cue("RH001");
+      setTimeout(() => cue("RH003"), 900);
+      completeRep(goalSeconds);
       return;
     }
+    // A single encouragement cue at the halfway mark of the hold.
     const t = setTimeout(() => {
-      if (balanceHoldStartRef.current !== null) cue("RH001");
-    }, 600);
+      if (durationHoldStartRef.current !== null) cue("RH002");
+    }, Math.max((goalSeconds * 1000) / 2 - elapsed * 1000, 0));
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [guidedActive, selectedExercise, poseDetected]);
+  }, [selectedExercise, target, poseDetected]);
 
   function limbLabel(side: Side, limb: string) {
     return `${side === "left" ? t("sideLeft") : t("sideRight")} ${limb}`;
@@ -910,7 +991,7 @@ function LiveSessionPage() {
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">
                   {guidedActive ? (
-                    `Rep ${Math.min(guidedReps + 1, DAILY_SESSION[guidedIndex]?.targetReps ?? 1)} of ${DAILY_SESSION[guidedIndex]?.targetReps ?? "—"}`
+                    `Guided step ${guidedIndex + 1}`
                   ) : (
                     <>
                       Tracking: {limbLabel(trackedSide, trackedLimb)}
@@ -925,8 +1006,17 @@ function LiveSessionPage() {
                   )}
                 </p>
                 <p className="font-display text-4xl font-bold tabular-nums text-stone-50">
-                  {liveAngle !== null ? `${liveAngle}°` : "—"}
+                  {isDurationTarget
+                    ? `${holdSeconds.toFixed(1)}s / ${target?.durationSeconds ?? "—"}s`
+                    : liveAngle !== null
+                      ? `${liveAngle}°`
+                      : "—"}
                 </p>
+                {!isDurationTarget && holdSeconds > 0 ? (
+                  <p className="mt-1 text-xs font-semibold text-emerald-300">
+                    Holding: {holdSeconds.toFixed(1)}s
+                  </p>
+                ) : null}
               </div>
               <div className="text-stone-300">
                 <TargetBadge
@@ -938,12 +1028,51 @@ function LiveSessionPage() {
                 />
               </div>
               <div className="text-right">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">Best this session</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">
+                  {isDurationTarget ? "Best hold" : "Best angle"}
+                </p>
                 <p className="font-display text-2xl font-bold tabular-nums text-emerald-300">
-                  {maxAngle !== null ? `${maxAngle}°` : "Not yet recorded"}
+                  {isDurationTarget
+                    ? bestHoldSeconds !== null
+                      ? `${bestHoldSeconds}s`
+                      : "Not yet recorded"
+                    : maxAngle !== null
+                      ? `${maxAngle}°`
+                      : "Not yet recorded"}
                 </p>
               </div>
             </GlassCard>
+
+            {target && (target.targetType === "angle" || isDurationTarget) ? (
+              <GlassCard tint="neutral" className="p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-300">
+                    Rep {Math.min(repsCompleted + 1, repsTarget)} of {repsTarget}
+                  </p>
+                  <div className="flex gap-1">
+                    {Array.from({ length: repsTarget }).map((_, i) => (
+                      <span
+                        key={i}
+                        className={`h-2 w-2 rounded-full ${i < repsCompleted ? "bg-emerald-300" : "bg-white/15"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {repLog.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {repLog.map((r, i) => (
+                      <span
+                        key={i}
+                        className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-stone-300"
+                      >
+                        Rep {i + 1}
+                        {r.angle ? ` · ${r.angle}°` : ""} · held {r.heldSeconds}s
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </GlassCard>
+            ) : null}
 
             {guidedActive && DAILY_SESSION[guidedIndex] ? (
               <GlassCard tint="emerald" className="p-5">
