@@ -86,6 +86,10 @@ const DAILY_SESSION: GuidedStep[] = [
 // clinical data, matching what the guided plan itself already uses.
 const DEFAULT_TARGET_REPS = 8;
 const DEFAULT_TARGET_HOLDS = 3;
+// A moderate, broadly-achievable angle for exercises with no specific
+// clinical target defined yet — 90° is a standard "half range" reference
+// (e.g. arm raised to shoulder height) rather than a full end-range reach.
+const DEFAULT_AVERAGE_ANGLE = 90;
 
 function LiveSessionPage() {
   const { t, lang } = useLanguage();
@@ -146,7 +150,16 @@ function LiveSessionPage() {
   }, []);
   const { cue, unlock, stop: stopVoice } = useVoicePrompts(showVoiceBanner);
 
-  const target = useExerciseTarget(selectedExercise?.slug ?? "", "", [], trackedSide);
+  const rawTarget = useExerciseTarget(selectedExercise?.slug ?? "", "", [], trackedSide);
+  // Roughly 19 of the 50 catalog exercises have a real clinical target
+  // defined — the rest resolve to null and, without this, would silently
+  // show no target badge and no rep/hold tracking at all. Give every
+  // exercise a moderate, achievable fallback instead.
+  const target =
+    rawTarget ??
+    (selectedExercise
+      ? { source: "default" as const, targetType: "angle" as const, angle: { primary: DEFAULT_AVERAGE_ANGLE, primaryLabel: "Range of motion" } }
+      : null);
   const isDurationTarget = target?.targetType === "duration";
   const repsTarget = guidedActive
     ? DAILY_SESSION[guidedIndex]?.targetReps ?? 1
@@ -418,7 +431,10 @@ function LiveSessionPage() {
     }
     lastAngleSampleRef.current = { angle: confidentAngle, at: now };
 
-    const nearGoal = confidentAngle >= goal * 0.9;
+    // "Reached" is a moderate, achievable bar — most CP-affected children
+    // won't have full/typical range of motion, so gating a rep on ~90% of
+    // a clinical end-range target would mean it (almost) never completes.
+    const nearGoal = confidentAngle >= goal * 0.65;
 
     if (nearGoal) {
       if (dwellStartRef.current === null) dwellStartRef.current = now;
@@ -431,7 +447,7 @@ function LiveSessionPage() {
     } else if (holdReachedRef.current) {
       // Mid-return from a real hold — wait for a clear drop before counting
       // the rep, so natural angle wobble right at the top doesn't end it early.
-      if (confidentAngle < goal * 0.4) {
+      if (confidentAngle < goal * 0.3) {
         const heldFor = dwellStartRef.current ? (now - dwellStartRef.current) / 1000 : 0;
         holdReachedRef.current = false;
         dwellStartRef.current = null;
@@ -444,7 +460,7 @@ function LiveSessionPage() {
       // of target, nudge toward it.
       dwellStartRef.current = null;
       setHoldSeconds(0);
-      if (confidentAngle < goal * 0.55) cue(stallCode);
+      if (confidentAngle < goal * 0.4) cue(stallCode);
     }
   }, [confidentAngle, target, selectedExercise, cue, guidedActive, guidedIndex]);
 
