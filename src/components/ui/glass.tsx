@@ -29,15 +29,15 @@ export function GlassCard({
   className?: string;
   tint?: GlassTint;
   as?: "div" | "button";
-  onClick?: (() => void) | null;
+  onClick?: () => void;
   disabled?: boolean;
   children: ReactNode;
 }) {
   return (
     <Comp
-      onClick={onClick ?? undefined}
-      type={Comp === "button" ? "button" : undefined}
+      onClick={onClick}
       disabled={Comp === "button" ? disabled : undefined}
+      type={Comp === "button" ? "button" : undefined}
       className={`relative overflow-hidden rounded-3xl border backdrop-blur-2xl shadow-lg shadow-black/30 ${TINTS[tint]} ${className}`}
     >
       {/* faint top sheen so the glass reads as curved/lit, not a flat tint */}
@@ -104,7 +104,7 @@ export function BottomNav<T extends string>({
   onChange,
 }: {
   items: { id: T; icon: React.ComponentType<{ className?: string }>; label: string }[];
-  active: T;
+  active?: T;
   onChange: (id: T) => void;
 }) {
   return (

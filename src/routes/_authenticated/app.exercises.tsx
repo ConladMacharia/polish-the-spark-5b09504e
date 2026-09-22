@@ -18,6 +18,7 @@ import {
 import { EXERCISES, translateExercise, type Exercise } from "@/lib/exercise-catalog";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { TargetBadge, useExerciseTarget } from "@/components/ExerciseTargetDisplay";
+import { getEffectiveTarget } from "@/lib/exercise-targets";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
 import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
 import { useVoicePrompts } from "@/lib/voice/useVoicePrompts";
@@ -103,6 +104,8 @@ function LiveSessionPage() {
   const [guidedIndex, setGuidedIndex] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
   const guidedAdvancingRef = useRef(false);
+  const sessionIdRef = useRef<string | null>(null);
+  const sessionStartedAtRef = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -389,8 +392,97 @@ function LiveSessionPage() {
   /** Records one finished rep/hold — shared by both the angle path and the
    *  duration path below, so "what counts as done" and "what happens when
    *  the guided plan's target is hit" only exist in one place. */
+  /**
+   * Which real database bucket a session's measurement belongs to — and,
+   * deliberately, which exercises DON'T get persisted at all. Leg-track
+   * exercises currently reuse the upper-body shoulder-flexion landmarks
+   * (see angleUtils.ts), so their angle isn't a trustworthy measurement of
+   * the leg yet — better to record nothing than to save a wrong number
+   * that later shows up as "progress."
+   */
+  function sessionBucketFor(exercise: Exercise, durationTarget: boolean): "arm_raise" | "balance_hold" | null {
+    if (durationTarget) return "balance_hold";
+    if (exercise.track === "leg") return null;
+    return "arm_raise";
+  }
+
+  async function startSupabaseSession(exercise: Exercise, repsGoal: number, durationTarget: boolean) {
+    const bucket = sessionBucketFor(exercise, durationTarget);
+    if (!bucket || !patient?.id) return;
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user?.id;
+    if (!uid) return;
+    const dbLang = lang === "sw" || lang === "ki" ? lang : "en";
+    const { data, error } = await supabase
+      .from("sessions")
+      .insert({
+        patient_id: patient.id,
+        caregiver_id: uid,
+        exercise: bucket,
+        exercise_slug: exercise.slug,
+        reps_target: repsGoal,
+        language_used: dbLang,
+      })
+      .select("id")
+      .single();
+    if (!error && data) sessionIdRef.current = data.id;
+  }
+
+  async function recordRepInSupabase(
+    repNumber: number,
+    heldForSeconds: number,
+    angle: number | undefined,
+    durationTarget: boolean,
+    goalSeconds: number | undefined,
+  ) {
+    const sessionId = sessionIdRef.current;
+    if (!sessionId) return;
+    // A simple, honest proxy for "how good was this rep" — how close it
+    // got to the target, capped at 100. Not a clinical form-quality score.
+    const correctness = durationTarget
+      ? 100
+      : angle !== undefined && target?.targetType === "angle" && target.angle
+        ? Math.min(100, Math.round((angle / target.angle.primary) * 100))
+        : 100;
+    await supabase.from("rep_evaluations").insert({
+      session_id: sessionId,
+      rep_number: repNumber,
+      correctness_score: correctness,
+      angle_achieved_deg: !durationTarget && angle !== undefined ? Math.round(angle) : null,
+      hold_achieved_ms: Math.round(heldForSeconds * 1000),
+    });
+    void goalSeconds; // not persisted per-rep — the session-level target already carries it
+  }
+
+  async function endSupabaseSession() {
+    const sessionId = sessionIdRef.current;
+    sessionIdRef.current = null;
+    if (!sessionId) return;
+    const startedAt = sessionStartedAtRef.current;
+    sessionStartedAtRef.current = null;
+    const durationSeconds = startedAt ? Math.round((Date.now() - startedAt) / 1000) : 0;
+    const anglesRecorded = repLog.map((r) => r.angle).filter((a): a is number => a !== undefined);
+    const avgAngle = anglesRecorded.length
+      ? Math.round(anglesRecorded.reduce((s, a) => s + a, 0) / anglesRecorded.length)
+      : null;
+    const bestHoldMs = bestHoldSeconds !== null ? Math.round(bestHoldSeconds * 1000) : null;
+    const goal = repsTarget || 1;
+    await supabase
+      .from("sessions")
+      .update({
+        duration_seconds: durationSeconds,
+        reps_completed: repsCompleted,
+        completion_pct: Math.min(100, Math.round((repsCompleted / goal) * 100)),
+        avg_range_of_motion_deg: avgAngle,
+        best_hold_ms: bestHoldMs,
+      })
+      .eq("id", sessionId);
+  }
+
   function completeRep(heldForSeconds: number, angle?: number) {
     const rounded = Math.round(heldForSeconds * 10) / 10;
+    const repNumber = repsCompleted + 1;
+    void recordRepInSupabase(repNumber, heldForSeconds, angle, isDurationTarget, target?.durationSeconds);
     setRepsCompleted((r) => {
       const total = r + 1;
       if (guidedActive) {
@@ -465,6 +557,7 @@ function LiveSessionPage() {
   }, [confidentAngle, target, selectedExercise, cue, guidedActive, guidedIndex]);
 
   function closeCamera() {
+    void endSupabaseSession();
     setSelectedExercise(null);
     setPendingExercise(null);
     setPoseDetected(false);
@@ -491,6 +584,7 @@ function LiveSessionPage() {
 
   // Stop the camera and return to the arm picker for the same exercise
   function changeSide() {
+    void endSupabaseSession();
     const current = selectedExercise;
     setSelectedExercise(null);
     setPoseDetected(false);
@@ -518,9 +612,10 @@ function LiveSessionPage() {
 
   function startWithSide(side: Side) {
     unlock(); // user gesture — required for audio playback on mobile
+    const exercise = pendingExercise;
     setTrackedSide(side);
     setTrackedLimb(pendingLimb);
-    setSelectedExercise(pendingExercise);
+    setSelectedExercise(exercise);
     setPendingExercise(null);
     setRepsCompleted(0);
     setHoldSeconds(0);
@@ -528,6 +623,15 @@ function LiveSessionPage() {
     setRepLog([]);
     durationHoldStartRef.current = null;
     cue("LS001");
+    if (exercise) {
+      // Compute fresh — the target/isDurationTarget state above still
+      // reflects whatever was selected before this call, not this one.
+      const freshTarget = getEffectiveTarget(exercise.slug, [], "", side);
+      const freshIsDuration = freshTarget?.targetType === "duration";
+      const goal = freshIsDuration ? DEFAULT_TARGET_HOLDS : DEFAULT_TARGET_REPS;
+      sessionStartedAtRef.current = Date.now();
+      void startSupabaseSession(exercise, goal, freshIsDuration);
+    }
   }
 
   /** Begin one step of the guided daily session — auto-confirms a default
@@ -548,12 +652,17 @@ function LiveSessionPage() {
     setTrackedLimb(exercise.track === "leg" ? "leg" : "arm");
     setSelectedExercise(exercise);
     cue("LS001");
+    const freshTarget = getEffectiveTarget(exercise.slug, [], "", "right");
+    const freshIsDuration = freshTarget?.targetType === "duration";
+    sessionStartedAtRef.current = Date.now();
+    void startSupabaseSession(exercise, step.targetReps, freshIsDuration);
   }
 
   function advanceGuidedSession() {
     if (guidedAdvancingRef.current) return; // already advancing — ignore a second trigger
     guidedAdvancingRef.current = true;
 
+    void endSupabaseSession();
     stopVoice();
     smoothersRef.current.clear();
     recorderRef.current.reset();

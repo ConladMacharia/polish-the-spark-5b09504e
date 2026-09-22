@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, PlayCircle, Flame, ShieldAlert, Rocket, Home, Dumbbell, Video, User, Globe } from "lucide-react";
+import { LogOut, PlayCircle, Flame, ShieldAlert, Rocket, Home, Dumbbell, Video, User, Globe, TrendingUp } from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -214,6 +214,19 @@ function CaregiverHome() {
               </div>
               <h4 className="mt-3 font-display text-base font-bold text-stone-50">{t("trainingFilms")}</h4>
               <p className="mt-0.5 text-[12px] font-medium text-stone-300">{t("trainingFilmsSub")}</p>
+            </GlassCard>
+
+            <GlassCard
+              tint="neutral"
+              as="button"
+              onClick={() => navigate({ to: "/app/progress" })}
+              className="p-4 text-left sm:col-span-2"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-300/90">
+                <TrendingUp className="h-5 w-5 text-emerald-950" />
+              </div>
+              <h4 className="mt-3 font-display text-base font-bold text-stone-50">Progress</h4>
+              <p className="mt-0.5 text-[12px] font-medium text-stone-300">See how sessions are trending</p>
             </GlassCard>
 
             <GlassCard tint="dark" className="flex items-center gap-4 p-4 sm:col-span-2">
