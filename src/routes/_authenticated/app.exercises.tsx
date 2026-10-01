@@ -25,6 +25,7 @@ import { useVoicePrompts } from "@/lib/voice/useVoicePrompts";
 import { getLanguage } from "@/lib/i18n/languages";
 
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { LowLightBooster, openCameraStream } from "@/lib/camera";
 
 
 export const Route = createFileRoute("/_authenticated/app/exercises")({
@@ -107,6 +108,7 @@ function LiveSessionPage() {
   const sessionIdRef = useRef<string | null>(null);
   const sessionStartedAtRef = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const boosterRef = useRef(new LowLightBooster());
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const smoothersRef = useRef<Map<number, LandmarkSmoother>>(new Map());
@@ -193,15 +195,7 @@ function LiveSessionPage() {
     async function startCamera() {
       setCameraError(null);
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: "user",
-            width: { ideal: 640 },
-            height: { ideal: 480 },
-            frameRate: { ideal: 30 },
-          },
-          audio: false,
-        });
+        localStream = await openCameraStream({ width: 640, height: 480, facingMode: "user" });
         if (cancelled) {
           localStream.getTracks().forEach((track) => track.stop());
           return;
@@ -283,7 +277,7 @@ function LiveSessionPage() {
             lastVideoTime = video.currentTime;
             busy = true;
             try {
-              const results = landmarker.detectForVideo(video, performance.now());
+              const results = landmarker.detectForVideo(boosterRef.current.frame(video), performance.now());
 
               ctx.clearRect(0, 0, cw, ch);
 

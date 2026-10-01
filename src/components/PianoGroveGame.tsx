@@ -15,6 +15,7 @@ import {
   AdaptiveScalar,
   AdaptivePinch,
 } from "@/lib/pose/adaptiveTracking";
+import { LowLightBooster } from "@/lib/camera";
 
 // Finger skeleton connections (MediaPipe hand model) for the live overlay.
 const HAND_BONES: [number, number][] = [
@@ -56,6 +57,7 @@ interface NoteState {
 
 export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const boosterRef = useRef(new LowLightBooster());
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const gameFrameRef = useRef<number | null>(null);
@@ -187,7 +189,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
     isDetectingRef.current = true;
     lastVideoTimeRef.current = video.currentTime;
 
-    const result = landmarker.detectForVideo(video, performance.now());
+    const result = landmarker.detectForVideo(boosterRef.current.frame(video), performance.now());
 
     const nowMs = performance.now();
 

@@ -14,6 +14,7 @@ import {
   type Side,
 } from "@/lib/pose/angleUtils";
 import { saveTrackedSession } from "@/lib/sessions.data";
+import { LowLightBooster, openCameraStream } from "@/lib/camera";
 
 type TrackedMovement = "elbow" | "shoulderFlexion";
 
@@ -41,6 +42,7 @@ export function LiveTrackingSession({
   overrides = [],
 }: LiveTrackingSessionProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const boosterRef = useRef(new LowLightBooster());
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landmarkerRef = useRef<PoseLandmarker | null>(null);
   const smoothersRef = useRef<Map<number, LandmarkSmoother>>(new Map());
@@ -108,22 +110,24 @@ export function LiveTrackingSession({
 
   useEffect(() => {
     let stream: MediaStream | null = null;
+    let unmounted = false;
 
     async function setup() {
       // Model should already be warmed up from app mount (see poseLandmarker.ts),
       // so this typically resolves instantly rather than triggering a fresh load.
-      setStatusMessage("Loading tracking model...");
-      landmarkerRef.current = await getPoseLandmarker();
-
-      setStatusMessage("Requesting camera access...");
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: PROCESS_WIDTH },
-          height: { ideal: PROCESS_HEIGHT },
-          facingMode: "user",
-        },
-        audio: false,
-      });
+      // Model load and camera start run IN PARALLEL — previously the camera
+      // only began opening after the model finished loading.
+      setStatusMessage("Starting camera...");
+      const [landmarker, camera] = await Promise.all([
+        getPoseLandmarker(),
+        openCameraStream({ width: PROCESS_WIDTH, height: PROCESS_HEIGHT, facingMode: "user" }),
+      ]);
+      stream = camera;
+      if (unmounted) {
+        camera.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      landmarkerRef.current = landmarker;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -141,6 +145,7 @@ export function LiveTrackingSession({
     });
 
     return () => {
+      unmounted = true;
       if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -172,7 +177,7 @@ export function LiveTrackingSession({
     lastVideoTimeRef.current = video.currentTime;
 
     const timestampMs = performance.now();
-    const result = landmarker.detectForVideo(video, timestampMs);
+    const result = landmarker.detectForVideo(boosterRef.current.frame(video), timestampMs);
 
     const ctx = canvas.getContext("2d");
     if (ctx && result.landmarks.length > 0) {

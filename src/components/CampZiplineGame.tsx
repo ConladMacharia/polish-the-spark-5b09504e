@@ -13,6 +13,7 @@ import {
   blendConfidence,
   handConfidence,
 } from "@/lib/pose/adaptiveTracking";
+import { LowLightBooster } from "@/lib/camera";
 
 interface CampZiplineGameProps {
   // Difficulty parameter — read from the per-child target/range system
@@ -34,6 +35,7 @@ const PINCH_GRACE_MS = 90;
 
 export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const boosterRef = useRef(new LowLightBooster());
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
@@ -111,7 +113,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
       lastVideoTimeRef.current = video.currentTime;
 
       const now = performance.now();
-      const result = landmarker.detectForVideo(video, now);
+      const result = landmarker.detectForVideo(boosterRef.current.frame(video), now);
       if (result.landmarks.length > 0) {
         const lm = result.landmarks[0];
         const thumb = lm[HAND_LANDMARKS.THUMB_TIP];

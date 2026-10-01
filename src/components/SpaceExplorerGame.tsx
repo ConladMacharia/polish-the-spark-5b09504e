@@ -11,6 +11,7 @@ import {
   blendConfidence,
   handConfidence,
 } from "@/lib/pose/adaptiveTracking";
+import { LowLightBooster } from "@/lib/camera";
 
 interface Obstacle {
   x: number;
@@ -36,6 +37,7 @@ const MAX_SPEED = 9;
 
 export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExplorerGameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const boosterRef = useRef(new LowLightBooster());
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
@@ -123,7 +125,7 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
     isDetectingRef.current = true;
     lastVideoTimeRef.current = video.currentTime;
 
-    const result = landmarker.detectForVideo(video, performance.now());
+    const result = landmarker.detectForVideo(boosterRef.current.frame(video), performance.now());
     if (result.landmarks.length > 0) {
       const lm = result.landmarks[0];
       // Palm center = average of wrist + 4 MCP joints

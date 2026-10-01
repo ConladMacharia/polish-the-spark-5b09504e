@@ -6,28 +6,26 @@
 //    two-hand variant never re-downloads it
 //  * GPU is tried first, with an automatic CPU fallback so a device without a
 //    working WebGL delegate still starts instead of hanging
-import {
-  FilesetResolver,
-  HandLandmarker,
-  type HandLandmarkerResult,
-} from "@mediapipe/tasks-vision";
+import { HandLandmarker, type HandLandmarkerResult } from "@mediapipe/tasks-vision";
+import { openCameraStream } from "@/lib/camera";
+import { getVision } from "@/lib/pose/vision";
 
-const WASM_BASE = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
 const MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
-
-let visionPromise: ReturnType<typeof FilesetResolver.forVisionTasks> | null = null;
-function getVision() {
-  if (!visionPromise) visionPromise = FilesetResolver.forVisionTasks(WASM_BASE);
-  return visionPromise;
-}
 
 let modelPromise: Promise<Uint8Array> | null = null;
 function getModelBuffer() {
   if (!modelPromise) {
     modelPromise = fetch(MODEL_URL)
-      .then((r) => r.arrayBuffer())
-      .then((b) => new Uint8Array(b));
+      .then((r) => {
+        if (!r.ok) throw new Error(`Hand model download failed (${r.status})`);
+        return r.arrayBuffer();
+      })
+      .then((b) => new Uint8Array(b))
+      .catch((err) => {
+        modelPromise = null; // allow retry
+        throw err;
+      });
   }
   return modelPromise;
 }
@@ -40,10 +38,11 @@ async function create(numHands: number): Promise<HandLandmarker> {
     runningMode: "VIDEO" as const,
     numHands,
     // Low thresholds = the hand locks on within the first frames instead of
-    // needing a perfectly lit, perfectly still hand first.
-    minHandDetectionConfidence: 0.35,
-    minHandPresenceConfidence: 0.35,
-    minTrackingConfidence: 0.35,
+    // needing a perfectly lit, perfectly still hand first. Lowered a touch more
+    // for dim rooms, where detector scores sag even on a clearly visible hand.
+    minHandDetectionConfidence: 0.3,
+    minHandPresenceConfidence: 0.3,
+    minTrackingConfidence: 0.3,
   });
   try {
     return await HandLandmarker.createFromOptions(vision, options("GPU"));
@@ -93,27 +92,19 @@ export function warmUpHandLandmarker(): void {
   getHandLandmarker().catch((err) => console.error("HandLandmarker warm-up failed", err));
 }
 
-/** Low-latency camera stream shared by every camera game. */
+/**
+ * Low-latency, low-light-tuned camera stream shared by every camera game.
+ * Re-uses a warm camera when one was just closed (see lib/camera.ts).
+ */
 export async function startCameraStream(): Promise<MediaStream> {
-  return navigator.mediaDevices.getUserMedia({
-    video: {
-      width: { ideal: 640 },
-      height: { ideal: 480 },
-      frameRate: { ideal: 30, max: 30 },
-      facingMode: "user",
-    },
-    audio: false,
-  });
+  return openCameraStream({ width: 640, height: 480, facingMode: "user" });
 }
 
 /**
  * Attaches a stream to a video element and resolves once real frames are
  * flowing, so the first detect() call never runs against an empty texture.
  */
-export async function attachStream(
-  video: HTMLVideoElement,
-  stream: MediaStream
-): Promise<void> {
+export async function attachStream(video: HTMLVideoElement, stream: MediaStream): Promise<void> {
   video.srcObject = stream;
   video.muted = true;
   video.playsInline = true;

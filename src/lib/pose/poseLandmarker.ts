@@ -2,11 +2,11 @@
 // Singleton loader — model initializes ONCE and is reused across camera sessions.
 // This alone fixes most of the "slow to open" issue.
 
-import {
-  FilesetResolver,
-  PoseLandmarker,
-  type PoseLandmarkerResult,
-} from "@mediapipe/tasks-vision";
+import { PoseLandmarker, type PoseLandmarkerResult } from "@mediapipe/tasks-vision";
+import { getVision } from "@/lib/pose/vision";
+
+const POSE_MODEL_URL =
+  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
 
 let poseLandmarkerInstance: PoseLandmarker | null = null;
 let loadingPromise: Promise<PoseLandmarker> | null = null;
@@ -28,26 +28,35 @@ export async function getPoseLandmarker(): Promise<PoseLandmarker> {
   }
 
   loadingPromise = (async () => {
-    const vision = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-    );
+    const vision = await getVision();
 
-    const landmarker = await PoseLandmarker.createFromOptions(vision, {
-      baseOptions: {
-        modelAssetPath:
-          "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-        delegate: "GPU", // config change, not a model change — significant speed gain
-      },
-      runningMode: "VIDEO", // required for correct real-time tracking
+    // Lower confidences than the defaults: in dim rooms pose scores sag even
+    // when the body is clearly visible, and the app already gates coaching on
+    // its own confidence checks downstream.
+    const options = (delegate: "GPU" | "CPU") => ({
+      baseOptions: { modelAssetPath: POSE_MODEL_URL, delegate },
+      runningMode: "VIDEO" as const, // required for correct real-time tracking
       numPoses: 1,
-      minPoseDetectionConfidence: 0.5,
-      minPosePresenceConfidence: 0.5,
-      minTrackingConfidence: 0.5,
+      minPoseDetectionConfidence: 0.4,
+      minPosePresenceConfidence: 0.4,
+      minTrackingConfidence: 0.4,
     });
+
+    let landmarker: PoseLandmarker;
+    try {
+      landmarker = await PoseLandmarker.createFromOptions(vision, options("GPU"));
+    } catch (err) {
+      // No working WebGL delegate: fall back to CPU so it still starts.
+      console.warn("PoseLandmarker GPU delegate unavailable, using CPU", err);
+      landmarker = await PoseLandmarker.createFromOptions(vision, options("CPU"));
+    }
 
     poseLandmarkerInstance = landmarker;
     return landmarker;
-  })();
+  })().catch((err) => {
+    loadingPromise = null; // allow a retry instead of caching the failure
+    throw err;
+  });
 
   return loadingPromise;
 }
@@ -66,7 +75,7 @@ export function warmUpPoseLandmarker(): void {
 export function detectPoseForVideo(
   landmarker: PoseLandmarker,
   video: HTMLVideoElement,
-  timestampMs: number
+  timestampMs: number,
 ): PoseLandmarkerResult {
   return landmarker.detectForVideo(video, timestampMs);
 }

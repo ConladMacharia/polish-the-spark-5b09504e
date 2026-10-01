@@ -23,6 +23,7 @@ import {
 import { Staircase, type ChildGame, type Eligibility } from "@/lib/child-games";
 import { Rafiki } from "@/components/child/Rafiki";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { LowLightBooster } from "@/lib/camera";
 
 type Target = { id: number; x: number; y: number; drifting: boolean };
 
@@ -61,6 +62,7 @@ export function ChildGameScreen({
 }) {
   const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const boosterRef = useRef(new LowLightBooster());
   const rafRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const smoother = useRef(new PointSmoother(0.4));
@@ -119,7 +121,7 @@ export function ChildGameScreen({
           if (cancelled || !videoRef.current) return;
           const v = videoRef.current;
           if (v.readyState >= 2) {
-            const res = landmarker.detectForVideo(v, performance.now());
+            const res = landmarker.detectForVideo(boosterRef.current.frame(v), performance.now());
             const hands = (res.landmarks ?? []) as Hand[];
             const sides = (res.handedness ?? []).map(
               (h) => (h?.[0]?.categoryName ?? "Right") as Handedness

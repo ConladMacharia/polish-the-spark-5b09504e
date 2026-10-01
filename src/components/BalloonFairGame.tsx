@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getTwoHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
 import { HAND_LANDMARKS } from "@/lib/pose/fingerUtils";
+import { LowLightBooster } from "@/lib/camera";
 
 interface BalloonFairGameProps {
   bowHand: "left" | "right";
@@ -78,6 +79,7 @@ export function BalloonFairGame({
   windStrength = 1,
 }: BalloonFairGameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const boosterRef = useRef(new LowLightBooster());
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const isDetectingRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
@@ -216,7 +218,7 @@ export function BalloonFairGame({
     isDetectingRef.current = true;
     lastVideoTimeRef.current = video.currentTime;
 
-    const result = landmarker.detectForVideo(video, performance.now());
+    const result = landmarker.detectForVideo(boosterRef.current.frame(video), performance.now());
     const hands = result.landmarks ?? [];
 
     // Each hand is described purely by what it's doing — pinching or open — so
