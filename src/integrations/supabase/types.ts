@@ -265,6 +265,13 @@ export type Database = {
           condition_notes: string | null
           contraindications: string | null
           cp_type: string | null
+          county: string | null
+          lat: number | null
+          lng: number | null
+          sub_county: string | null
+          ward: string | null
+          specialist_needs: string[]
+          consent_at: string | null
           created_at: string
           date_of_birth: string | null
           gmfcs_level: Database["public"]["Enums"]["gmfcs_level"] | null
@@ -289,6 +296,13 @@ export type Database = {
           condition_notes?: string | null
           contraindications?: string | null
           cp_type?: string | null
+          county?: string | null
+          lat?: number | null
+          lng?: number | null
+          sub_county?: string | null
+          ward?: string | null
+          specialist_needs?: string[]
+          consent_at?: string | null
           created_at?: string
           date_of_birth?: string | null
           gmfcs_level?: Database["public"]["Enums"]["gmfcs_level"] | null
@@ -313,6 +327,13 @@ export type Database = {
           condition_notes?: string | null
           contraindications?: string | null
           cp_type?: string | null
+          county?: string | null
+          lat?: number | null
+          lng?: number | null
+          sub_county?: string | null
+          ward?: string | null
+          specialist_needs?: string[]
+          consent_at?: string | null
           created_at?: string
           date_of_birth?: string | null
           gmfcs_level?: Database["public"]["Enums"]["gmfcs_level"] | null
@@ -398,6 +419,56 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      requests: {
+        Row: {
+          approved_by: string | null
+          assigned_therapist_id: string | null
+          child_id: string
+          created_at: string
+          created_by: string
+          funder: string
+          id: string
+          needs: string[]
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          assigned_therapist_id?: string | null
+          child_id: string
+          created_at?: string
+          created_by: string
+          funder?: string
+          id?: string
+          needs?: string[]
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          assigned_therapist_id?: string | null
+          child_id?: string
+          created_at?: string
+          created_by?: string
+          funder?: string
+          id?: string
+          needs?: string[]
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requests_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
@@ -529,6 +600,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      child_assigned_to_therapist: {
+        Args: { _child_id: string; _user_id: string }
+        Returns: boolean
+      }
+      child_owned_by: {
+        Args: { _child_id: string; _user_id: string }
+        Returns: boolean
+      }
       claim_patient_by_code: { Args: { _claim_code: string }; Returns: string }
       generate_claim_code: { Args: never; Returns: string }
       has_role: {
@@ -538,6 +617,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
+      is_verified_therapist: { Args: { _user_id: string }; Returns: boolean }
       user_can_access_patient: {
         Args: { _patient_id: string; _user_id: string }
         Returns: boolean
