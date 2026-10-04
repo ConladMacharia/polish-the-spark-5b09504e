@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { BadgeCheck, GitMerge, LogOut, ShieldCheck, Users } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminTheme } from "@/lib/adminTheme";
+import "@/components/admin/admin-theme.css";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -14,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { COUNTY_CENTROIDS, distanceKm, needLabel, professionLabel } from "@/lib/kenya";
 
 export const Route = createFileRoute("/_authenticated/app/admin")({
   head: () => ({ meta: [{ title: "Admin — Neuro-Bridge" }] }),
@@ -28,10 +31,10 @@ const NAV: { id: View; label: string; icon: typeof ShieldCheck }[] = [
   { id: "matching", label: "Matching", icon: GitMerge },
 ];
 
-// Neutral, data-first look. Colors are plain slate for now and will be
-// swapped for the Neuro-Bridge palette in one pass.
+// Wide, data-first layout in champagne and emerald ink (see admin-theme.css).
 function AdminShell() {
   const [view, setView] = useState<View>("verification");
+  useAdminTheme();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -43,10 +46,10 @@ function AdminShell() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
-      <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white p-4">
+    <div className="flex min-h-screen text-foreground">
+      <aside className="flex w-60 shrink-0 flex-col bg-gradient-to-b from-[#064E3B] to-[#043326] p-4 text-[#F8E7C9]">
         <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#F8E7C9]/70">
             Neuro-Bridge
           </p>
           <h1 className="text-lg font-semibold">Coordinator</h1>
@@ -57,7 +60,7 @@ function AdminShell() {
               key={id}
               onClick={() => setView(id)}
               className={`flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition ${
-                view === id ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100"
+                view === id ? "bg-[#F8E7C9] text-[#064E3B]" : "text-[#F8E7C9]/85 hover:bg-card/10"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -65,12 +68,17 @@ function AdminShell() {
             </button>
           ))}
         </nav>
-        <Button variant="ghost" className="justify-start text-slate-600" onClick={signOut}>
+        <Button
+          variant="ghost"
+          className="justify-start text-[#F8E7C9]/80 hover:bg-card/10 hover:text-[#F8E7C9]"
+          onClick={signOut}
+        >
           <LogOut className="mr-2 h-4 w-4" /> Sign out
         </Button>
       </aside>
 
       <main className="min-w-0 flex-1 p-8">
+        <AdminHero view={view} />
         {view === "verification" && <Verification />}
         {view === "children" && <Children />}
         {view === "matching" && <Matching />}
@@ -79,20 +87,76 @@ function AdminShell() {
   );
 }
 
+const HERO_LINE: Record<View, string> = {
+  verification: "Check each licence before you verify a therapist.",
+  children: "Everyone registered, across all caregivers.",
+  matching: "Pair each request with the right verified therapist.",
+};
+
+function AdminHero({ view }: { view: View }) {
+  const { data } = useQuery({
+    queryKey: ["admin", "counts"],
+    queryFn: async () => {
+      const [waiting, toVerify, kids] = await Promise.all([
+        supabase
+          .from("requests")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["pending", "declined"]),
+        supabase
+          .from("therapists")
+          .select("user_id", { count: "exact", head: true })
+          .eq("verified", false),
+        supabase.from("patients").select("id", { count: "exact", head: true }),
+      ]);
+      return {
+        waiting: waiting.count ?? 0,
+        toVerify: toVerify.count ?? 0,
+        kids: kids.count ?? 0,
+      };
+    },
+  });
+
+  const stats = [
+    { label: "Requests waiting", value: data?.waiting },
+    { label: "Therapists to verify", value: data?.toVerify },
+    { label: "Children registered", value: data?.kids },
+  ];
+
+  return (
+    <section className="nb-admin-hero mb-6 p-6">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[#F8E7C9]/75">
+        {NAV.find((n) => n.id === view)?.label}
+      </p>
+      <p className="mt-1 max-w-lg text-sm text-[#F8E7C9]/90">{HERO_LINE[view]}</p>
+      <div className="relative z-10 mt-4 flex flex-wrap gap-3">
+        {stats.map((x) => (
+          <div
+            key={x.label}
+            className="min-w-[8.5rem] rounded-xl bg-card/10 px-4 py-2.5 backdrop-blur"
+          >
+            <p className="text-2xl font-semibold leading-none">{x.value ?? "–"}</p>
+            <p className="mt-1 text-[11px] font-medium text-[#F8E7C9]/80">{x.label}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function Heading({ title, hint }: { title: string; hint: string }) {
   return (
     <div className="mb-5">
       <h2 className="text-xl font-semibold">{title}</h2>
-      <p className="text-sm text-slate-500">{hint}</p>
+      <p className="text-sm text-muted-foreground">{hint}</p>
     </div>
   );
 }
 
 function Pill({ children, tone }: { children: React.ReactNode; tone: "ok" | "wait" | "idle" }) {
   const tones = {
-    ok: "bg-emerald-100 text-emerald-800",
-    wait: "bg-amber-100 text-amber-800",
-    idle: "bg-slate-100 text-slate-600",
+    ok: "bg-[#064E3B]/10 text-[#064E3B]",
+    wait: "bg-amber-200/70 text-amber-900",
+    idle: "bg-black/5 text-muted-foreground",
   };
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${tones[tone]}`}>
@@ -136,11 +200,12 @@ function Verification() {
         title="Verification queue"
         hint="Check each licence with the professional regulator before you verify anyone."
       />
-      <div className="rounded-lg border border-slate-200 bg-white">
+      <div className="rounded-lg border border-border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Profession</TableHead>
               <TableHead>Clinic</TableHead>
               <TableHead>Licence no.</TableHead>
               <TableHead>City</TableHead>
@@ -151,14 +216,14 @@ function Verification() {
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={6} className="text-slate-500">
+                <TableCell colSpan={7} className="text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && data?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-slate-500">
+                <TableCell colSpan={7} className="text-muted-foreground">
                   No therapists have signed up yet.
                 </TableCell>
               </TableRow>
@@ -166,7 +231,8 @@ function Verification() {
             {data?.map((t) => (
               <TableRow key={t.user_id}>
                 <TableCell className="font-medium">{t.profile?.full_name || "—"}</TableCell>
-                <TableCell>{t.clinic_name}</TableCell>
+                <TableCell>{professionLabel(t.profession)}</TableCell>
+                <TableCell>{t.clinic_name || "—"}</TableCell>
                 <TableCell>{t.license_number || "—"}</TableCell>
                 <TableCell>{t.city || "—"}</TableCell>
                 <TableCell>
@@ -216,7 +282,7 @@ function Children() {
   return (
     <>
       <Heading title="Children" hint="Everyone registered, across all caregivers." />
-      <div className="rounded-lg border border-slate-200 bg-white">
+      <div className="rounded-lg border border-border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -231,14 +297,14 @@ function Children() {
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={6} className="text-slate-500">
+                <TableCell colSpan={6} className="text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && data?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-slate-500">
+                <TableCell colSpan={6} className="text-muted-foreground">
                   No children registered yet.
                 </TableCell>
               </TableRow>
@@ -285,7 +351,7 @@ function Matching() {
     queryFn: async () => {
       const [{ data: requests, error }, { data: verified }] = await Promise.all([
         supabase.from("requests").select("*").order("created_at", { ascending: false }),
-        supabase.from("therapists").select("user_id, clinic_name, city").eq("verified", true),
+        supabase.from("therapists").select("*").eq("verified", true),
       ]);
       if (error) throw error;
       const childIds = [...new Set((requests ?? []).map((r) => r.child_id))];
@@ -329,9 +395,9 @@ function Matching() {
     <>
       <Heading
         title="Matching"
-        hint="Requests from caregivers. Pick a verified therapist; they then accept or decline."
+        hint="Requests from caregivers. Pick a verified therapist; they then accept or decline. Distances are estimates from the child's county centre."
       />
-      <div className="rounded-lg border border-slate-200 bg-white">
+      <div className="rounded-lg border border-border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -346,14 +412,14 @@ function Matching() {
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={6} className="text-slate-500">
+                <TableCell colSpan={6} className="text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && data?.requests.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-slate-500">
+                <TableCell colSpan={6} className="text-muted-foreground">
                   No requests yet.
                 </TableCell>
               </TableRow>
@@ -365,7 +431,7 @@ function Matching() {
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{kid?.child_name ?? "—"}</TableCell>
                   <TableCell>{kid?.county ?? "—"}</TableCell>
-                  <TableCell>{r.needs.join(", ") || "—"}</TableCell>
+                  <TableCell>{r.needs.map(needLabel).join(", ") || "—"}</TableCell>
                   <TableCell className="capitalize">{r.funder}</TableCell>
                   <TableCell>
                     <Pill tone={statusTone(r.status)}>{r.status}</Pill>
@@ -373,25 +439,21 @@ function Matching() {
                   <TableCell className="text-right">
                     {r.status === "pending" || r.status === "declined" ? (
                       <div className="flex items-center justify-end gap-2">
-                        <select
-                          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+                        <TherapistSelect
                           value={pick[r.id] ?? ""}
-                          onChange={(e) => setPick((p) => ({ ...p, [r.id]: e.target.value }))}
-                        >
-                          <option value="">Choose therapist…</option>
-                          {data.therapists.map((t) => (
-                            <option key={t.user_id} value={t.user_id}>
-                              {t.name}
-                              {t.city ? ` — ${t.city}` : ""}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(v) => setPick((p) => ({ ...p, [r.id]: v }))}
+                          therapists={data.therapists}
+                          needs={r.needs}
+                          county={kid?.county ?? null}
+                        />
                         <Button size="sm" onClick={() => match(r.id)}>
                           Match
                         </Button>
                       </div>
                     ) : (
-                      <span className="text-sm text-slate-500">{assigned?.name ?? "Assigned"}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {assigned?.name ?? "Assigned"}
+                      </span>
                     )}
                   </TableCell>
                 </TableRow>
@@ -401,5 +463,97 @@ function Matching() {
         </Table>
       </div>
     </>
+  );
+}
+
+/* ── Therapist picker: best fits first ──────────────────────────────── */
+
+type PickableTherapist = {
+  user_id: string;
+  name: string;
+  city: string | null;
+  profession: string | null;
+  specializations: string[];
+  home_lat: number | null;
+  home_lng: number | null;
+  radius_km: number | null;
+  home_visits: boolean;
+};
+
+function TherapistSelect({
+  value,
+  onChange,
+  therapists,
+  needs,
+  county,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  therapists: PickableTherapist[];
+  needs: string[];
+  county: string | null;
+}) {
+  const centre = county ? COUNTY_CENTROIDS[county] : undefined;
+
+  const scored = therapists.map((t) => {
+    const km =
+      centre && t.home_lat != null && t.home_lng != null
+        ? distanceKm(centre, { lat: t.home_lat, lng: t.home_lng })
+        : null;
+    const inRange = km != null && t.radius_km != null && km <= t.radius_km;
+    const matchesNeed = needs.length === 0 || needs.some((n) => t.specializations.includes(n));
+    const best = t.home_visits && inRange && matchesNeed;
+    return { t, km, inRange, matchesNeed, best };
+  });
+
+  const byDistance = (a: (typeof scored)[number], b: (typeof scored)[number]) =>
+    (a.km ?? 1e9) - (b.km ?? 1e9);
+  const best = scored.filter((x) => x.best).sort(byDistance);
+  const others = scored.filter((x) => !x.best).sort(byDistance);
+
+  const label = (x: (typeof scored)[number]) => {
+    const parts = [
+      `${x.t.name}`,
+      professionLabel(x.t.profession),
+      x.t.city,
+      x.km != null ? `about ${Math.round(x.km)} km away` : "distance unknown",
+      x.t.radius_km != null ? `works within ${x.t.radius_km} km` : null,
+    ];
+    const flags = [
+      !x.t.home_visits ? "clinic only" : null,
+      x.km != null && !x.inRange ? "outside their area" : null,
+      !x.matchesNeed ? "different speciality" : null,
+    ].filter(Boolean);
+    return parts.filter(Boolean).join(" · ") + (flags.length ? ` (${flags.join(", ")})` : "");
+  };
+
+  return (
+    <select
+      className="max-w-[28rem] rounded-md border border-input bg-card px-2 py-1 text-sm"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      <option value="">
+        {therapists.length === 0 ? "No verified therapists yet" : "Choose therapist…"}
+      </option>
+      {best.length > 0 && (
+        <optgroup label="Best fits (in range, right speciality, home visits)">
+          {best.map((x) => (
+            <option key={x.t.user_id} value={x.t.user_id}>
+              {label(x)}
+            </option>
+          ))}
+        </optgroup>
+      )}
+      {others.length > 0 && (
+        <optgroup label={best.length > 0 ? "Other verified therapists" : "Verified therapists"}>
+          {others.map((x) => (
+            <option key={x.t.user_id} value={x.t.user_id}>
+              {label(x)}
+            </option>
+          ))}
+        </optgroup>
+      )}
+    </select>
   );
 }

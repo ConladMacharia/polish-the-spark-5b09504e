@@ -1,0 +1,54 @@
+/*
+ * Admin theme: champagne (#F8E7C9) blended with emerald ink (#064E3B).
+ * Switched on (on <html>) only while the coordinator screen is open, so pop-ups
+ * pick it up too and the other roles' looks are untouched.
+ * The admin screen is always light, even if dark mode was chosen elsewhere.
+ */
+html.theme-nb-admin,
+html.dark.theme-nb-admin {
+  color-scheme: light;
+  --background: #fffaf0;
+  --foreground: #0b2e24;
+  --card: #fffdf8;
+  --card-foreground: #0b2e24;
+  --popover: #fffdf8;
+  --popover-foreground: #0b2e24;
+  --primary: #064e3b;
+  --primary-foreground: #f8e7c9;
+  --secondary: #f8e7c9;
+  --secondary-foreground: #064e3b;
+  --muted: #f5ead2;
+  --muted-foreground: #4f5f53;
+  --accent: #f1dcb4;
+  --accent-foreground: #064e3b;
+  --border: #e6d3ab;
+  --input: #e6d3ab;
+  --ring: #064e3b;
+}
+
+html.theme-nb-admin body {
+  background-color: var(--background);
+  background-image: linear-gradient(180deg, #f8e7c9 0%, #fffaf0 380px);
+  background-repeat: no-repeat;
+  color: var(--foreground);
+}
+
+/* Emerald-to-champagne banner at the top of each admin page */
+.nb-admin-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  color: #f8e7c9;
+  background: linear-gradient(120deg, #064e3b 0%, #0a6149 58%, #c9b98f 118%);
+}
+.nb-admin-hero::after {
+  content: "";
+  position: absolute;
+  right: -3rem;
+  top: -4rem;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(248, 231, 201, 0.6), rgba(248, 231, 201, 0) 70%);
+  pointer-events: none;
+}

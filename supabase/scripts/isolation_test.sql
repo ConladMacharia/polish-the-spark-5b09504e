@@ -66,8 +66,10 @@ BEGIN
   -- admins are only ever made directly in the database, never by sign-up
   INSERT INTO public.user_roles (user_id, role) VALUES (adm, 'admin');
   -- therapist 1 is verified, therapist 2 is not
+  -- (signing up as a therapist now creates their row automatically)
   INSERT INTO public.therapists (user_id, clinic_name, verified) VALUES
-    (th_1, 'Test Clinic 1', true), (th_2, 'Test Clinic 2', false);
+    (th_1, 'Test Clinic 1', true), (th_2, 'Test Clinic 2', false)
+  ON CONFLICT (user_id) DO UPDATE SET clinic_name = EXCLUDED.clinic_name, verified = EXCLUDED.verified;
   -- one child each for the two caregivers
   INSERT INTO public.patients (child_name, claim_code, claimed_by_caregiver_id)
     VALUES ('Child A', public.generate_claim_code(), cg_a) RETURNING id INTO child_a;
