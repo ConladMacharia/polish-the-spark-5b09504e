@@ -270,6 +270,18 @@ BEGIN
   INSERT INTO nb_results (check_name, result)
     VALUES ('Admin can see all children', CASE WHEN cnt = 3 THEN 'PASS' ELSE 'FAIL' END);
 
+  -- 22. only one open request per child (stops double submissions)
+  BEGIN
+    INSERT INTO public.requests (child_id, created_by, needs) VALUES (child_a, cg_a, ARRAY['physiotherapy']);
+    v := false;
+  EXCEPTION WHEN unique_violation THEN
+    v := true;
+  WHEN OTHERS THEN
+    v := false;
+  END;
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('A child cannot have two open requests at once', CASE WHEN v THEN 'PASS' ELSE 'FAIL' END);
+
   -- 21. logged-out visitors get nothing
   BEGIN
     PERFORM pg_temp.nb_login(NULL, 'anon');

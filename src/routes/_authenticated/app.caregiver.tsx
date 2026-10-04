@@ -8,6 +8,7 @@ import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { RafikiIsland } from "@/components/child/RafikiIsland";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
+import { SpecialistCare } from "@/components/child/SpecialistCare";
 import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
 
 
@@ -240,6 +241,9 @@ function CaregiverHome() {
               </div>
             </GlassCard>
           </div>
+
+          {/* Specialist care: ask for a therapist, see the status */}
+          <SpecialistCare patient={patient as never} onEditProfile={() => setProfileOpen(true)} />
 
           {/* Tip card */}
           <GlassCard tint="neutral" className="mt-3 flex items-start gap-3 p-4">

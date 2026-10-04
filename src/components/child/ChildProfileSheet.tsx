@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { AmbientBlobs, Chip, GlassCard, SectionLabel } from "@/components/ui/glass";
+import { KENYA_COUNTIES } from "@/lib/kenya";
 
 const CP_TYPES = [
   "Spastic diplegia",
@@ -52,6 +53,10 @@ export type ChildProfile = {
   macs_level?: string | null;
   mobility?: string | null;
   condition_notes?: string | null;
+  county?: string | null;
+  sub_county?: string | null;
+  ward?: string | null;
+  consent_at?: string | null;
 };
 
 export function ChildProfileSheet({
@@ -65,9 +70,13 @@ export function ChildProfileSheet({
 }) {
   const qc = useQueryClient();
   const [form, setForm] = useState<ChildProfile>({});
+  const [consent, setConsent] = useState(false);
 
   useEffect(() => {
-    if (open && patient) setForm(patient);
+    if (open && patient) {
+      setForm(patient);
+      setConsent(!!patient.consent_at);
+    }
   }, [open, patient]);
 
   const save = useMutation({
@@ -81,6 +90,12 @@ export function ChildProfileSheet({
         macs_level: form.macs_level ?? null,
         mobility: form.mobility ?? null,
         condition_notes: form.condition_notes ?? null,
+        county: form.county || null,
+        sub_county: form.sub_county?.trim() || null,
+        ward: form.ward?.trim() || null,
+        // Consent is recorded once, with the date. Ticking it again later
+        // does not move the original date.
+        ...(consent && !patient.consent_at ? { consent_at: new Date().toISOString() } : {}),
       };
       const { error } = await supabase
         .from("patients")
@@ -234,6 +249,64 @@ export function ChildProfileSheet({
             <p className="mt-2 text-[11px] text-stone-400">
               Used to keep standing/balance exercises safe for this child.
             </p>
+          </Field>
+
+          <Field label="Where you live">
+            <div className="space-y-3">
+              <select
+                value={form.county ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, county: e.target.value }))}
+                className="w-full rounded-2xl border border-white/15 bg-white/[0.08] px-3 py-2.5 text-sm font-semibold text-stone-50 backdrop-blur-xl"
+              >
+                <option value="" className="text-stone-900">
+                  Choose your county
+                </option>
+                {KENYA_COUNTIES.map((c) => (
+                  <option key={c} value={c} className="text-stone-900">
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  value={form.sub_county ?? ""}
+                  placeholder="Sub-county"
+                  onChange={(e) => setForm((f) => ({ ...f, sub_county: e.target.value }))}
+                  className="rounded-2xl border-white/15 bg-white/[0.08] font-semibold text-stone-50 placeholder:text-stone-500 backdrop-blur-xl"
+                />
+                <Input
+                  value={form.ward ?? ""}
+                  placeholder="Ward"
+                  onChange={(e) => setForm((f) => ({ ...f, ward: e.target.value }))}
+                  className="rounded-2xl border-white/15 bg-white/[0.08] font-semibold text-stone-50 placeholder:text-stone-500 backdrop-blur-xl"
+                />
+              </div>
+            </div>
+            <p className="mt-2 text-[11px] text-stone-400">
+              Used only to find a specialist who can reach you.
+            </p>
+          </Field>
+
+          <Field label="Sharing with a specialist">
+            <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.05] p-3 backdrop-blur-xl">
+              <input
+                type="checkbox"
+                checked={consent}
+                disabled={!!patient?.consent_at}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-emerald-300"
+              />
+              <span className="text-[12.5px] font-medium leading-relaxed text-stone-300">
+                I am this child's parent or guardian. I agree that this child's profile and
+                progress can be shared with a verified therapist who is matched to us, so they can
+                plan care.
+              </span>
+            </label>
+            {patient?.consent_at && (
+              <p className="mt-2 text-[11px] text-emerald-300">
+                Consent recorded on {new Date(patient.consent_at).toLocaleDateString()}.
+              </p>
+            )}
           </Field>
 
           <Field label="Notes for this child (optional)">
