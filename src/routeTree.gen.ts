@@ -20,6 +20,9 @@ import { Route as AuthenticatedAppProgressRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppExercisesRouteImport } from './routes/_authenticated/app.exercises'
 import { Route as AuthenticatedAppCaregiverRouteImport } from './routes/_authenticated/app.caregiver'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
+import { Route as AuthenticatedAppTherapistIndexRouteImport } from './routes/_authenticated/app.therapist.index'
+import { Route as AuthenticatedAppTherapistVisitsRouteImport } from './routes/_authenticated/app.therapist.visits'
+import { Route as AuthenticatedAppTherapistRequestsRouteImport } from './routes/_authenticated/app.therapist.requests'
 import { Route as AuthenticatedAppTherapistPatientPatientIdRouteImport } from './routes/_authenticated/app.therapist.patient.$patientId'
 
 const AuthRoute = AuthRouteImport.update({
@@ -81,6 +84,24 @@ const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppTherapistIndexRoute =
+  AuthenticatedAppTherapistIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppTherapistRoute,
+  } as any)
+const AuthenticatedAppTherapistVisitsRoute =
+  AuthenticatedAppTherapistVisitsRouteImport.update({
+    id: '/visits',
+    path: '/visits',
+    getParentRoute: () => AuthenticatedAppTherapistRoute,
+  } as any)
+const AuthenticatedAppTherapistRequestsRoute =
+  AuthenticatedAppTherapistRequestsRouteImport.update({
+    id: '/requests',
+    path: '/requests',
+    getParentRoute: () => AuthenticatedAppTherapistRoute,
+  } as any)
 const AuthenticatedAppTherapistPatientPatientIdRoute =
   AuthenticatedAppTherapistPatientPatientIdRouteImport.update({
     id: '/patient/$patientId',
@@ -99,6 +120,9 @@ export interface FileRoutesByFullPath {
   '/app/therapist': typeof AuthenticatedAppTherapistRouteWithChildren
   '/app/training': typeof AuthenticatedAppTrainingRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/therapist/requests': typeof AuthenticatedAppTherapistRequestsRoute
+  '/app/therapist/visits': typeof AuthenticatedAppTherapistVisitsRoute
+  '/app/therapist/': typeof AuthenticatedAppTherapistIndexRoute
   '/app/therapist/patient/$patientId': typeof AuthenticatedAppTherapistPatientPatientIdRoute
 }
 export interface FileRoutesByTo {
@@ -108,9 +132,11 @@ export interface FileRoutesByTo {
   '/app/caregiver': typeof AuthenticatedAppCaregiverRoute
   '/app/exercises': typeof AuthenticatedAppExercisesRoute
   '/app/progress': typeof AuthenticatedAppProgressRoute
-  '/app/therapist': typeof AuthenticatedAppTherapistRouteWithChildren
   '/app/training': typeof AuthenticatedAppTrainingRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/therapist/requests': typeof AuthenticatedAppTherapistRequestsRoute
+  '/app/therapist/visits': typeof AuthenticatedAppTherapistVisitsRoute
+  '/app/therapist': typeof AuthenticatedAppTherapistIndexRoute
   '/app/therapist/patient/$patientId': typeof AuthenticatedAppTherapistPatientPatientIdRoute
 }
 export interface FileRoutesById {
@@ -126,6 +152,9 @@ export interface FileRoutesById {
   '/_authenticated/app/therapist': typeof AuthenticatedAppTherapistRouteWithChildren
   '/_authenticated/app/training': typeof AuthenticatedAppTrainingRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/therapist/requests': typeof AuthenticatedAppTherapistRequestsRoute
+  '/_authenticated/app/therapist/visits': typeof AuthenticatedAppTherapistVisitsRoute
+  '/_authenticated/app/therapist/': typeof AuthenticatedAppTherapistIndexRoute
   '/_authenticated/app/therapist/patient/$patientId': typeof AuthenticatedAppTherapistPatientPatientIdRoute
 }
 export interface FileRouteTypes {
@@ -141,6 +170,9 @@ export interface FileRouteTypes {
     | '/app/therapist'
     | '/app/training'
     | '/app/'
+    | '/app/therapist/requests'
+    | '/app/therapist/visits'
+    | '/app/therapist/'
     | '/app/therapist/patient/$patientId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -150,9 +182,11 @@ export interface FileRouteTypes {
     | '/app/caregiver'
     | '/app/exercises'
     | '/app/progress'
-    | '/app/therapist'
     | '/app/training'
     | '/app'
+    | '/app/therapist/requests'
+    | '/app/therapist/visits'
+    | '/app/therapist'
     | '/app/therapist/patient/$patientId'
   id:
     | '__root__'
@@ -167,6 +201,9 @@ export interface FileRouteTypes {
     | '/_authenticated/app/therapist'
     | '/_authenticated/app/training'
     | '/_authenticated/app/'
+    | '/_authenticated/app/therapist/requests'
+    | '/_authenticated/app/therapist/visits'
+    | '/_authenticated/app/therapist/'
     | '/_authenticated/app/therapist/patient/$patientId'
   fileRoutesById: FileRoutesById
 }
@@ -255,6 +292,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/therapist/': {
+      id: '/_authenticated/app/therapist/'
+      path: '/'
+      fullPath: '/app/therapist/'
+      preLoaderRoute: typeof AuthenticatedAppTherapistIndexRouteImport
+      parentRoute: typeof AuthenticatedAppTherapistRoute
+    }
+    '/_authenticated/app/therapist/visits': {
+      id: '/_authenticated/app/therapist/visits'
+      path: '/visits'
+      fullPath: '/app/therapist/visits'
+      preLoaderRoute: typeof AuthenticatedAppTherapistVisitsRouteImport
+      parentRoute: typeof AuthenticatedAppTherapistRoute
+    }
+    '/_authenticated/app/therapist/requests': {
+      id: '/_authenticated/app/therapist/requests'
+      path: '/requests'
+      fullPath: '/app/therapist/requests'
+      preLoaderRoute: typeof AuthenticatedAppTherapistRequestsRouteImport
+      parentRoute: typeof AuthenticatedAppTherapistRoute
+    }
     '/_authenticated/app/therapist/patient/$patientId': {
       id: '/_authenticated/app/therapist/patient/$patientId'
       path: '/patient/$patientId'
@@ -266,11 +324,18 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppTherapistRouteChildren {
+  AuthenticatedAppTherapistRequestsRoute: typeof AuthenticatedAppTherapistRequestsRoute
+  AuthenticatedAppTherapistVisitsRoute: typeof AuthenticatedAppTherapistVisitsRoute
+  AuthenticatedAppTherapistIndexRoute: typeof AuthenticatedAppTherapistIndexRoute
   AuthenticatedAppTherapistPatientPatientIdRoute: typeof AuthenticatedAppTherapistPatientPatientIdRoute
 }
 
 const AuthenticatedAppTherapistRouteChildren: AuthenticatedAppTherapistRouteChildren =
   {
+    AuthenticatedAppTherapistRequestsRoute:
+      AuthenticatedAppTherapistRequestsRoute,
+    AuthenticatedAppTherapistVisitsRoute: AuthenticatedAppTherapistVisitsRoute,
+    AuthenticatedAppTherapistIndexRoute: AuthenticatedAppTherapistIndexRoute,
     AuthenticatedAppTherapistPatientPatientIdRoute:
       AuthenticatedAppTherapistPatientPatientIdRoute,
   }

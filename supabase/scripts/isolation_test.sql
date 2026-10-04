@@ -32,6 +32,7 @@ DECLARE ids uuid[];
 BEGIN
   SELECT array_agg(id) INTO ids FROM auth.users WHERE email LIKE 'nb-test-%@example.invalid';
   IF ids IS NULL THEN RETURN; END IF;
+  DELETE FROM public.visits WHERE therapist_id = ANY(ids);
   DELETE FROM public.requests WHERE created_by = ANY(ids) OR assigned_therapist_id = ANY(ids);
   DELETE FROM public.patients WHERE claimed_by_caregiver_id = ANY(ids) OR therapist_id = ANY(ids);
   DELETE FROM public.therapists WHERE user_id = ANY(ids);
@@ -50,6 +51,7 @@ DECLARE
   child_a uuid;
   child_b uuid;
   req uuid;
+  visit_id uuid;
   cnt int;
   rows_changed int;
   v boolean;
@@ -202,6 +204,14 @@ BEGIN
   INSERT INTO nb_results (check_name, result)
     VALUES ('Therapist 1 sees only the assigned child', CASE WHEN cnt = 1 THEN 'PASS' ELSE 'FAIL' END);
 
+  -- 13b. before accepting, therapist 1 cannot see the caregiver's contact details
+  UPDATE public.profiles SET full_name = 'Caregiver A', phone = '0700000001' WHERE id = cg_a;
+  PERFORM pg_temp.nb_login(th_1);
+  SELECT count(*) INTO cnt FROM public.profiles WHERE id = cg_a;
+  PERFORM pg_temp.nb_logout();
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('Therapist cannot see caregiver contact before accepting', CASE WHEN cnt = 0 THEN 'PASS' ELSE 'FAIL' END);
+
   -- 14. therapist_2 still sees none
   PERFORM pg_temp.nb_login(th_2);
   SELECT count(*) INTO cnt FROM public.patients;
@@ -233,6 +243,94 @@ BEGIN
   END;
   INSERT INTO nb_results (check_name, result)
     VALUES ('The assigned verified therapist can accept', CASE WHEN v THEN 'PASS' ELSE 'FAIL' END);
+
+  -- 16b. a visit cannot be logged by the verified therapist for a child that is not theirs
+  BEGIN
+    PERFORM pg_temp.nb_login(th_1);
+    INSERT INTO public.visits (request_id, child_id, therapist_id, activities)
+      VALUES (req, child_b, th_1, 'should fail');
+    PERFORM pg_temp.nb_logout();
+    v := false;
+  EXCEPTION WHEN OTHERS THEN
+    PERFORM pg_temp.nb_logout(); v := true;
+  END;
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('A therapist cannot log a visit for a child that is not assigned', CASE WHEN v THEN 'PASS' ELSE 'FAIL' END);
+
+  -- 16c. the assigned verified therapist can log a visit
+  BEGIN
+    PERFORM pg_temp.nb_login(th_1);
+    INSERT INTO public.visits (request_id, child_id, therapist_id, activities, milestone_notes)
+      VALUES (req, child_a, th_1, 'Hand opening and reaching practice', 'Reached for cup twice')
+      RETURNING id INTO visit_id;
+    PERFORM pg_temp.nb_logout();
+    v := true;
+  EXCEPTION WHEN OTHERS THEN
+    PERFORM pg_temp.nb_logout(); v := false;
+  END;
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('The assigned therapist can log a visit', CASE WHEN v THEN 'PASS' ELSE 'FAIL' END);
+
+  -- 16d. an unverified therapist cannot log a visit, even if they try to use this request
+  BEGIN
+    PERFORM pg_temp.nb_login(th_2);
+    INSERT INTO public.visits (request_id, child_id, therapist_id, activities)
+      VALUES (req, child_a, th_2, 'should fail');
+    PERFORM pg_temp.nb_logout();
+    v := false;
+  EXCEPTION WHEN OTHERS THEN
+    PERFORM pg_temp.nb_logout(); v := true;
+  END;
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('An unverified therapist cannot log a visit', CASE WHEN v THEN 'PASS' ELSE 'FAIL' END);
+
+  -- 16e. a visit cannot be moved to another child
+  BEGIN
+    PERFORM pg_temp.nb_login(th_1);
+    UPDATE public.visits SET child_id = child_b WHERE id = visit_id;
+    PERFORM pg_temp.nb_logout();
+    v := false;
+  EXCEPTION WHEN OTHERS THEN
+    PERFORM pg_temp.nb_logout(); v := true;
+  END;
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('A visit cannot be moved to another child', CASE WHEN v THEN 'PASS' ELSE 'FAIL' END);
+
+  -- 16f. the child's caregiver can read the visit; another caregiver cannot
+  PERFORM pg_temp.nb_login(cg_a);
+  SELECT count(*) INTO cnt FROM public.visits WHERE id = visit_id;
+  PERFORM pg_temp.nb_logout();
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('The child''s caregiver can read the visit', CASE WHEN cnt = 1 THEN 'PASS' ELSE 'FAIL' END);
+
+  PERFORM pg_temp.nb_login(cg_b);
+  SELECT count(*) INTO cnt FROM public.visits WHERE id = visit_id;
+  PERFORM pg_temp.nb_logout();
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('Another caregiver cannot read the visit', CASE WHEN cnt = 0 THEN 'PASS' ELSE 'FAIL' END);
+
+  -- 16g. therapist 2 cannot read therapist 1's visit
+  PERFORM pg_temp.nb_login(th_2);
+  SELECT count(*) INTO cnt FROM public.visits WHERE id = visit_id;
+  PERFORM pg_temp.nb_logout();
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('Another therapist cannot read the visit', CASE WHEN cnt = 0 THEN 'PASS' ELSE 'FAIL' END);
+
+  -- 16h. after accepting, therapist 1 can see caregiver A's contact, but not caregiver B's
+  PERFORM pg_temp.nb_login(th_1);
+  SELECT count(*) INTO cnt FROM public.profiles WHERE id = cg_a;
+  SELECT count(*) INTO rows_changed FROM public.profiles WHERE id = cg_b;
+  PERFORM pg_temp.nb_logout();
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('After accepting, therapist sees only their own caregiver''s contact',
+            CASE WHEN cnt = 1 AND rows_changed = 0 THEN 'PASS' ELSE 'FAIL' END);
+
+  -- 16i. admin can read visits
+  PERFORM pg_temp.nb_login(adm);
+  SELECT count(*) INTO cnt FROM public.visits WHERE id = visit_id;
+  PERFORM pg_temp.nb_logout();
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('Admin can read visits', CASE WHEN cnt = 1 THEN 'PASS' ELSE 'FAIL' END);
 
   -- 17. therapist_2 cannot touch the request at all
   PERFORM pg_temp.nb_login(th_2);
@@ -293,6 +391,17 @@ BEGIN
   END;
   INSERT INTO nb_results (check_name, result)
     VALUES ('Logged-out visitors cannot read children', CASE WHEN v THEN 'PASS' ELSE 'FAIL' END);
+
+  BEGIN
+    PERFORM pg_temp.nb_login(NULL, 'anon');
+    SELECT count(*) INTO cnt FROM public.visits;
+    PERFORM pg_temp.nb_logout();
+    v := (cnt = 0);
+  EXCEPTION WHEN OTHERS THEN
+    PERFORM pg_temp.nb_logout(); v := true;
+  END;
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('Logged-out visitors cannot read visits', CASE WHEN v THEN 'PASS' ELSE 'FAIL' END);
 
   BEGIN
     PERFORM pg_temp.nb_login(NULL, 'anon');

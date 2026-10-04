@@ -595,11 +595,73 @@ export type Database = {
         }
         Relationships: []
       }
+      visits: {
+        Row: {
+          activities: string
+          child_id: string
+          created_at: string
+          id: string
+          milestone_notes: string | null
+          next_review: string | null
+          request_id: string
+          therapist_id: string
+          updated_at: string
+          visit_date: string
+        }
+        Insert: {
+          activities: string
+          child_id: string
+          created_at?: string
+          id?: string
+          milestone_notes?: string | null
+          next_review?: string | null
+          request_id: string
+          therapist_id: string
+          updated_at?: string
+          visit_date?: string
+        }
+        Update: {
+          activities?: string
+          child_id?: string
+          created_at?: string
+          id?: string
+          milestone_notes?: string | null
+          next_review?: string | null
+          request_id?: string
+          therapist_id?: string
+          updated_at?: string
+          visit_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visits_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visits_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_log_visit: {
+        Args: { _child_id: string; _request_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_my_accepted_caregiver: {
+        Args: { _caregiver_id: string; _therapist_id: string }
+        Returns: boolean
+      }
       child_assigned_to_therapist: {
         Args: { _child_id: string; _user_id: string }
         Returns: boolean

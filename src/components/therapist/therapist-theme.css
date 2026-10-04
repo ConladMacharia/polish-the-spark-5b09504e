@@ -1,0 +1,90 @@
+/*
+ * Therapist theme: electric indigo (#5B3DF5) blended with soft lilac (#E8DEFF).
+ * The class is put on <html> while a therapist is signed in to the therapist
+ * area, so pop-ups (dialogs, menus) that render outside the page pick it up too.
+ * It is removed again when the therapist leaves, so caregiver screens are untouched.
+ */
+html.theme-nb-therapist {
+  --background: #f7f3ff;
+  --foreground: #1e1646;
+  --card: #ffffff;
+  --card-foreground: #1e1646;
+  --popover: #ffffff;
+  --popover-foreground: #1e1646;
+  --primary: #5b3df5;
+  --primary-foreground: #ffffff;
+  --secondary: #e8deff;
+  --secondary-foreground: #2b1b80;
+  --muted: #f1ebff;
+  --muted-foreground: #6b5fa3;
+  --accent: #e8deff;
+  --accent-foreground: #3a22c9;
+  --border: #ddd2fa;
+  --input: #e3dafb;
+  --ring: #5b3df5;
+  --sage: #2e9e73;
+  --sage-foreground: #ffffff;
+  --sky-soft: #f1ebff;
+  --nb-grad-a: #5b3df5;
+  --nb-grad-b: #7a5bff;
+  --nb-grad-c: #b9a3ff;
+}
+
+html.dark.theme-nb-therapist {
+  --background: #120e2b;
+  --foreground: #efe9ff;
+  --card: #1b1640;
+  --card-foreground: #efe9ff;
+  --popover: #1b1640;
+  --popover-foreground: #efe9ff;
+  --primary: #8a73ff;
+  --primary-foreground: #120e2b;
+  --secondary: #2a2362;
+  --secondary-foreground: #e8deff;
+  --muted: #221c52;
+  --muted-foreground: #b3a6e6;
+  --accent: #3a2f8f;
+  --accent-foreground: #e8deff;
+  --border: rgba(232, 222, 255, 0.14);
+  --input: rgba(232, 222, 255, 0.16);
+  --ring: #8a73ff;
+  --sage: #4fc79a;
+  --sky-soft: #221c52;
+  --nb-grad-a: #4b2fd6;
+  --nb-grad-b: #5b3df5;
+  --nb-grad-c: #8a73ff;
+}
+
+html.theme-nb-therapist body {
+  background-image: linear-gradient(180deg, #e8deff 0%, #f7f3ff 340px);
+  background-repeat: no-repeat;
+  background-color: var(--background);
+}
+html.dark.theme-nb-therapist body {
+  background-image: linear-gradient(180deg, #1f1852 0%, #120e2b 360px);
+}
+
+/* The indigo-to-lilac banner at the top of therapist pages */
+.nb-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    var(--nb-grad-a) 0%,
+    var(--nb-grad-b) 55%,
+    var(--nb-grad-c) 100%
+  );
+}
+.nb-hero::after {
+  content: "";
+  position: absolute;
+  right: -3rem;
+  top: -3rem;
+  width: 12rem;
+  height: 12rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(232, 222, 255, 0.55), rgba(232, 222, 255, 0) 70%);
+  pointer-events: none;
+}
