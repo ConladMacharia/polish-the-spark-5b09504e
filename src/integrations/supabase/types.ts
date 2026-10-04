@@ -551,6 +551,18 @@ export type Database = {
           updated_at: string
           user_id: string
           verified: boolean
+          available_days: string[]
+          home_lat: number | null
+          home_lng: number | null
+          home_visits: boolean
+          languages: string[]
+          profession: string | null
+          radius_km: number | null
+          specializations: string[]
+          county: string | null
+          license_body: string | null
+          license_document_path: string | null
+          profile_submitted_at: string | null
         }
         Insert: {
           city?: string | null
@@ -561,6 +573,18 @@ export type Database = {
           updated_at?: string
           user_id: string
           verified?: boolean
+          available_days?: string[]
+          home_lat?: number | null
+          home_lng?: number | null
+          home_visits?: boolean
+          languages?: string[]
+          profession?: string | null
+          radius_km?: number | null
+          specializations?: string[]
+          county?: string | null
+          license_body?: string | null
+          license_document_path?: string | null
+          profile_submitted_at?: string | null
         }
         Update: {
           city?: string | null
@@ -571,6 +595,18 @@ export type Database = {
           updated_at?: string
           user_id?: string
           verified?: boolean
+          available_days?: string[]
+          home_lat?: number | null
+          home_lng?: number | null
+          home_visits?: boolean
+          languages?: string[]
+          profession?: string | null
+          radius_km?: number | null
+          specializations?: string[]
+          county?: string | null
+          license_body?: string | null
+          license_document_path?: string | null
+          profile_submitted_at?: string | null
         }
         Relationships: []
       }
@@ -654,6 +690,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_initial_role: { Args: { _role: string }; Returns: string }
       can_log_visit: {
         Args: { _child_id: string; _request_id: string; _user_id: string }
         Returns: boolean

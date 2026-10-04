@@ -144,3 +144,28 @@ export function distanceKm(
     Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
+
+export const WEEKDAYS = [
+  { value: "mon", label: "Mon" },
+  { value: "tue", label: "Tue" },
+  { value: "wed", label: "Wed" },
+  { value: "thu", label: "Thu" },
+  { value: "fri", label: "Fri" },
+  { value: "sat", label: "Sat" },
+  { value: "sun", label: "Sun" },
+] as const;
+
+export const THERAPIST_LANGUAGES = [
+  { value: "en", label: "English" },
+  { value: "sw", label: "Kiswahili" },
+  { value: "ki", label: "Gikuyu" },
+  { value: "luo", label: "Dholuo" },
+  { value: "luy", label: "Luhya" },
+  { value: "kam", label: "Kikamba" },
+  { value: "kis", label: "Ekegusii" },
+  { value: "kln", label: "Kalenjin" },
+  { value: "mij", label: "Mijikenda" },
+  { value: "mer", label: "Kimeru" },
+  { value: "tur", label: "Turkana" },
+  { value: "som", label: "Somali" },
+] as const;

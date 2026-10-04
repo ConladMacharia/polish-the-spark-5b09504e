@@ -30,3 +30,17 @@ export async function fetchMyRole(userId: string): Promise<AppRole | null> {
 export function homeForRole(role: AppRole | null) {
   return HOME_FOR_ROLE[role ?? "caregiver"];
 }
+
+/**
+ * For people who signed up without a role (for example with Google): gives
+ * them the role they picked on the sign-up form, or caregiver. The database
+ * only ever allows caregiver or therapist here, never admin.
+ */
+export async function claimInitialRole(pending: string | null): Promise<AppRole | null> {
+  const wanted = pending === "therapist" ? "therapist" : "caregiver";
+  const { data, error } = await supabase.rpc("claim_initial_role", { _role: wanted });
+  if (error || !data) return null;
+  return data as AppRole;
+}
+
+export const PENDING_ROLE_KEY = "nb-pending-role";

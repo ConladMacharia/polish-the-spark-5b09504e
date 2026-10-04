@@ -48,6 +48,9 @@ DECLARE
   th_1 uuid := gen_random_uuid();
   th_2 uuid := gen_random_uuid();
   adm  uuid := gen_random_uuid();
+  th_3 uuid := gen_random_uuid();
+  nr   uuid := gen_random_uuid();
+  got  text;
   child_a uuid;
   child_b uuid;
   req uuid;
@@ -381,6 +384,50 @@ BEGIN
   END;
   INSERT INTO nb_results (check_name, result)
     VALUES ('A child cannot have two open requests at once', CASE WHEN v THEN 'PASS' ELSE 'FAIL' END);
+
+  -- 20b. someone with no role yet can claim caregiver or therapist, but never admin
+  INSERT INTO auth.users (id, email, raw_user_meta_data)
+    VALUES (nr, 'nb-test-norole@example.invalid', '{}');
+  PERFORM pg_temp.nb_login(nr);
+  got := public.claim_initial_role('admin');
+  PERFORM pg_temp.nb_logout();
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('Asking for admin when you have no role only gives caregiver',
+            CASE WHEN got = 'caregiver'
+                  AND NOT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = nr AND role = 'admin')
+                 THEN 'PASS' ELSE 'FAIL' END);
+
+  -- 20c. a person who already has a role cannot swap it using that function
+  PERFORM pg_temp.nb_login(cg_a);
+  got := public.claim_initial_role('therapist');
+  PERFORM pg_temp.nb_logout();
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('A caregiver cannot turn themselves into a therapist',
+            CASE WHEN got = 'caregiver'
+                  AND NOT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = cg_a AND role = 'therapist')
+                 THEN 'PASS' ELSE 'FAIL' END);
+
+  -- 20d. changing the licence number sends a verified therapist back to pending
+  INSERT INTO auth.users (id, email, raw_user_meta_data)
+    VALUES (th_3, 'nb-test-therapist-3@example.invalid', '{"role":"therapist"}');
+  UPDATE public.therapists SET verified = true, license_number = 'ORIGINAL-1' WHERE user_id = th_3;
+  PERFORM pg_temp.nb_login(th_3);
+  UPDATE public.therapists SET license_number = 'CHANGED-2' WHERE user_id = th_3;
+  PERFORM pg_temp.nb_logout();
+  SELECT verified INTO v FROM public.therapists WHERE user_id = th_3;
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('New licence details send a verified therapist back to pending',
+            CASE WHEN v = false THEN 'PASS' ELSE 'FAIL' END);
+
+  -- 20e. changing something harmless (availability) keeps a therapist verified
+  UPDATE public.therapists SET verified = true WHERE user_id = th_3;
+  PERFORM pg_temp.nb_login(th_3);
+  UPDATE public.therapists SET radius_km = 80 WHERE user_id = th_3;
+  PERFORM pg_temp.nb_logout();
+  SELECT verified INTO v FROM public.therapists WHERE user_id = th_3;
+  INSERT INTO nb_results (check_name, result)
+    VALUES ('Changing service radius does not remove verification',
+            CASE WHEN v = true THEN 'PASS' ELSE 'FAIL' END);
 
   -- 21. logged-out visitors get nothing
   BEGIN

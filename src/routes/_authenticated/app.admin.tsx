@@ -16,7 +16,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { COUNTY_CENTROIDS, distanceKm, needLabel, professionLabel } from "@/lib/kenya";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  COUNTY_CENTROIDS,
+  THERAPIST_LANGUAGES,
+  WEEKDAYS,
+  distanceKm,
+  needLabel,
+  professionLabel,
+} from "@/lib/kenya";
 
 export const Route = createFileRoute("/_authenticated/app/admin")({
   head: () => ({ meta: [{ title: "Admin — Neuro-Bridge" }] }),
@@ -169,6 +183,7 @@ function Pill({ children, tone }: { children: React.ReactNode; tone: "ok" | "wai
 
 function Verification() {
   const qc = useQueryClient();
+  const [openId, setOpenId] = useState<string | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "therapists"],
     queryFn: async () => {
@@ -236,28 +251,48 @@ function Verification() {
                 <TableCell>{t.license_number || "—"}</TableCell>
                 <TableCell>{t.city || "—"}</TableCell>
                 <TableCell>
-                  {t.verified ? <Pill tone="ok">Verified</Pill> : <Pill tone="wait">Pending</Pill>}
+                  {t.verified ? (
+                    <Pill tone="ok">Verified</Pill>
+                  ) : t.profile_submitted_at || t.license_number ? (
+                    <Pill tone="wait">Pending</Pill>
+                  ) : (
+                    <Pill tone="idle">No details yet</Pill>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
-                  {t.verified ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setVerified(t.user_id, false)}
-                    >
-                      Remove
+                  <div className="flex items-center justify-end gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => setOpenId(t.user_id)}>
+                      Details
                     </Button>
-                  ) : (
-                    <Button size="sm" onClick={() => setVerified(t.user_id, true)}>
-                      <BadgeCheck className="mr-1 h-4 w-4" /> Verify
-                    </Button>
-                  )}
+                    {t.verified ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setVerified(t.user_id, false)}
+                      >
+                        Remove
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        disabled={!t.license_number}
+                        title={!t.license_number ? "Waiting for licence details" : undefined}
+                        onClick={() => setVerified(t.user_id, true)}
+                      >
+                        <BadgeCheck className="mr-1 h-4 w-4" /> Verify
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+      <TherapistDetails
+        therapist={data?.find((t) => t.user_id === openId) ?? null}
+        onClose={() => setOpenId(null)}
+      />
     </>
   );
 }
@@ -557,3 +592,104 @@ function TherapistSelect({
     </select>
   );
 }
+
+/* ── Therapist details + licence document ───────────────────────────── */
+
+type TherapistRow = {
+  user_id: string;
+  clinic_name: string;
+  license_number: string | null;
+  license_body: string | null;
+  license_document_path: string | null;
+  profession: string | null;
+  county: string | null;
+  city: string | null;
+  radius_km: number | null;
+  home_visits: boolean;
+  specializations: string[];
+  available_days: string[];
+  languages: string[];
+  verified: boolean;
+  profile_submitted_at: string | null;
+  profile?: { full_name: string; phone: string | null };
+};
+
+function TherapistDetails({
+  therapist: t,
+  onClose,
+}: {
+  therapist: TherapistRow | null;
+  onClose: () => void;
+}) {
+  const [opening, setOpening] = useState(false);
+
+  async function openDocument() {
+    if (!t?.license_document_path) return;
+    setOpening(true);
+    try {
+      // A private link that stops working after 5 minutes.
+      const { data, error } = await supabase.storage
+        .from("therapist-docs")
+        .createSignedUrl(t.license_document_path, 300);
+      if (error || !data) return toast.error(error?.message ?? "Could not open the document");
+      window.open(data.signedUrl, "_blank", "noopener");
+    } finally {
+      setOpening(false);
+    }
+  }
+
+  const label = (list: readonly { value: string; label: string }[], values: string[]) =>
+    values.map((v) => list.find((x) => x.value === v)?.label ?? v).join(", ") || "—";
+
+  const rows: [string, React.ReactNode][] = t
+    ? [
+        ["Profession", professionLabel(t.profession)],
+        ["Clinic", t.clinic_name || "—"],
+        ["Licence number", t.license_number || "—"],
+        ["Issued by", t.license_body || "—"],
+        ["Phone", t.profile?.phone || "—"],
+        ["Works from", [t.city, t.county].filter(Boolean).join(", ") || "—"],
+        [
+          "Travels up to",
+          t.radius_km
+            ? `${t.radius_km} km${t.home_visits ? "" : " (clinic only, no home visits)"}`
+            : "—",
+        ],
+        ["Offers", t.specializations.map(needLabelSafe).join(", ") || "—"],
+        ["Days", label(WEEKDAYS, t.available_days)],
+        ["Languages", label(THERAPIST_LANGUAGES, t.languages)],
+        [
+          "Details sent",
+          t.profile_submitted_at
+            ? new Date(t.profile_submitted_at).toLocaleDateString()
+            : "Not yet",
+        ],
+      ]
+    : [];
+
+  return (
+    <Dialog open={!!t} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{t?.profile?.full_name || "Therapist"}</DialogTitle>
+          <DialogDescription>
+            Compare the licence number and document with the professional body before verifying.
+          </DialogDescription>
+        </DialogHeader>
+        <dl className="divide-y divide-border text-sm">
+          {rows.map(([k, v]) => (
+            <div key={k} className="flex justify-between gap-4 py-2">
+              <dt className="text-muted-foreground">{k}</dt>
+              <dd className="text-right font-medium">{v}</dd>
+            </div>
+          ))}
+        </dl>
+        <Button onClick={openDocument} disabled={!t?.license_document_path || opening}>
+          {t?.license_document_path ? "Open licence document" : "No document uploaded"}
+        </Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const needLabelSafe = (v: string) => needLabel(v);

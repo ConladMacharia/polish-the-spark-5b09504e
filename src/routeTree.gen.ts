@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,8 +24,14 @@ import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppTherapistIndexRouteImport } from './routes/_authenticated/app.therapist.index'
 import { Route as AuthenticatedAppTherapistVisitsRouteImport } from './routes/_authenticated/app.therapist.visits'
 import { Route as AuthenticatedAppTherapistRequestsRouteImport } from './routes/_authenticated/app.therapist.requests'
+import { Route as AuthenticatedAppTherapistProfileRouteImport } from './routes/_authenticated/app.therapist.profile'
 import { Route as AuthenticatedAppTherapistPatientPatientIdRouteImport } from './routes/_authenticated/app.therapist.patient.$patientId'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -102,6 +109,12 @@ const AuthenticatedAppTherapistRequestsRoute =
     path: '/requests',
     getParentRoute: () => AuthenticatedAppTherapistRoute,
   } as any)
+const AuthenticatedAppTherapistProfileRoute =
+  AuthenticatedAppTherapistProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedAppTherapistRoute,
+  } as any)
 const AuthenticatedAppTherapistPatientPatientIdRoute =
   AuthenticatedAppTherapistPatientPatientIdRouteImport.update({
     id: '/patient/$patientId',
@@ -112,6 +125,7 @@ const AuthenticatedAppTherapistPatientPatientIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/caregiver': typeof AuthenticatedAppCaregiverRoute
@@ -120,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/app/therapist': typeof AuthenticatedAppTherapistRouteWithChildren
   '/app/training': typeof AuthenticatedAppTrainingRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/therapist/profile': typeof AuthenticatedAppTherapistProfileRoute
   '/app/therapist/requests': typeof AuthenticatedAppTherapistRequestsRoute
   '/app/therapist/visits': typeof AuthenticatedAppTherapistVisitsRoute
   '/app/therapist/': typeof AuthenticatedAppTherapistIndexRoute
@@ -128,12 +143,14 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/caregiver': typeof AuthenticatedAppCaregiverRoute
   '/app/exercises': typeof AuthenticatedAppExercisesRoute
   '/app/progress': typeof AuthenticatedAppProgressRoute
   '/app/training': typeof AuthenticatedAppTrainingRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/therapist/profile': typeof AuthenticatedAppTherapistProfileRoute
   '/app/therapist/requests': typeof AuthenticatedAppTherapistRequestsRoute
   '/app/therapist/visits': typeof AuthenticatedAppTherapistVisitsRoute
   '/app/therapist': typeof AuthenticatedAppTherapistIndexRoute
@@ -144,6 +161,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
   '/_authenticated/app/caregiver': typeof AuthenticatedAppCaregiverRoute
@@ -152,6 +170,7 @@ export interface FileRoutesById {
   '/_authenticated/app/therapist': typeof AuthenticatedAppTherapistRouteWithChildren
   '/_authenticated/app/training': typeof AuthenticatedAppTrainingRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/therapist/profile': typeof AuthenticatedAppTherapistProfileRoute
   '/_authenticated/app/therapist/requests': typeof AuthenticatedAppTherapistRequestsRoute
   '/_authenticated/app/therapist/visits': typeof AuthenticatedAppTherapistVisitsRoute
   '/_authenticated/app/therapist/': typeof AuthenticatedAppTherapistIndexRoute
@@ -162,6 +181,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/app'
     | '/app/admin'
     | '/app/caregiver'
@@ -170,6 +190,7 @@ export interface FileRouteTypes {
     | '/app/therapist'
     | '/app/training'
     | '/app/'
+    | '/app/therapist/profile'
     | '/app/therapist/requests'
     | '/app/therapist/visits'
     | '/app/therapist/'
@@ -178,12 +199,14 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/app/admin'
     | '/app/caregiver'
     | '/app/exercises'
     | '/app/progress'
     | '/app/training'
     | '/app'
+    | '/app/therapist/profile'
     | '/app/therapist/requests'
     | '/app/therapist/visits'
     | '/app/therapist'
@@ -193,6 +216,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/reset-password'
     | '/_authenticated/app'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/caregiver'
@@ -201,6 +225,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/therapist'
     | '/_authenticated/app/training'
     | '/_authenticated/app/'
+    | '/_authenticated/app/therapist/profile'
     | '/_authenticated/app/therapist/requests'
     | '/_authenticated/app/therapist/visits'
     | '/_authenticated/app/therapist/'
@@ -211,10 +236,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -313,6 +346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppTherapistRequestsRouteImport
       parentRoute: typeof AuthenticatedAppTherapistRoute
     }
+    '/_authenticated/app/therapist/profile': {
+      id: '/_authenticated/app/therapist/profile'
+      path: '/profile'
+      fullPath: '/app/therapist/profile'
+      preLoaderRoute: typeof AuthenticatedAppTherapistProfileRouteImport
+      parentRoute: typeof AuthenticatedAppTherapistRoute
+    }
     '/_authenticated/app/therapist/patient/$patientId': {
       id: '/_authenticated/app/therapist/patient/$patientId'
       path: '/patient/$patientId'
@@ -324,6 +364,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppTherapistRouteChildren {
+  AuthenticatedAppTherapistProfileRoute: typeof AuthenticatedAppTherapistProfileRoute
   AuthenticatedAppTherapistRequestsRoute: typeof AuthenticatedAppTherapistRequestsRoute
   AuthenticatedAppTherapistVisitsRoute: typeof AuthenticatedAppTherapistVisitsRoute
   AuthenticatedAppTherapistIndexRoute: typeof AuthenticatedAppTherapistIndexRoute
@@ -332,6 +373,8 @@ interface AuthenticatedAppTherapistRouteChildren {
 
 const AuthenticatedAppTherapistRouteChildren: AuthenticatedAppTherapistRouteChildren =
   {
+    AuthenticatedAppTherapistProfileRoute:
+      AuthenticatedAppTherapistProfileRoute,
     AuthenticatedAppTherapistRequestsRoute:
       AuthenticatedAppTherapistRequestsRoute,
     AuthenticatedAppTherapistVisitsRoute: AuthenticatedAppTherapistVisitsRoute,
@@ -383,6 +426,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

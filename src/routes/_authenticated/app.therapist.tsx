@@ -1,14 +1,16 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  CalendarCheck,
   ClipboardList,
   LogOut,
   Moon,
   ShieldAlert,
   Stethoscope,
   Sun,
+  UserRound,
   Users,
-  CalendarCheck,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +27,7 @@ const NAV = [
   { to: "/app/therapist/requests", label: "Requests", icon: ClipboardList },
   { to: "/app/therapist", label: "My children", icon: Users },
   { to: "/app/therapist/visits", label: "Visits", icon: CalendarCheck },
+  { to: "/app/therapist/profile", label: "Profile", icon: UserRound },
 ] as const;
 
 function TherapistLayout() {
@@ -47,6 +50,13 @@ function TherapistLayout() {
     },
     refetchInterval: 60_000,
   });
+
+  // First visit as a new therapist: go straight to the profile form.
+  useEffect(() => {
+    if (me && !me.verified && !me.profile_submitted_at && path === "/app/therapist") {
+      navigate({ to: "/app/therapist/profile", replace: true });
+    }
+  }, [me, path, navigate]);
 
   async function signOut() {
     await qc.cancelQueries();
@@ -126,11 +136,29 @@ function TherapistLayout() {
           <div className="flex items-start gap-3 rounded-2xl border border-border bg-secondary p-4 text-secondary-foreground">
             <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div className="text-sm">
-              <p className="font-semibold">Your account is waiting to be verified</p>
-              <p className="mt-0.5 opacity-80">
-                We check each therapist's licence before sending requests. Until then you can set up
-                your own patients, but requests and visits stay locked.
-              </p>
+              {me.profile_submitted_at ? (
+                <>
+                  <p className="font-semibold">Your account is waiting to be verified</p>
+                  <p className="mt-0.5 opacity-80">
+                    A coordinator is checking your licence. Until then you can set up your own
+                    patients, but requests and visits stay locked.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold">Finish your profile to get verified</p>
+                  <p className="mt-0.5 opacity-80">
+                    Add your licence and the area you work in. Requests and visits unlock once a
+                    coordinator has verified you.{" "}
+                    <Link
+                      to="/app/therapist/profile"
+                      className="font-semibold text-primary underline"
+                    >
+                      Open my profile
+                    </Link>
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -140,7 +168,7 @@ function TherapistLayout() {
 
       {/* Phone navigation */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur md:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-3">
+        <div className="mx-auto grid max-w-md grid-cols-4">
           {NAV.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
