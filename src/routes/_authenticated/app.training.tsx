@@ -87,8 +87,7 @@ function TrainingPage() {
             label: t("catShoulder"),
             icon: "🦾",
             items: [
-              { slug: "arm", name: t("exForwardReach"), focus: t("focusFlexion") },
-              { slug: "arm-circles", name: t("exArmLowering"), focus: t("focusExtension") },
+              { slug: "arm-circles", name: t("exShoulderExtension"), focus: t("focusExtension") },
               { slug: "side-bend", name: t("exSideReach"), focus: t("focusAbduction") },
               { slug: "midline", name: t("exCrossBodyReach"), focus: t("focusAdduction") },
               { slug: "wall-slide", name: t("exRotation"), focus: t("focusRotationFull") },
@@ -100,7 +99,6 @@ function TrainingPage() {
             icon: "💪",
             items: [
               { slug: "reach", name: t("exBendStraighten"), focus: t("focusFlexionExtension") },
-              { slug: "shoulder", name: t("exPalmUpDown"), focus: t("focusSupinationPronation") },
             ],
           },
           {
@@ -108,12 +106,15 @@ function TrainingPage() {
             label: t("catWrist"),
             icon: "🖐️",
             items: [
+              { slug: "wrist-finger-stretch", name: t("exWristFingerStretch"), focus: t("focusStretch") },
               { slug: "draw", name: t("exWristBendUp"), focus: t("focusExtension") },
               { slug: "tracing", name: t("exWristBendDown"), focus: t("focusFlexion") },
               { slug: "page-turn", name: t("exWristTilt"), focus: t("focusRadialUlnar") },
             ],
           },
-          { id: "hand", label: t("catHandFingers"), icon: "🤲", keywords: ["hand", "finger", "grasp", "pincer", "thumb"] },
+          { id: "hand", label: t("catHandFingers"), icon: "🤲", items: [
+              { slug: "open-hand", name: t("exOpenHandPositioning"), focus: t("focusHandOpening") },
+            ] },
         ],
       },
       {
@@ -122,7 +123,7 @@ function TrainingPage() {
         icon: "🦵",
         track: "leg",
         subcats: [
-          { id: "hip", label: t("catHip"), keywords: ["hip"] },
+          { id: "hip", label: t("catHip"), keywords: ["hip"], extra: [{ slug: "sit-ups", name: t("exSitUps"), focus: t("focusCoreStrength") }] },
           { id: "knee", label: t("catKnee"), keywords: ["knee"] },
           { id: "ankle", label: t("catAnkle"), keywords: ["ankle", "foot"] },
           { id: "balance", label: t("catBalance"), keywords: ["balance"] },
@@ -154,8 +155,13 @@ function TrainingPage() {
       const hay = `${e.name} ${e.focus} ${e.description} ${e.slug}`.toLowerCase();
       return keywords.some((k) => hay.includes(k));
     });
-    const result = matches.length ? matches : base;
-    return result.map((e) => translateExercise(e, t));
+    const result = (matches.length ? matches : base).map((e) => translateExercise(e, t));
+    for (const it of sub.extra ?? []) {
+      if (result.some((e) => e.slug === it.slug)) continue;
+      const found = EXERCISES.find((e) => e.slug === it.slug);
+      result.push({ ...(found ?? ({} as Exercise)), slug: it.slug, name: it.name, focus: it.focus } as Exercise);
+    }
+    return result;
   }
 
   return (

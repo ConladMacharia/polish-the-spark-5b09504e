@@ -26,7 +26,6 @@ import { getLanguage } from "@/lib/i18n/languages";
 
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { LowLightBooster, openCameraStream } from "@/lib/camera";
-import { fetchActiveChild } from "@/lib/activeChild";
 
 
 export const Route = createFileRoute("/_authenticated/app/exercises")({
@@ -737,7 +736,14 @@ function LiveSessionPage() {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
       if (!uid) return null;
-      return await fetchActiveChild(uid);
+      const { data } = await supabase
+        .from("patients")
+        .select("*")
+        .eq("claimed_by_caregiver_id", uid)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return data;
     },
   });
   const childNameForCopy = patient?.child_name?.split(" ")[0] ?? "your child";
@@ -763,8 +769,7 @@ function LiveSessionPage() {
             label: t("catShoulder"),
             icon: "🦾",
             items: [
-              { slug: "arm", name: t("exForwardReach"), focus: t("focusFlexion") },
-              { slug: "arm-circles", name: t("exArmLowering"), focus: t("focusExtension") },
+              { slug: "arm-circles", name: t("exShoulderExtension"), focus: t("focusExtension") },
               { slug: "side-bend", name: t("exSideReach"), focus: t("focusAbduction") },
               { slug: "midline", name: t("exCrossBodyReach"), focus: t("focusAdduction") },
               { slug: "wall-slide", name: t("exRotation"), focus: t("focusRotationFull") },
@@ -776,7 +781,6 @@ function LiveSessionPage() {
             icon: "💪",
             items: [
               { slug: "reach", name: t("exBendStraighten"), focus: t("focusFlexionExtension") },
-              { slug: "shoulder", name: t("exPalmUpDown"), focus: t("focusSupinationPronation") },
             ],
           },
           {
@@ -784,6 +788,7 @@ function LiveSessionPage() {
             label: t("catWrist"),
             icon: "🖐️",
             items: [
+              { slug: "wrist-finger-stretch", name: t("exWristFingerStretch"), focus: t("focusStretch") },
               { slug: "draw", name: t("exWristBendUp"), focus: t("focusExtension") },
               { slug: "tracing", name: t("exWristBendDown"), focus: t("focusFlexion") },
               {
@@ -797,7 +802,9 @@ function LiveSessionPage() {
             id: "hand",
             label: t("catHandFingers"),
             icon: "🤲",
-            keywords: ["hand", "finger", "grasp", "pincer", "thumb"],
+            items: [
+              { slug: "open-hand", name: t("exOpenHandPositioning"), focus: t("focusHandOpening") },
+            ],
           },
         ],
       },
@@ -807,7 +814,7 @@ function LiveSessionPage() {
         icon: "🦵",
         track: "leg",
         subcats: [
-          { id: "hip", label: t("catHip"), icon: "🦿", keywords: ["hip"] },
+          { id: "hip", label: t("catHip"), icon: "🦿", keywords: ["hip"], extra: [{ slug: "sit-ups", name: t("exSitUps"), focus: t("focusCoreStrength") }] },
           { id: "knee", label: t("catKnee"), icon: "🦵", keywords: ["knee"] },
           { id: "ankle", label: t("catAnkle"), icon: "👟", keywords: ["ankle", "foot"] },
           { id: "balance", label: t("catBalance"), icon: "⚖️", keywords: ["balance"] },
@@ -847,8 +854,13 @@ function LiveSessionPage() {
       const hay = `${e.name} ${e.focus} ${e.description} ${e.slug}`.toLowerCase();
       return keywords.some((k) => hay.includes(k));
     });
-    const result = matches.length ? matches : base;
-    return result.map((e) => translateExercise(e, t));
+    const result = (matches.length ? matches : base).map((e) => translateExercise(e, t));
+    for (const it of sub.extra ?? []) {
+      if (result.some((e) => e.slug === it.slug)) continue;
+      const found = EXERCISES.find((e) => e.slug === it.slug);
+      result.push({ ...(found ?? ({} as Exercise)), slug: it.slug, name: it.name, focus: it.focus } as Exercise);
+    }
+    return result;
   }
 
   return (

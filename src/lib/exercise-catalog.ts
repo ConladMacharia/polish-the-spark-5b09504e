@@ -339,6 +339,18 @@ export const EXERCISES: Exercise[] = [
     gamified: true,
   },
 
+  {
+    slug: "sit-ups",
+    name: "Sit-ups",
+    category: "pt",
+    track: "leg",
+    icon: "🧘",
+    focus: "Core strength",
+    description: "Lie on your back and curl up slowly towards sitting, then lower with control.",
+    benefits: "Builds abdominal strength for sitting up and trunk control.",
+    gamified: true,
+  },
+
   // ============ OCCUPATIONAL THERAPY (21) ============
   {
     slug: "pinch",
@@ -569,6 +581,28 @@ export const EXERCISES: Exercise[] = [
     focus: "Bilateral coordination",
     description: "Roll a large ball forward using both palms.",
     benefits: "Trains symmetric two-hand control.",
+    gamified: true,
+  },
+  {
+    slug: "open-hand",
+    name: "Open hand positioning",
+    category: "ot",
+    track: "arm",
+    icon: "🖐️",
+    focus: "Hand opening",
+    description: "Open the hand fully with fingers spread, hold, then relax.",
+    benefits: "Improves finger extension and the ability to release and grasp objects.",
+    gamified: true,
+  },
+  {
+    slug: "wrist-finger-stretch",
+    name: "Wrist and finger stretch",
+    category: "ot",
+    track: "arm",
+    icon: "🤲",
+    focus: "Stretch",
+    description: "Extend the arm, then gently stretch the wrist and fingers back and hold.",
+    benefits: "Reduces stiffness and keeps wrist and finger range of motion.",
     gamified: true,
   },
 ];

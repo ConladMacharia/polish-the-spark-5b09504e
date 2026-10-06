@@ -109,6 +109,10 @@ export const EN_STRINGS = {
   exWristBendUp: "Wrist bend up",
   exWristBendDown: "Wrist bend down",
   exWristTilt: "Side to side wrist tilt",
+  exShoulderExtension: "Shoulder extension",
+  exWristFingerStretch: "Wrist and finger stretch",
+  exOpenHandPositioning: "Open hand positioning",
+  exSitUps: "Sit-ups",
 
   // --- Movement focus terms ---
   focusFlexion: "Flexion",
@@ -119,6 +123,9 @@ export const EN_STRINGS = {
   focusFlexionExtension: "Flexion and extension",
   focusSupinationPronation: "Supination and pronation",
   focusRadialUlnar: "Radial and ulnar deviation",
+  focusStretch: "Stretch",
+  focusHandOpening: "Hand opening",
+  focusCoreStrength: "Core strength",
 
   // --- Exercise catalog (name / focus), keyed by slug ---
   exCatName_arm: "Forward reach",
