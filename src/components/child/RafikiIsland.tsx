@@ -154,6 +154,23 @@ function buildRegions(macs: MacsLevel): Region[] {
  * Screen A — the world map, laid out as a calm card grid: one card per island
  * region, its activity and mechanic, and the MACS gating chip.
  */
+/** Little picture scene on each game card: the main picture plus two extras. */
+const SCENE_EXTRAS: Record<string, [string, string]> = {
+  "cloud-squeeze": ["🌤️", "🌈"],
+  "firefly-catch": ["🌿", "🌙"],
+  "star-reach": ["🌌", "✨"],
+  "piano-grove": ["🎵", "🌳"],
+  "bubble-lagoon": ["🐠", "🌊"],
+  "zip-tent": ["🌲", "🔥"],
+  "shape-sorter": ["🔺", "🟦"],
+  "peg-pop": ["🔴", "🟢"],
+  "snip-ribbon": ["✂️", "🎪"],
+  "carry-basket": ["🍎", "🌼"],
+  "magic-garden": ["🦋", "🌷"],
+  "space-explorer": ["🚀", "⭐"],
+  "balloon-pop": ["🎉", "🎪"],
+};
+
 export function RafikiIsland({ childName }: { childName?: string }) {
   const { t } = useLanguage();
   const [macs] = useState(readMacsLevel);
@@ -254,6 +271,22 @@ export function RafikiIsland({ childName }: { childName?: string }) {
                   }`}
                   onClick={() => playable && setActive(playable)}
                 >
+                  <div
+                    aria-hidden="true"
+                    className={`relative mb-3 flex h-28 items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-br ${games[0].gradient}`}
+                  >
+                    <span className="absolute left-3 top-2 text-2xl opacity-80">
+                      {(SCENE_EXTRAS[games[0].id] ?? ["✨", "⭐"])[0]}
+                    </span>
+                    <span className="absolute bottom-2 right-3 text-2xl opacity-80">
+                      {(SCENE_EXTRAS[games[0].id] ?? ["✨", "⭐"])[1]}
+                    </span>
+                    {games.map((g) => (
+                      <span key={g.id} className="text-6xl drop-shadow-lg">
+                        {g.emoji}
+                      </span>
+                    ))}
+                  </div>
                   <div className="flex items-center gap-2.5">
                     <span className="flex items-center gap-1.5">
                       {games.map((g) => {

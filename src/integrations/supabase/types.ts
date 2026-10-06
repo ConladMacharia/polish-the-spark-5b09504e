@@ -510,6 +510,7 @@ export type Database = {
         Row: {
           avg_correctness: number | null
           avg_range_of_motion_deg: number | null
+          best_angle_deg: number | null
           best_hold_ms: number | null
           caregiver_id: string | null
           completion_pct: number
@@ -524,11 +525,13 @@ export type Database = {
           patient_id: string
           reps_completed: number
           reps_target: number
+          side: string | null
           started_at: string
         }
         Insert: {
           avg_correctness?: number | null
           avg_range_of_motion_deg?: number | null
+          best_angle_deg?: number | null
           best_hold_ms?: number | null
           caregiver_id?: string | null
           completion_pct?: number
@@ -543,11 +546,13 @@ export type Database = {
           patient_id: string
           reps_completed?: number
           reps_target?: number
+          side?: string | null
           started_at?: string
         }
         Update: {
           avg_correctness?: number | null
           avg_range_of_motion_deg?: number | null
+          best_angle_deg?: number | null
           best_hold_ms?: number | null
           caregiver_id?: string | null
           completion_pct?: number
@@ -562,6 +567,7 @@ export type Database = {
           patient_id?: string
           reps_completed?: number
           reps_target?: number
+          side?: string | null
           started_at?: string
         }
         Relationships: [
