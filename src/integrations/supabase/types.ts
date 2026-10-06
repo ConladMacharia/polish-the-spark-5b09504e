@@ -208,6 +208,39 @@ export type Database = {
           },
         ]
       }
+      exercise_videos: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          mime_type: string | null
+          size_bytes: number | null
+          slug: string
+          storage_path: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          mime_type?: string | null
+          size_bytes?: number | null
+          slug: string
+          storage_path: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          mime_type?: string | null
+          size_bytes?: number | null
+          slug?: string
+          storage_path?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       pain_mood_logs: {
         Row: {
           created_at: string

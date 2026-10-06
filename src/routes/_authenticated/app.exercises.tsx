@@ -26,6 +26,7 @@ import { getLanguage } from "@/lib/i18n/languages";
 
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { LowLightBooster, openCameraStream } from "@/lib/camera";
+import { fetchActiveChild } from "@/lib/activeChild";
 
 
 export const Route = createFileRoute("/_authenticated/app/exercises")({
@@ -736,14 +737,7 @@ function LiveSessionPage() {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
       if (!uid) return null;
-      const { data } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("claimed_by_caregiver_id", uid)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      return data;
+      return await fetchActiveChild(uid);
     },
   });
   const childNameForCopy = patient?.child_name?.split(" ")[0] ?? "your child";

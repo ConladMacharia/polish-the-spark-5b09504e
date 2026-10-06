@@ -8,6 +8,10 @@ import { EXERCISES, translateExercise, type Exercise } from "@/lib/exercise-cata
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
+import { ExerciseVideoDialog } from "@/components/training/ExerciseVideoDialog";
+import { VideoUploadButton } from "@/components/training/VideoUploadButton";
+import { fetchMyRole } from "@/lib/roles";
+import { fetchExerciseVideos } from "@/lib/training-videos";
 import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
 
 export const Route = createFileRoute("/_authenticated/app/training")({
@@ -24,6 +28,21 @@ function TrainingPage() {
   const navigate = useNavigate();
   const [launching, setLaunching] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [active, setActive] = useState<Exercise | null>(null);
+
+  const { data: videos = {} } = useQuery({
+    queryKey: ["exercise-videos"],
+    queryFn: fetchExerciseVideos,
+  });
+
+  const { data: role } = useQuery({
+    queryKey: ["my-role"],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getUser();
+      return data.user ? fetchMyRole(data.user.id) : null;
+    },
+  });
+  const isAdmin = role === "admin";
 
   const { data: patient } = useQuery({
     queryKey: ["my-patient"],
@@ -193,38 +212,51 @@ function TrainingPage() {
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {items.map((ex: Exercise, i: number) => (
-                        <GlassCard
-                          key={`${sub.id}-${ex.slug}`}
-                          as="button"
-                          tint={i % 2 === 0 ? "emerald" : "neutral"}
-                          onClick={() => launch(ex.slug)}
-                          className={`flex flex-col text-left ${launching === ex.slug ? "opacity-60" : ""}`}
-                        >
-                          <div className="relative flex h-24 items-center justify-center bg-black/25 text-4xl">
-                            <span className="absolute left-2 top-2 rounded-md border border-white/15 bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-200 backdrop-blur-xl">
-                              Video
-                            </span>
-                            {ex.icon}
-                            <div className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-emerald-300/90">
-                              <PlayCircle className="h-4 w-4 text-emerald-950" />
-                            </div>
+                      {items.map((ex: Exercise, i: number) => {
+                        const video = videos[ex.slug];
+                        return (
+                          <div key={`${sub.id}-${ex.slug}`} className="relative">
+                            <GlassCard
+                              as="button"
+                              tint={i % 2 === 0 ? "emerald" : "neutral"}
+                              onClick={() => setActive(ex)}
+                              className={`flex h-full w-full flex-col text-left ${launching === ex.slug ? "opacity-60" : ""}`}
+                            >
+                              <div className="relative flex h-24 items-center justify-center bg-black/25 text-4xl">
+                                <span className="absolute left-2 top-2 rounded-md border border-white/15 bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-200 backdrop-blur-xl">
+                                  Video
+                                </span>
+                                {ex.icon}
+                                <div className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-emerald-300/90">
+                                  <PlayCircle className="h-4 w-4 text-emerald-950" />
+                                </div>
+                              </div>
+                              <div className="flex flex-1 flex-col justify-between p-4">
+                                <div>
+                                  <p className="text-[10px] font-bold uppercase tracking-wide text-stone-400">
+                                    {ex.focus}
+                                  </p>
+                                  <h4 className="mt-1 font-display text-base font-bold leading-tight text-stone-50">
+                                    {ex.name}
+                                  </h4>
+                                </div>
+                                <span
+                                  className={`mt-3 border-t border-white/10 pt-2.5 text-[12px] font-bold ${
+                                    video ? "text-emerald-300" : "text-stone-500"
+                                  }`}
+                                >
+                                  {video ? "Watch short video" : "Video coming soon"}
+                                </span>
+                              </div>
+                            </GlassCard>
+                            {isAdmin && (
+                              <div className="absolute right-2 top-2 z-10">
+                                <VideoUploadButton slug={ex.slug} video={video} />
+                              </div>
+                            )}
                           </div>
-                          <div className="flex flex-1 flex-col justify-between p-4">
-                            <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wide text-stone-400">
-                                {ex.focus}
-                              </p>
-                              <h4 className="mt-1 font-display text-base font-bold leading-tight text-stone-50">
-                                {ex.name}
-                              </h4>
-                            </div>
-                            <span className="mt-3 border-t border-white/10 pt-2.5 text-[12px] font-bold text-emerald-300">
-                              Watch short video
-                            </span>
-                          </div>
-                        </GlassCard>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -246,6 +278,20 @@ function TrainingPage() {
           onChange={handleNav}
         />
       </div>
+
+      <ExerciseVideoDialog
+        open={!!active}
+        onOpenChange={(o) => {
+          if (!o) setActive(null);
+        }}
+        name={active?.name ?? ""}
+        focus={active?.focus}
+        video={active ? videos[active.slug] : undefined}
+        onStartTracking={() => {
+          if (active) launch(active.slug);
+          setActive(null);
+        }}
+      />
 
       <ChildProfileSheet open={profileOpen} onOpenChange={setProfileOpen} patient={patient as never} />
     </div>

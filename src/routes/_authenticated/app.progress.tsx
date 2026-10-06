@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
 import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
+import { fetchActiveChild } from "@/lib/activeChild";
 
 export const Route = createFileRoute("/_authenticated/app/progress")({
   head: () => ({ meta: [{ title: "Progress — Neuro-Bridge" }] }),
@@ -96,14 +97,7 @@ function ProgressPage() {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
       if (!uid) return null;
-      const { data } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("claimed_by_caregiver_id", uid)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      return data;
+      return await fetchActiveChild(uid);
     },
   });
 
