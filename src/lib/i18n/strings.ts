@@ -113,6 +113,8 @@ export const EN_STRINGS = {
   exWristFingerStretch: "Wrist and finger stretch",
   exOpenHandPositioning: "Open hand positioning",
   exSitUps: "Sit-ups",
+  exFlexionExtension: "Flexion and extension",
+  exSideTilt: "Side to side tilt",
 
   // --- Movement focus terms ---
   focusFlexion: "Flexion",

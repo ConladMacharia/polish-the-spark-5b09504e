@@ -784,6 +784,14 @@ function LiveSessionPage() {
             ],
           },
           {
+            id: "hand",
+            label: t("catHandFingers"),
+            icon: "🤲",
+            items: [
+              { slug: "open-hand", name: t("exOpenHandPositioning"), focus: t("focusHandOpening") },
+            ],
+          },
+          {
             id: "wrist",
             label: t("catWrist"),
             icon: "🖐️",
@@ -798,14 +806,6 @@ function LiveSessionPage() {
               },
             ],
           },
-          {
-            id: "hand",
-            label: t("catHandFingers"),
-            icon: "🤲",
-            items: [
-              { slug: "open-hand", name: t("exOpenHandPositioning"), focus: t("focusHandOpening") },
-            ],
-          },
         ],
       },
       {
@@ -814,8 +814,18 @@ function LiveSessionPage() {
         icon: "🦵",
         track: "leg",
         subcats: [
-          { id: "hip", label: t("catHip"), icon: "🦿", keywords: ["hip"], extra: [{ slug: "sit-ups", name: t("exSitUps"), focus: t("focusCoreStrength") }] },
-          { id: "knee", label: t("catKnee"), icon: "🦵", keywords: ["knee"] },
+          { id: "hip", label: t("catHip"), icon: "🦿", items: [
+            { slug: "sit-ups", name: t("exSitUps"), focus: t("focusCoreStrength") },
+            { slug: "hip-abduction", name: t("exCatName_hipAbduction"), focus: t("focusAbduction") },
+            { slug: "hip-flex-ext", name: t("exFlexionExtension"), focus: t("focusFlexionExtension") },
+            { slug: "hip-rotation", name: t("focusRotationFull"), focus: t("focusRotationFull") },
+          ] },
+          { id: "knee", label: t("catKnee"), icon: "🦵", items: [
+            { slug: "squat", name: t("exCatName_squat"), focus: t("exCatFocus_squat") },
+            { slug: "knee-extension", name: t("exCatName_kneeExtension"), focus: t("exCatFocus_kneeExtension") },
+            { slug: "knee-flex-ext", name: t("exFlexionExtension"), focus: t("focusFlexionExtension") },
+            { slug: "knee-tilt", name: t("exSideTilt"), focus: t("exSideTilt") },
+          ] },
           { id: "ankle", label: t("catAnkle"), icon: "👟", keywords: ["ankle", "foot"] },
           { id: "balance", label: t("catBalance"), icon: "⚖️", keywords: ["balance"] },
         ],

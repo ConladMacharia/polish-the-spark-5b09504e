@@ -101,6 +101,9 @@ function TrainingPage() {
               { slug: "reach", name: t("exBendStraighten"), focus: t("focusFlexionExtension") },
             ],
           },
+          { id: "hand", label: t("catHandFingers"), icon: "🤲", items: [
+              { slug: "open-hand", name: t("exOpenHandPositioning"), focus: t("focusHandOpening") },
+            ] },
           {
             id: "wrist",
             label: t("catWrist"),
@@ -112,9 +115,6 @@ function TrainingPage() {
               { slug: "page-turn", name: t("exWristTilt"), focus: t("focusRadialUlnar") },
             ],
           },
-          { id: "hand", label: t("catHandFingers"), icon: "🤲", items: [
-              { slug: "open-hand", name: t("exOpenHandPositioning"), focus: t("focusHandOpening") },
-            ] },
         ],
       },
       {
@@ -123,8 +123,18 @@ function TrainingPage() {
         icon: "🦵",
         track: "leg",
         subcats: [
-          { id: "hip", label: t("catHip"), keywords: ["hip"], extra: [{ slug: "sit-ups", name: t("exSitUps"), focus: t("focusCoreStrength") }] },
-          { id: "knee", label: t("catKnee"), keywords: ["knee"] },
+          { id: "hip", label: t("catHip"), items: [
+            { slug: "sit-ups", name: t("exSitUps"), focus: t("focusCoreStrength") },
+            { slug: "hip-abduction", name: t("exCatName_hipAbduction"), focus: t("focusAbduction") },
+            { slug: "hip-flex-ext", name: t("exFlexionExtension"), focus: t("focusFlexionExtension") },
+            { slug: "hip-rotation", name: t("focusRotationFull"), focus: t("focusRotationFull") },
+          ] },
+          { id: "knee", label: t("catKnee"), items: [
+            { slug: "squat", name: t("exCatName_squat"), focus: t("exCatFocus_squat") },
+            { slug: "knee-extension", name: t("exCatName_kneeExtension"), focus: t("exCatFocus_kneeExtension") },
+            { slug: "knee-flex-ext", name: t("exFlexionExtension"), focus: t("focusFlexionExtension") },
+            { slug: "knee-tilt", name: t("exSideTilt"), focus: t("exSideTilt") },
+          ] },
           { id: "ankle", label: t("catAnkle"), keywords: ["ankle", "foot"] },
           { id: "balance", label: t("catBalance"), keywords: ["balance"] },
         ],

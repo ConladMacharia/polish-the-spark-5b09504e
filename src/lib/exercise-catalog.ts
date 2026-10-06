@@ -351,6 +351,52 @@ export const EXERCISES: Exercise[] = [
     gamified: true,
   },
 
+  {
+    slug: "hip-flex-ext",
+    name: "Flexion and extension",
+    category: "pt",
+    track: "leg",
+    icon: "🦿",
+    focus: "Flexion and extension",
+    description: "Lift the leg forward, then swing it back with control.",
+    benefits: "Improves hip range of motion for walking and stepping.",
+    gamified: true,
+  },
+  {
+    slug: "knee-flex-ext",
+    name: "Flexion and extension",
+    category: "pt",
+    track: "leg",
+    icon: "🦵",
+    focus: "Flexion and extension",
+    description: "Bend the knee, then straighten it fully, slowly and with control.",
+    benefits: "Maintains knee range of motion and strengthens the muscles around it.",
+    gamified: true,
+  },
+  {
+    slug: "knee-tilt",
+    name: "Side to side tilt",
+    category: "pt",
+    track: "leg",
+    icon: "↔️",
+    focus: "Side to side tilt",
+    description: "Gently tilt the leg from side to side, keeping the movement small and smooth.",
+    benefits: "Builds control of side-to-side leg movement.",
+    gamified: true,
+  },
+
+  {
+    slug: "hip-rotation",
+    name: "Internal and external rotation",
+    category: "pt",
+    track: "leg",
+    icon: "🔄",
+    focus: "Internal and external rotation",
+    description: "Slowly turn the leg inward, then outward, keeping the movement controlled.",
+    benefits: "Improves hip rotation range for walking, sitting and dressing.",
+    gamified: true,
+  },
+
   // ============ OCCUPATIONAL THERAPY (21) ============
   {
     slug: "pinch",
