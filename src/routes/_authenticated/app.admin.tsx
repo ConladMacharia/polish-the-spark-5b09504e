@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { BadgeCheck, GitMerge, LogOut, ShieldCheck, Users } from "lucide-react";
+import { BadgeCheck, GitMerge, LogOut, ShieldCheck, Users, Video } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminTheme } from "@/lib/adminTheme";
@@ -81,6 +81,13 @@ function AdminShell() {
               {label}
             </button>
           ))}
+          <button
+            onClick={() => navigate({ to: "/app/training" })}
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium text-[#F8E7C9]/85 transition hover:bg-card/10"
+          >
+            <Video className="h-4 w-4" />
+            Training videos
+          </button>
         </nav>
         <Button
           variant="ghost"
@@ -310,13 +317,7 @@ function Children() {
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
-      const caregivers = await loadCaregivers((data ?? []).map((c) => c.claimed_by_caregiver_id));
-      return (data ?? []).map((c) => ({
-        ...c,
-        caregiver: c.claimed_by_caregiver_id
-          ? caregivers.get(c.claimed_by_caregiver_id)
-          : undefined,
-      }));
+      return data;
     },
   });
 
@@ -356,7 +357,11 @@ function Children() {
                 <TableCell>{[c.county, c.sub_county].filter(Boolean).join(", ") || "—"}</TableCell>
                 <TableCell>{c.gmfcs_level ?? "—"}</TableCell>
                 <TableCell>
-                  <CaregiverCell person={c.caregiver} />
+                  {c.claimed_by_caregiver_id ? (
+                    <Pill tone="ok">Linked</Pill>
+                  ) : (
+                    <Pill tone="idle">Not yet</Pill>
+                  )}
                 </TableCell>
                 <TableCell>
                   {c.therapist_id ? <Pill tone="ok">Assigned</Pill> : <Pill tone="idle">None</Pill>}
@@ -395,19 +400,14 @@ function Matching() {
       const therapistIds = (verified ?? []).map((t) => t.user_id);
       const [{ data: kids }, { data: names }] = await Promise.all([
         childIds.length
-          ? supabase
-              .from("patients")
-              .select("id, child_name, county, claimed_by_caregiver_id")
-              .in("id", childIds)
+          ? supabase.from("patients").select("id, child_name, county").in("id", childIds)
           : Promise.resolve({ data: [] }),
         therapistIds.length
           ? supabase.from("profiles").select("id, full_name").in("id", therapistIds)
           : Promise.resolve({ data: [] }),
       ]);
-      const caregivers = await loadCaregivers((kids ?? []).map((k) => k.claimed_by_caregiver_id));
       return {
         requests: requests ?? [],
-        caregivers,
         kids: new Map((kids ?? []).map((k) => [k.id, k])),
         therapists: (verified ?? []).map((t) => ({
           ...t,
@@ -444,7 +444,6 @@ function Matching() {
           <TableHeader>
             <TableRow>
               <TableHead>Child</TableHead>
-              <TableHead>Caregiver</TableHead>
               <TableHead>County</TableHead>
               <TableHead>Needs</TableHead>
               <TableHead>Funder</TableHead>
@@ -455,14 +454,14 @@ function Matching() {
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={7} className="text-muted-foreground">
+                <TableCell colSpan={6} className="text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && data?.requests.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-muted-foreground">
+                <TableCell colSpan={6} className="text-muted-foreground">
                   No requests yet.
                 </TableCell>
               </TableRow>
@@ -473,15 +472,6 @@ function Matching() {
               return (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{kid?.child_name ?? "—"}</TableCell>
-                  <TableCell>
-                    <CaregiverCell
-                      person={
-                        kid?.claimed_by_caregiver_id
-                          ? data.caregivers.get(kid.claimed_by_caregiver_id)
-                          : undefined
-                      }
-                    />
-                  </TableCell>
                   <TableCell>{kid?.county ?? "—"}</TableCell>
                   <TableCell>{r.needs.map(needLabel).join(", ") || "—"}</TableCell>
                   <TableCell className="capitalize">{r.funder}</TableCell>
@@ -710,33 +700,3 @@ function TherapistDetails({
 }
 
 const needLabelSafe = (v: string) => needLabel(v);
-
-/* ── Caregiver name and phone (admin can call them) ─────────────────── */
-
-type Person = { full_name: string; phone: string | null };
-
-function CaregiverCell({ person }: { person: Person | undefined }) {
-  if (!person) return <Pill tone="idle">Not linked</Pill>;
-  return (
-    <div className="leading-tight">
-      <p className="font-medium">{person.full_name || "Caregiver"}</p>
-      {person.phone ? (
-        <a
-          href={`tel:${person.phone.replace(/\s/g, "")}`}
-          className="text-xs font-semibold text-primary underline-offset-2 hover:underline"
-        >
-          {person.phone}
-        </a>
-      ) : (
-        <p className="text-xs text-muted-foreground">No phone added</p>
-      )}
-    </div>
-  );
-}
-
-async function loadCaregivers(ids: (string | null)[]) {
-  const unique = [...new Set(ids.filter(Boolean))] as string[];
-  if (unique.length === 0) return new Map<string, Person>();
-  const { data } = await supabase.from("profiles").select("id, full_name, phone").in("id", unique);
-  return new Map((data ?? []).map((p) => [p.id, { full_name: p.full_name, phone: p.phone }]));
-}
