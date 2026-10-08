@@ -296,27 +296,27 @@ export type Database = {
           claimed_at: string | null
           claimed_by_caregiver_id: string | null
           condition_notes: string | null
-          contraindications: string | null
-          cp_type: string | null
-          county: string | null
-          lat: number | null
-          lng: number | null
-          sub_county: string | null
-          ward: string | null
-          specialist_needs: string[]
           consent_at: string | null
+          contraindications: string | null
+          county: string | null
+          cp_type: string | null
           created_at: string
           date_of_birth: string | null
           gmfcs_level: Database["public"]["Enums"]["gmfcs_level"] | null
           goals: string[]
           id: string
+          lat: number | null
+          lng: number | null
           macs_level: string | null
           mobility: string | null
           next_followup_at: string | null
           preferred_language: Database["public"]["Enums"]["preferred_language"]
+          specialist_needs: string[]
+          sub_county: string | null
           therapist_id: string | null
           ui_language: string
           updated_at: string
+          ward: string | null
         }
         Insert: {
           active?: boolean
@@ -327,27 +327,27 @@ export type Database = {
           claimed_at?: string | null
           claimed_by_caregiver_id?: string | null
           condition_notes?: string | null
-          contraindications?: string | null
-          cp_type?: string | null
-          county?: string | null
-          lat?: number | null
-          lng?: number | null
-          sub_county?: string | null
-          ward?: string | null
-          specialist_needs?: string[]
           consent_at?: string | null
+          contraindications?: string | null
+          county?: string | null
+          cp_type?: string | null
           created_at?: string
           date_of_birth?: string | null
           gmfcs_level?: Database["public"]["Enums"]["gmfcs_level"] | null
           goals?: string[]
           id?: string
+          lat?: number | null
+          lng?: number | null
           macs_level?: string | null
           mobility?: string | null
           next_followup_at?: string | null
           preferred_language?: Database["public"]["Enums"]["preferred_language"]
+          specialist_needs?: string[]
+          sub_county?: string | null
           therapist_id?: string | null
           ui_language?: string
           updated_at?: string
+          ward?: string | null
         }
         Update: {
           active?: boolean
@@ -358,27 +358,27 @@ export type Database = {
           claimed_at?: string | null
           claimed_by_caregiver_id?: string | null
           condition_notes?: string | null
-          contraindications?: string | null
-          cp_type?: string | null
-          county?: string | null
-          lat?: number | null
-          lng?: number | null
-          sub_county?: string | null
-          ward?: string | null
-          specialist_needs?: string[]
           consent_at?: string | null
+          contraindications?: string | null
+          county?: string | null
+          cp_type?: string | null
           created_at?: string
           date_of_birth?: string | null
           gmfcs_level?: Database["public"]["Enums"]["gmfcs_level"] | null
           goals?: string[]
           id?: string
+          lat?: number | null
+          lng?: number | null
           macs_level?: string | null
           mobility?: string | null
           next_followup_at?: string | null
           preferred_language?: Database["public"]["Enums"]["preferred_language"]
+          specialist_needs?: string[]
+          sub_county?: string | null
           therapist_id?: string | null
           ui_language?: string
           updated_at?: string
+          ward?: string | null
         }
         Relationships: []
       }
@@ -582,70 +582,70 @@ export type Database = {
       }
       therapists: {
         Row: {
+          available_days: string[]
           city: string | null
           clinic_name: string
           country: string | null
+          county: string | null
           created_at: string
-          license_number: string | null
-          updated_at: string
-          user_id: string
-          verified: boolean
-          available_days: string[]
           home_lat: number | null
           home_lng: number | null
           home_visits: boolean
           languages: string[]
-          profession: string | null
-          radius_km: number | null
-          specializations: string[]
-          county: string | null
           license_body: string | null
           license_document_path: string | null
+          license_number: string | null
+          profession: string | null
           profile_submitted_at: string | null
+          radius_km: number | null
+          specializations: string[]
+          updated_at: string
+          user_id: string
+          verified: boolean
         }
         Insert: {
+          available_days?: string[]
           city?: string | null
           clinic_name: string
           country?: string | null
+          county?: string | null
           created_at?: string
+          home_lat?: number | null
+          home_lng?: number | null
+          home_visits?: boolean
+          languages?: string[]
+          license_body?: string | null
+          license_document_path?: string | null
           license_number?: string | null
+          profession?: string | null
+          profile_submitted_at?: string | null
+          radius_km?: number | null
+          specializations?: string[]
           updated_at?: string
           user_id: string
           verified?: boolean
-          available_days?: string[]
-          home_lat?: number | null
-          home_lng?: number | null
-          home_visits?: boolean
-          languages?: string[]
-          profession?: string | null
-          radius_km?: number | null
-          specializations?: string[]
-          county?: string | null
-          license_body?: string | null
-          license_document_path?: string | null
-          profile_submitted_at?: string | null
         }
         Update: {
+          available_days?: string[]
           city?: string | null
           clinic_name?: string
           country?: string | null
+          county?: string | null
           created_at?: string
-          license_number?: string | null
-          updated_at?: string
-          user_id?: string
-          verified?: boolean
-          available_days?: string[]
           home_lat?: number | null
           home_lng?: number | null
           home_visits?: boolean
           languages?: string[]
-          profession?: string | null
-          radius_km?: number | null
-          specializations?: string[]
-          county?: string | null
           license_body?: string | null
           license_document_path?: string | null
+          license_number?: string | null
+          profession?: string | null
           profile_submitted_at?: string | null
+          radius_km?: number | null
+          specializations?: string[]
+          updated_at?: string
+          user_id?: string
+          verified?: boolean
         }
         Relationships: []
       }
@@ -729,13 +729,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      claim_initial_role: { Args: { _role: string }; Returns: string }
       can_log_visit: {
         Args: { _child_id: string; _request_id: string; _user_id: string }
-        Returns: boolean
-      }
-      is_my_accepted_caregiver: {
-        Args: { _caregiver_id: string; _therapist_id: string }
         Returns: boolean
       }
       child_assigned_to_therapist: {
@@ -746,6 +741,7 @@ export type Database = {
         Args: { _child_id: string; _user_id: string }
         Returns: boolean
       }
+      claim_initial_role: { Args: { _role: string }; Returns: string }
       claim_patient_by_code: { Args: { _claim_code: string }; Returns: string }
       generate_claim_code: { Args: never; Returns: string }
       has_role: {
@@ -756,6 +752,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_my_accepted_caregiver: {
+        Args: { _caregiver_id: string; _therapist_id: string }
+        Returns: boolean
+      }
       is_verified_therapist: { Args: { _user_id: string }; Returns: boolean }
       user_can_access_patient: {
         Args: { _patient_id: string; _user_id: string }

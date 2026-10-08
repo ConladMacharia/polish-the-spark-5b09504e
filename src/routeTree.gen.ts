@@ -9,27 +9,31 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
-import { Route as AuthenticatedAppTrainingRouteImport } from './routes/_authenticated/app.training'
-import { Route as AuthenticatedAppTherapistRouteImport } from './routes/_authenticated/app.therapist'
-import { Route as AuthenticatedAppProgressRouteImport } from './routes/_authenticated/app.progress'
-import { Route as AuthenticatedAppExercisesRouteImport } from './routes/_authenticated/app.exercises'
-import { Route as AuthenticatedAppCaregiverRouteImport } from './routes/_authenticated/app.caregiver'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
+import { Route as AuthenticatedAppCaregiverRouteImport } from './routes/_authenticated/app.caregiver'
+import { Route as AuthenticatedAppExercisesRouteImport } from './routes/_authenticated/app.exercises'
+import { Route as AuthenticatedAppProgressRouteImport } from './routes/_authenticated/app.progress'
+import { Route as AuthenticatedAppTherapistRouteImport } from './routes/_authenticated/app.therapist'
+import { Route as AuthenticatedAppTrainingRouteImport } from './routes/_authenticated/app.training'
 import { Route as AuthenticatedAppTherapistIndexRouteImport } from './routes/_authenticated/app.therapist.index'
-import { Route as AuthenticatedAppTherapistVisitsRouteImport } from './routes/_authenticated/app.therapist.visits'
-import { Route as AuthenticatedAppTherapistRequestsRouteImport } from './routes/_authenticated/app.therapist.requests'
 import { Route as AuthenticatedAppTherapistProfileRouteImport } from './routes/_authenticated/app.therapist.profile'
+import { Route as AuthenticatedAppTherapistRequestsRouteImport } from './routes/_authenticated/app.therapist.requests'
+import { Route as AuthenticatedAppTherapistVisitsRouteImport } from './routes/_authenticated/app.therapist.visits'
 import { Route as AuthenticatedAppTherapistPatientPatientIdRouteImport } from './routes/_authenticated/app.therapist.patient.$patientId'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -37,13 +41,9 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
@@ -56,22 +56,15 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
-const AuthenticatedAppTrainingRoute =
-  AuthenticatedAppTrainingRouteImport.update({
-    id: '/training',
-    path: '/training',
-    getParentRoute: () => AuthenticatedAppRoute,
-  } as any)
-const AuthenticatedAppTherapistRoute =
-  AuthenticatedAppTherapistRouteImport.update({
-    id: '/therapist',
-    path: '/therapist',
-    getParentRoute: () => AuthenticatedAppRoute,
-  } as any)
-const AuthenticatedAppProgressRoute =
-  AuthenticatedAppProgressRouteImport.update({
-    id: '/progress',
-    path: '/progress',
+const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppCaregiverRoute =
+  AuthenticatedAppCaregiverRouteImport.update({
+    id: '/caregiver',
+    path: '/caregiver',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppExercisesRoute =
@@ -80,27 +73,34 @@ const AuthenticatedAppExercisesRoute =
     path: '/exercises',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
-const AuthenticatedAppCaregiverRoute =
-  AuthenticatedAppCaregiverRouteImport.update({
-    id: '/caregiver',
-    path: '/caregiver',
+const AuthenticatedAppProgressRoute =
+  AuthenticatedAppProgressRouteImport.update({
+    id: '/progress',
+    path: '/progress',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
-const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
+const AuthenticatedAppTherapistRoute =
+  AuthenticatedAppTherapistRouteImport.update({
+    id: '/therapist',
+    path: '/therapist',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppTrainingRoute =
+  AuthenticatedAppTrainingRouteImport.update({
+    id: '/training',
+    path: '/training',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppTherapistIndexRoute =
   AuthenticatedAppTherapistIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedAppTherapistRoute,
   } as any)
-const AuthenticatedAppTherapistVisitsRoute =
-  AuthenticatedAppTherapistVisitsRouteImport.update({
-    id: '/visits',
-    path: '/visits',
+const AuthenticatedAppTherapistProfileRoute =
+  AuthenticatedAppTherapistProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
     getParentRoute: () => AuthenticatedAppTherapistRoute,
   } as any)
 const AuthenticatedAppTherapistRequestsRoute =
@@ -109,10 +109,10 @@ const AuthenticatedAppTherapistRequestsRoute =
     path: '/requests',
     getParentRoute: () => AuthenticatedAppTherapistRoute,
   } as any)
-const AuthenticatedAppTherapistProfileRoute =
-  AuthenticatedAppTherapistProfileRouteImport.update({
-    id: '/profile',
-    path: '/profile',
+const AuthenticatedAppTherapistVisitsRoute =
+  AuthenticatedAppTherapistVisitsRouteImport.update({
+    id: '/visits',
+    path: '/visits',
     getParentRoute: () => AuthenticatedAppTherapistRoute,
   } as any)
 const AuthenticatedAppTherapistPatientPatientIdRoute =
@@ -241,18 +241,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -262,11 +255,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app': {
@@ -283,32 +283,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/app/training': {
-      id: '/_authenticated/app/training'
-      path: '/training'
-      fullPath: '/app/training'
-      preLoaderRoute: typeof AuthenticatedAppTrainingRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/therapist': {
-      id: '/_authenticated/app/therapist'
-      path: '/therapist'
-      fullPath: '/app/therapist'
-      preLoaderRoute: typeof AuthenticatedAppTherapistRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/progress': {
-      id: '/_authenticated/app/progress'
-      path: '/progress'
-      fullPath: '/app/progress'
-      preLoaderRoute: typeof AuthenticatedAppProgressRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/exercises': {
-      id: '/_authenticated/app/exercises'
-      path: '/exercises'
-      fullPath: '/app/exercises'
-      preLoaderRoute: typeof AuthenticatedAppExercisesRouteImport
+    '/_authenticated/app/admin': {
+      id: '/_authenticated/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/caregiver': {
@@ -318,11 +297,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCaregiverRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/app/admin': {
-      id: '/_authenticated/app/admin'
-      path: '/admin'
-      fullPath: '/app/admin'
-      preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
+    '/_authenticated/app/exercises': {
+      id: '/_authenticated/app/exercises'
+      path: '/exercises'
+      fullPath: '/app/exercises'
+      preLoaderRoute: typeof AuthenticatedAppExercisesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/progress': {
+      id: '/_authenticated/app/progress'
+      path: '/progress'
+      fullPath: '/app/progress'
+      preLoaderRoute: typeof AuthenticatedAppProgressRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/therapist': {
+      id: '/_authenticated/app/therapist'
+      path: '/therapist'
+      fullPath: '/app/therapist'
+      preLoaderRoute: typeof AuthenticatedAppTherapistRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/training': {
+      id: '/_authenticated/app/training'
+      path: '/training'
+      fullPath: '/app/training'
+      preLoaderRoute: typeof AuthenticatedAppTrainingRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/therapist/': {
@@ -332,11 +332,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppTherapistIndexRouteImport
       parentRoute: typeof AuthenticatedAppTherapistRoute
     }
-    '/_authenticated/app/therapist/visits': {
-      id: '/_authenticated/app/therapist/visits'
-      path: '/visits'
-      fullPath: '/app/therapist/visits'
-      preLoaderRoute: typeof AuthenticatedAppTherapistVisitsRouteImport
+    '/_authenticated/app/therapist/profile': {
+      id: '/_authenticated/app/therapist/profile'
+      path: '/profile'
+      fullPath: '/app/therapist/profile'
+      preLoaderRoute: typeof AuthenticatedAppTherapistProfileRouteImport
       parentRoute: typeof AuthenticatedAppTherapistRoute
     }
     '/_authenticated/app/therapist/requests': {
@@ -346,11 +346,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppTherapistRequestsRouteImport
       parentRoute: typeof AuthenticatedAppTherapistRoute
     }
-    '/_authenticated/app/therapist/profile': {
-      id: '/_authenticated/app/therapist/profile'
-      path: '/profile'
-      fullPath: '/app/therapist/profile'
-      preLoaderRoute: typeof AuthenticatedAppTherapistProfileRouteImport
+    '/_authenticated/app/therapist/visits': {
+      id: '/_authenticated/app/therapist/visits'
+      path: '/visits'
+      fullPath: '/app/therapist/visits'
+      preLoaderRoute: typeof AuthenticatedAppTherapistVisitsRouteImport
       parentRoute: typeof AuthenticatedAppTherapistRoute
     }
     '/_authenticated/app/therapist/patient/$patientId': {
