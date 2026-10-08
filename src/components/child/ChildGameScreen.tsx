@@ -380,7 +380,7 @@ export function ChildGameScreen({
       <button
         type="button"
         onClick={onExit}
-        aria-label="Leave the game"
+        aria-label={t("uiLeaveGame")}
         className="absolute left-4 top-4 z-30 grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-white/20 text-slate-900 shadow backdrop-blur-xl"
       >
         <X className="h-5 w-5" />
@@ -452,7 +452,7 @@ export function ChildGameScreen({
       {game.mechanic === "twoWrist" && !bothHands && (
         <div className="pointer-events-none absolute inset-x-0 top-24 z-20 text-center">
           <span className="rounded-full bg-white/90 px-5 py-2 font-playful text-xl text-amber-900">
-            Show Rafiki both hands 🙌
+            {t("uiShowBothHands")}
           </span>
         </div>
       )}
@@ -535,6 +535,7 @@ function RewardOverlay({
   onDone: () => void;
   onLeave: () => void;
 }) {
+  const { t } = useLanguage();
   const art: Record<ChildGame["reward"], string> = {
     jar: "🏺✨",
     constellation: "🌌⭐",
@@ -554,21 +555,21 @@ function RewardOverlay({
     <div className="absolute inset-0 z-40 grid place-items-center bg-emerald-950/75 backdrop-blur-sm">
       <div className="mx-6 rounded-[2rem] bg-white px-8 py-10 text-center shadow-2xl">
         <div className="animate-bounce text-7xl">{art[game.reward]}</div>
-        <p className="mt-4 font-playful text-3xl text-emerald-900">You did it!</p>
+        <p className="mt-4 font-playful text-3xl text-emerald-900">{t("uiYouDidIt")}</p>
         <div className="mt-6 flex flex-col gap-3">
           <button
             type="button"
             onClick={onDone}
             className="rounded-2xl bg-emerald-400 px-8 py-4 font-playful text-2xl text-emerald-950 shadow-[0_4px_0_#047857]"
           >
-            Play again
+            {t("uiPlayAgain")}
           </button>
           <button
             type="button"
             onClick={onLeave}
             className="rounded-2xl bg-emerald-50 px-8 py-3 font-playful text-xl text-emerald-900"
           >
-            Back to the island
+            {t("backToIsland")}
           </button>
         </div>
       </div>

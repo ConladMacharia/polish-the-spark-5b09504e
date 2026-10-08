@@ -882,7 +882,7 @@ function LiveSessionPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate({ to: "/app/caregiver" })}
-              aria-label="Back to dashboard"
+              aria-label={t("uiBackDashboard")}
               className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-white/10 backdrop-blur-xl"
             >
               <ArrowLeft className="h-4 w-4 text-stone-50" />
@@ -964,7 +964,7 @@ function LiveSessionPage() {
                               </h4>
                             </div>
                             <span className="mt-3 border-t border-white/10 pt-2.5 text-[12px] font-bold text-emerald-300">
-                              AI tracked exercise
+                              {t("uiAiTracked")}
                             </span>
                           </div>
                         </GlassCard>
@@ -996,7 +996,7 @@ function LiveSessionPage() {
       {pendingExercise ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-emerald-950/95 px-4 text-stone-50 backdrop-blur-sm">
           <GlassCard tint="emerald" className="w-full max-w-md p-6 text-center">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">Before we start</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">{t("uiBeforeWeStart")}</p>
             <h2 className="mt-1 font-display text-2xl font-bold text-stone-50">{pendingExercise.name}</h2>
             <p className="mt-2 text-sm text-stone-300">
               Which {pendingLimb} is being exercised? Tracking will measure that side only.
@@ -1022,7 +1022,7 @@ function LiveSessionPage() {
               onClick={() => setPendingExercise(null)}
               className="mt-4 text-sm font-semibold text-stone-400 underline"
             >
-              Cancel
+              {t("uiCancel")}
             </button>
           </GlassCard>
         </div>
@@ -1081,12 +1081,12 @@ function LiveSessionPage() {
                 {stream && (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-emerald-950/80 px-3 py-1 text-xs font-semibold text-stone-50 backdrop-blur-xl">
                     <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
-                    Camera active
+                    {t("uiCameraActive")}
                   </span>
                 )}
                 {isPoseLoading && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/90 px-3 py-1 text-xs font-semibold text-emerald-950 backdrop-blur-xl">
-                    Loading MediaPipe Pose…
+                    {t("uiLoadingPose")}
                   </span>
                 )}
                 {poseLandmarker && (
@@ -1109,14 +1109,14 @@ function LiveSessionPage() {
 
               {!stream && !cameraError ? (
                 <div className="absolute inset-0 z-30 flex items-center justify-center bg-emerald-950/70 text-sm text-stone-200">
-                  Requesting camera access…
+                  {t("uiRequestingCamera")}
                 </div>
               ) : null}
               {cameraError ? (
                 <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-emerald-950/80 px-4 text-center text-sm text-red-300">
                   <p>{cameraError}</p>
                   <p className="mt-2 text-xs text-stone-400">
-                    Please allow camera access in your browser settings.
+                    {t("uiAllowCamera")}
                   </p>
                 </div>
               ) : null}
@@ -1135,7 +1135,7 @@ function LiveSessionPage() {
                         onClick={changeSide}
                         className="ml-2 rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-stone-50 backdrop-blur-xl transition hover:bg-white/20"
                       >
-                        Change side
+                        {t("uiChangeSide")}
                       </button>
                     </>
                   )}
@@ -1212,7 +1212,7 @@ function LiveSessionPage() {
             {guidedActive && DAILY_SESSION[guidedIndex] ? (
               <GlassCard tint="emerald" className="p-5">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
-                  Why this exercise
+                  {t("uiWhyExercise")}
                 </p>
                 <p className="mt-1 text-sm text-stone-200">{DAILY_SESSION[guidedIndex].benefit}</p>
                 <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
@@ -1229,7 +1229,7 @@ function LiveSessionPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-emerald-950/95 px-4 text-center text-stone-50 backdrop-blur-sm">
           <GlassCard tint="emerald" className="w-full max-w-md p-8">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-300 text-3xl">🎉</div>
-            <h2 className="mt-4 font-display text-2xl font-bold text-stone-50">Session complete!</h2>
+            <h2 className="mt-4 font-display text-2xl font-bold text-stone-50">{t("uiSessionComplete")}</h2>
             <p className="mt-2 text-sm text-stone-300">
               Great work today — {childNameForCopy} finished all {DAILY_SESSION.length} exercises.
             </p>
@@ -1241,7 +1241,7 @@ function LiveSessionPage() {
               }}
               className="mt-6 w-full rounded-full bg-emerald-300 py-3 font-display text-sm font-bold text-emerald-950"
             >
-              Back to dashboard
+              {t("uiBackDashboard")}
             </button>
           </GlassCard>
         </div>

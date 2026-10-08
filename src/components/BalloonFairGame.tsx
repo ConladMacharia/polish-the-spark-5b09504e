@@ -9,6 +9,7 @@ import { HandLandmarker } from "@mediapipe/tasks-vision";
 import { getTwoHandLandmarker, startCameraStream, attachStream } from "@/lib/pose/handLandmarker";
 import { HAND_LANDMARKS } from "@/lib/pose/fingerUtils";
 import { LowLightBooster } from "@/lib/camera";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 interface BalloonFairGameProps {
   bowHand: "left" | "right";
@@ -78,6 +79,7 @@ export function BalloonFairGame({
   balloonHitRadiusScale = 1,
   windStrength = 1,
 }: BalloonFairGameProps) {
+  const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
   const boosterRef = useRef(new LowLightBooster());
   const landmarkerRef = useRef<HandLandmarker | null>(null);
@@ -412,14 +414,14 @@ export function BalloonFairGame({
 
       {error && <div style={{ textAlign: "center", padding: 20 }}>{error}</div>}
       {!isReady && !error && (
-        <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>
+        <div style={{ textAlign: "center", padding: 20 }}>{t("uiStartingCamera")}</div>
       )}
 
       {isReady && (
         <>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 10 }}>
-            <Stat label="Popped" value={popped} />
-            <Stat label="Streak" value={streak} />
+            <Stat label={t("uiPopped")} value={popped} />
+            <Stat label={t("uiStreak")} value={streak} />
           </div>
 
           <div

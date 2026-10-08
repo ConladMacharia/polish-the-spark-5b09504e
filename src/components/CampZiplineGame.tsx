@@ -14,6 +14,7 @@ import {
   handConfidence,
 } from "@/lib/pose/adaptiveTracking";
 import { LowLightBooster } from "@/lib/camera";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 interface CampZiplineGameProps {
   // Difficulty parameter — read from the per-child target/range system
@@ -34,6 +35,7 @@ const PINCH_RELEASE = 0.085;
 const PINCH_GRACE_MS = 90;
 
 export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProps) {
+  const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
   const boosterRef = useRef(new LowLightBooster());
   const landmarkerRef = useRef<HandLandmarker | null>(null);
@@ -187,7 +189,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
 
       {error && <div style={{ textAlign: "center", padding: 20 }}>{error}</div>}
       {!isReady && !error && (
-        <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>
+        <div style={{ textAlign: "center", padding: 20 }}>{t("uiStartingCamera")}</div>
       )}
 
       {isReady && (
@@ -344,9 +346,9 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
                 padding: 20,
               }}
             >
-              <div style={{ fontSize: 16, fontWeight: 700 }}>Tent zipped up!</div>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>{t("uiTentZipped")}</div>
               <div style={{ fontSize: 13, color: "#5F6B54", marginTop: 6 }}>
-                A cozy campsite is ready inside.
+                {t("uiCozyCampsite")}
               </div>
               <button
                 onClick={reset}
@@ -361,7 +363,7 @@ export function CampZiplineGame({ channelHalfWidth = 0.06 }: CampZiplineGameProp
                   cursor: "pointer",
                 }}
               >
-                Try again
+                {t("uiTryAgain")}
               </button>
             </div>
           )}

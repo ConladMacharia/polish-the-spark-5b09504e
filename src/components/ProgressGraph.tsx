@@ -7,6 +7,7 @@ import {
   resolveTargetSlug,
   type ChildExerciseTargetOverride,
 } from "@/lib/exercise-targets";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 interface Sample {
   t: number;
@@ -49,6 +50,7 @@ export default function ProgressGraph({
   liveHistory,
   targetAngle,
 }: ProgressGraphProps) {
+  const { t } = useLanguage();
   const [rows, setRows] = useState<SessionRow[]>([]);
   const [overrides, setOverrides] = useState<ChildExerciseTargetOverride[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,7 +172,7 @@ export default function ProgressGraph({
   if (loading) {
     return (
       <div className="py-8 text-center text-sm font-semibold text-slate-500">
-        Loading progress…
+        {t("uiLoadingProgress")}
       </div>
     );
   }
@@ -200,7 +202,7 @@ export default function ProgressGraph({
             onClick={() => setSide(null)}
             className={`px-3 py-1.5 text-xs font-extrabold ${side === null ? "bg-slate-900 text-white" : "bg-amber-50 text-slate-900"}`}
           >
-            Both
+            {t("uiBoth")}
           </button>
           {sideOptions.map((s) => (
             <button
@@ -222,7 +224,7 @@ export default function ProgressGraph({
       <div>
         {exerciseOptions.length > 0 && picker}
         <div className="rounded-2xl border-2 border-dashed border-slate-400 bg-amber-50 p-6 text-center">
-          <p className="font-display text-base font-bold text-slate-900">No progress yet</p>
+          <p className="font-display text-base font-bold text-slate-900">{t("uiNoProgressYet")}</p>
           <p className="mt-1 text-xs font-semibold text-slate-600">
             Finish a tracked exercise in the library and the angle reached will appear here, day by
             day.
@@ -263,7 +265,7 @@ export default function ProgressGraph({
       {exerciseOptions.length > 0 && picker}
 
       <div className="overflow-x-auto">
-        <svg width={width} height={height} role="img" aria-label="Angle achieved per day" className="block">
+        <svg width={width} height={height} role="img" aria-label={t("uiAnglePerDay")} className="block">
           {ticks.map((v) => (
             <g key={v}>
               <line x1={padL} x2={width - padR} y1={yFor(v)} y2={yFor(v)} stroke="currentColor" className="text-slate-200" />
@@ -313,7 +315,7 @@ export default function ProgressGraph({
       <div className="mt-3 grid grid-cols-3 gap-2">
         <div className="rounded-xl border-2 border-slate-900 bg-amber-50 p-2.5 text-center">
           <p className="font-display text-xl font-bold text-slate-900">{Math.round(latest.angle)}°</p>
-          <p className="text-[10px] font-extrabold uppercase text-slate-500">Latest best</p>
+          <p className="text-[10px] font-extrabold uppercase text-slate-500">{t("uiLatestBest")}</p>
         </div>
         <div className="rounded-xl border-2 border-slate-900 bg-amber-50 p-2.5 text-center">
           <p
@@ -321,7 +323,7 @@ export default function ProgressGraph({
           >
             {delta == null ? "—" : `${delta > 0 ? "+" : ""}${delta}°`}
           </p>
-          <p className="text-[10px] font-extrabold uppercase text-slate-500">Since last time</p>
+          <p className="text-[10px] font-extrabold uppercase text-slate-500">{t("uiSinceLastTime")}</p>
         </div>
         <div className="rounded-xl border-2 border-slate-900 bg-amber-50 p-2.5 text-center">
           <p className="font-display text-xl font-bold text-slate-900">

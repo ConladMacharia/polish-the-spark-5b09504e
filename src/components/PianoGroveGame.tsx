@@ -16,6 +16,7 @@ import {
   AdaptivePinch,
 } from "@/lib/pose/adaptiveTracking";
 import { LowLightBooster } from "@/lib/camera";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 // Finger skeleton connections (MediaPipe hand model) for the live overlay.
 const HAND_BONES: [number, number][] = [
@@ -56,6 +57,7 @@ interface NoteState {
 }
 
 export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
+  const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
   const boosterRef = useRef(new LowLightBooster());
   const landmarkerRef = useRef<HandLandmarker | null>(null);
@@ -422,7 +424,7 @@ export function PianoGroveGame({ onExit }: { onExit?: () => void }) {
 
       {error && <div style={{ textAlign: "center", padding: 20 }}>{error}</div>}
       {!isReady && !error && (
-        <div style={{ textAlign: "center", padding: 20 }}>Starting camera...</div>
+        <div style={{ textAlign: "center", padding: 20 }}>{t("uiStartingCamera")}</div>
       )}
 
       {isReady && (

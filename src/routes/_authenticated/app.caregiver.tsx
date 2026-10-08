@@ -1,19 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  LogOut,
-  PlayCircle,
-  Flame,
-  ShieldAlert,
-  Rocket,
-  Home,
-  Dumbbell,
-  Video,
-  User,
-  Globe,
-  TrendingUp,
-  Plus,
-} from "lucide-react";
+import { LogOut, PlayCircle, Flame, ShieldAlert, Rocket, Home, Dumbbell, Video, User, Globe, TrendingUp } from "lucide-react";
 import { useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -22,8 +9,8 @@ import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { RafikiIsland } from "@/components/child/RafikiIsland";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
 import { SpecialistCare } from "@/components/child/SpecialistCare";
-import { fetchActiveChild, setActiveChildId } from "@/lib/activeChild";
 import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
+
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
   head: () => ({
@@ -52,8 +39,7 @@ function CaregiverHome() {
   const { t } = useLanguage();
   const [uxMode, setUxMode] = useState<"caregiver" | "child">("caregiver");
   const [profileOpen, setProfileOpen] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
-  const [requestFor, setRequestFor] = useState<string | null>(null);
+
 
   const { data: profile } = useQuery({
     queryKey: ["me-profile"],
@@ -62,7 +48,7 @@ function CaregiverHome() {
       if (!userData.user) return null;
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, preferred_language, phone")
+        .select("full_name, preferred_language")
         .eq("id", userData.user.id)
         .maybeSingle();
       return data;
@@ -76,7 +62,13 @@ function CaregiverHome() {
       const uid = userData.user?.id;
       if (!uid) return null;
 
-      const existing = await fetchActiveChild(uid);
+      const { data: existing } = await supabase
+        .from("patients")
+        .select("*")
+        .eq("claimed_by_caregiver_id", uid)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
       if (existing) return existing;
 
       const { data: prof } = await supabase
@@ -102,29 +94,6 @@ function CaregiverHome() {
       return created;
     },
   });
-
-  // Every child this caregiver looks after (for the switcher under the greeting).
-  const { data: children } = useQuery({
-    queryKey: ["my-children"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
-      if (!uid) return [];
-      const { data } = await supabase
-        .from("patients")
-        .select("id, child_name")
-        .eq("claimed_by_caregiver_id", uid)
-        .order("created_at", { ascending: true });
-      return data ?? [];
-    },
-  });
-
-  async function chooseChild(id: string) {
-    if (id === patient?.id) return;
-    setActiveChildId(id);
-    // Every screen that shows "the child" reloads for the new one.
-    await qc.invalidateQueries({ queryKey: ["my-patient"] });
-  }
 
   async function handleSignOut() {
     await qc.cancelQueries();
@@ -184,8 +153,7 @@ function CaregiverHome() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-display text-2xl font-bold tracking-tight text-stone-50">
-                {t("greeting", { name: firstName })}{" "}
-                <span className="inline-block animate-bounce">👋</span>
+                {t("greeting", { name: firstName })} <span className="inline-block animate-bounce">👋</span>
               </h1>
             </div>
             <div className="flex items-center gap-2">
@@ -201,35 +169,6 @@ function CaregiverHome() {
             </div>
           </div>
 
-          {/* Children: switch between them, or add another */}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            {(children ?? []).map((c) => {
-              const active = c.id === patient?.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => chooseChild(c.id)}
-                  aria-pressed={active}
-                  className={`rounded-full border px-4 py-1.5 font-display text-[13px] font-semibold transition-colors ${
-                    active
-                      ? "border-emerald-200/40 bg-emerald-300 text-emerald-950"
-                      : "border-white/15 bg-white/10 text-stone-200 hover:bg-white/15"
-                  }`}
-                >
-                  {c.child_name?.split(" ")[0] || "Child"}
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-emerald-200/40 px-4 py-1.5 font-display text-[13px] font-semibold text-emerald-200 transition-colors hover:bg-white/10"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add child
-            </button>
-          </div>
-
           {/* Today's mission — hero card */}
           <GlassCard tint="emerald" className="mt-5" onClick={beginGuidedSession} as="button">
             <div className="p-5 text-left">
@@ -239,9 +178,7 @@ function CaregiverHome() {
               <h2 className="mt-3 font-display text-2xl font-bold leading-snug text-stone-50">
                 {t("startTodaySession")}
               </h2>
-              <p className="mt-1.5 text-[13px] font-medium text-stone-300">
-                {t("sessionDescription")}
-              </p>
+              <p className="mt-1.5 text-[13px] font-medium text-stone-300">{t("sessionDescription")}</p>
               <div className="mt-3 flex flex-wrap gap-3 text-[12px] font-semibold text-stone-300">
                 <span>🎯 {t("threeExercises")}</span>
                 <span>⏱ {t("twelveMinutes")}</span>
@@ -263,12 +200,8 @@ function CaregiverHome() {
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-300/90">
                 <Dumbbell className="h-5 w-5 text-emerald-950" />
               </div>
-              <h4 className="mt-3 font-display text-base font-bold text-stone-50">
-                {t("exerciseLibrary")}
-              </h4>
-              <p className="mt-0.5 text-[12px] font-medium text-stone-300">
-                {t("exerciseLibrarySub")}
-              </p>
+              <h4 className="mt-3 font-display text-base font-bold text-stone-50">{t("exerciseLibrary")}</h4>
+              <p className="mt-0.5 text-[12px] font-medium text-stone-300">{t("exerciseLibrarySub")}</p>
             </GlassCard>
 
             <GlassCard
@@ -280,12 +213,8 @@ function CaregiverHome() {
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-300/90">
                 <Video className="h-5 w-5 text-emerald-950" />
               </div>
-              <h4 className="mt-3 font-display text-base font-bold text-stone-50">
-                {t("trainingFilms")}
-              </h4>
-              <p className="mt-0.5 text-[12px] font-medium text-stone-300">
-                {t("trainingFilmsSub")}
-              </p>
+              <h4 className="mt-3 font-display text-base font-bold text-stone-50">{t("trainingFilms")}</h4>
+              <p className="mt-0.5 text-[12px] font-medium text-stone-300">{t("trainingFilmsSub")}</p>
             </GlassCard>
 
             <GlassCard
@@ -297,10 +226,8 @@ function CaregiverHome() {
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-300/90">
                 <TrendingUp className="h-5 w-5 text-emerald-950" />
               </div>
-              <h4 className="mt-3 font-display text-base font-bold text-stone-50">Progress</h4>
-              <p className="mt-0.5 text-[12px] font-medium text-stone-300">
-                See how sessions are trending
-              </p>
+              <h4 className="mt-3 font-display text-base font-bold text-stone-50">{t("uiProgress")}</h4>
+              <p className="mt-0.5 text-[12px] font-medium text-stone-300">{t("uiSeeTrending")}</p>
             </GlassCard>
 
             <GlassCard tint="dark" className="flex items-center gap-4 p-4 sm:col-span-2">
@@ -309,24 +236,14 @@ function CaregiverHome() {
               </div>
               <div className="h-9 w-px bg-white/10" />
               <div>
-                <p className="text-[11px] font-semibold uppercase text-stone-400">
-                  {t("lastSession")}
-                </p>
-                <p className="font-display text-sm font-bold text-stone-50">
-                  {t("lastSessionValue")}
-                </p>
+                <p className="text-[11px] font-semibold uppercase text-stone-400">{t("lastSession")}</p>
+                <p className="font-display text-sm font-bold text-stone-50">{t("lastSessionValue")}</p>
               </div>
             </GlassCard>
           </div>
 
           {/* Specialist care: ask for a therapist, see the status */}
-          <SpecialistCare
-            patient={patient as never}
-            phone={profile?.phone}
-            onEditProfile={() => setProfileOpen(true)}
-            openRequestFor={requestFor}
-            onRequestOpened={() => setRequestFor(null)}
-          />
+          <SpecialistCare patient={patient as never} onEditProfile={() => setProfileOpen(true)} />
 
           {/* Tip card */}
           <GlassCard tint="neutral" className="mt-3 flex items-start gap-3 p-4">
@@ -335,12 +252,8 @@ function CaregiverHome() {
               <p className="font-display text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
                 {t("tip")}
               </p>
-              <h5 className="mt-0.5 font-display text-sm font-bold text-stone-50">
-                {t("tipTitle")}
-              </h5>
-              <p className="mt-1 text-[12px] font-medium leading-relaxed text-stone-300">
-                {t("tipBody")}
-              </p>
+              <h5 className="mt-0.5 font-display text-sm font-bold text-stone-50">{t("tipTitle")}</h5>
+              <p className="mt-1 text-[12px] font-medium leading-relaxed text-stone-300">{t("tipBody")}</p>
             </div>
           </GlassCard>
 
@@ -366,13 +279,6 @@ function CaregiverHome() {
         </div>
       )}
 
-      <ChildProfileSheet
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        patient={null}
-        isNew
-        onCreated={(id) => setRequestFor(id)}
-      />
       <ChildProfileSheet
         open={profileOpen}
         onOpenChange={setProfileOpen}

@@ -183,7 +183,7 @@ function TrainingPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate({ to: "/app/caregiver" })}
-              aria-label="Back to dashboard"
+              aria-label={t("uiBackDashboard")}
               className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-white/10 backdrop-blur-xl"
             >
               <ArrowLeft className="h-4 w-4 text-stone-50" />
@@ -240,7 +240,7 @@ function TrainingPage() {
                             >
                               <div className="relative flex h-24 items-center justify-center bg-black/25 text-4xl">
                                 <span className="absolute left-2 top-2 rounded-md border border-white/15 bg-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-200 backdrop-blur-xl">
-                                  Video
+                                  {t("uiVideo")}
                                 </span>
                                 {ex.icon}
                                 <div className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-emerald-300/90">
@@ -261,7 +261,7 @@ function TrainingPage() {
                                     video ? "text-emerald-300" : "text-stone-500"
                                   }`}
                                 >
-                                  {video ? "Watch short video" : "Video coming soon"}
+                                  {video ? t("uiWatchVideo") : t("uiVideoSoon")}
                                 </span>
                               </div>
                             </GlassCard>

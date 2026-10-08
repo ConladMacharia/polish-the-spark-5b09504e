@@ -15,6 +15,7 @@ import {
 } from "@/lib/pose/angleUtils";
 import { saveTrackedSession } from "@/lib/sessions.data";
 import { LowLightBooster, openCameraStream } from "@/lib/camera";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 type TrackedMovement = "elbow" | "shoulderFlexion";
 
@@ -41,6 +42,7 @@ export function LiveTrackingSession({
   exerciseSlug,
   overrides = [],
 }: LiveTrackingSessionProps) {
+  const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
   const boosterRef = useRef(new LowLightBooster());
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -273,11 +275,11 @@ export function LiveTrackingSession({
             {maxAngle !== null ? `${maxAngle}°` : "Not yet recorded"}
           </div>
           <button onClick={resetRecording} style={{ marginTop: 8 }}>
-            Reset recording
+            {t("uiResetRecording")}
           </button>
           <div style={{ marginTop: 12 }}>
             <button onClick={saveSession} style={{ marginRight: 8 }}>
-              Finish session & save
+              {t("uiFinishSave")}
             </button>
           </div>
         </div>

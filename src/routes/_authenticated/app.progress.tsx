@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
 import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
-import { fetchActiveChild } from "@/lib/activeChild";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 export const Route = createFileRoute("/_authenticated/app/progress")({
   head: () => ({ meta: [{ title: "Progress — Neuro-Bridge" }] }),
@@ -88,6 +88,7 @@ function ProgressChart({ data, unit, emptyLabel }: { data: { label: string; valu
 }
 
 function ProgressPage() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -97,7 +98,14 @@ function ProgressPage() {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
       if (!uid) return null;
-      return await fetchActiveChild(uid);
+      const { data } = await supabase
+        .from("patients")
+        .select("*")
+        .eq("claimed_by_caregiver_id", uid)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return data;
     },
   });
 
@@ -180,14 +188,14 @@ function ProgressPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate({ to: "/app/caregiver" })}
-              aria-label="Back to dashboard"
+              aria-label={t("uiBackDashboard")}
               className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-white/10 backdrop-blur-xl"
             >
               <ArrowLeft className="h-4 w-4 text-stone-50" />
             </button>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">Progress</p>
-              <p className="font-display text-lg font-bold text-stone-50">How things are trending</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">{t("uiProgress")}</p>
+              <p className="font-display text-lg font-bold text-stone-50">{t("uiHowTrending")}</p>
             </div>
           </div>
           <LanguageSettings />
@@ -198,27 +206,27 @@ function ProgressPage() {
         <GlassCard tint="emerald" className="p-5">
           <div className="mb-3 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-emerald-300" />
-            <p className="font-display text-base font-bold text-stone-50">Arm &amp; Shoulder</p>
+            <p className="font-display text-base font-bold text-stone-50">{t("uiArmShoulder")}</p>
           </div>
-          <p className="mb-2 text-[11px] text-stone-400">Best angle reached, per session</p>
+          <p className="mb-2 text-[11px] text-stone-400">{t("uiBestAngle")}</p>
           <ProgressChart data={armData} unit="°" emptyLabel="Complete an arm or shoulder session to see it here" />
         </GlassCard>
 
         <GlassCard tint="neutral" className="p-5">
           <div className="mb-3 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-emerald-300" />
-            <p className="font-display text-base font-bold text-stone-50">Balance &amp; Holds</p>
+            <p className="font-display text-base font-bold text-stone-50">{t("uiBalanceHolds")}</p>
           </div>
-          <p className="mb-2 text-[11px] text-stone-400">Longest hold, per session</p>
+          <p className="mb-2 text-[11px] text-stone-400">{t("uiLongestHold")}</p>
           <ProgressChart data={balanceData} unit="s" emptyLabel="Complete a balance session to see it here" />
         </GlassCard>
 
         <GlassCard tint="dark" className="p-5">
-          <p className="font-display text-base font-bold text-stone-50">Today's progress</p>
+          <p className="font-display text-base font-bold text-stone-50">{t("uiTodaysProgress")}</p>
           <div className="mt-4 flex items-center gap-5">
             <ProgressRing pct={todayPct} />
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">Reps today</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400">{t("uiRepsToday")}</p>
               <p className="font-display text-2xl font-bold text-stone-50">
                 {todayReps} <span className="text-base font-medium text-stone-400">of {todayGoal || "—"}</span>
               </p>

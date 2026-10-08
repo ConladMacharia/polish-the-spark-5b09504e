@@ -3,6 +3,7 @@ import { Loader2, VideoOff } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { getVideoUrl, type ExerciseVideo } from "@/lib/training-videos";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 /** Pop-up player for one exercise's demo video. */
 export function ExerciseVideoDialog({
@@ -20,6 +21,7 @@ export function ExerciseVideoDialog({
   video?: ExerciseVideo;
   onStartTracking: () => void;
 }) {
+  const { t } = useLanguage();
   const { data: url, isLoading, isError } = useQuery({
     queryKey: ["exercise-video-url", video?.storage_path],
     queryFn: () => getVideoUrl(video!.storage_path),
@@ -42,7 +44,7 @@ export function ExerciseVideoDialog({
           {!video ? (
             <div className="flex aspect-video flex-col items-center justify-center gap-2 text-stone-400">
               <VideoOff className="h-8 w-8" />
-              <p className="text-sm font-semibold">Video coming soon</p>
+              <p className="text-sm font-semibold">{t("uiVideoSoon")}</p>
             </div>
           ) : isLoading ? (
             <div className="flex aspect-video items-center justify-center">
@@ -50,7 +52,7 @@ export function ExerciseVideoDialog({
             </div>
           ) : isError || !url ? (
             <div className="flex aspect-video items-center justify-center text-sm text-red-300">
-              Could not load the video. Please try again.
+              {t("uiVideoError")}
             </div>
           ) : (
             <video
@@ -69,7 +71,7 @@ export function ExerciseVideoDialog({
           onClick={onStartTracking}
           className="mt-1 rounded-full bg-emerald-300 px-5 py-3 text-sm font-bold text-emerald-950"
         >
-          Start tracking this exercise
+          {t("uiStartTracking")}
         </button>
       </DialogContent>
     </Dialog>

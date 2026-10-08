@@ -12,6 +12,7 @@ import {
   handConfidence,
 } from "@/lib/pose/adaptiveTracking";
 import { LowLightBooster } from "@/lib/camera";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 interface Obstacle {
   x: number;
@@ -36,6 +37,7 @@ const MIN_SPEED = 2.2;
 const MAX_SPEED = 9;
 
 export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExplorerGameProps) {
+  const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
   const boosterRef = useRef(new LowLightBooster());
   const landmarkerRef = useRef<HandLandmarker | null>(null);
@@ -229,16 +231,16 @@ export function SpaceExplorerGame({ gapHeight = 150, baseSpeed = 4.2 }: SpaceExp
 
       {error && <div style={{ textAlign: "center", padding: 20, color: "white" }}>{error}</div>}
       {!isReady && !error && (
-        <div style={{ textAlign: "center", padding: 20, color: "white" }}>Starting camera...</div>
+        <div style={{ textAlign: "center", padding: 20, color: "white" }}>{t("uiStartingCamera")}</div>
       )}
 
       {isReady && (
         <>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 10 }}>
-            <Stat label="Distance" value={Math.floor(distance)} />
-            <Stat label="Items" value={items} />
-            <Stat label="Close calls" value={closeCalls} />
-            <Stat label="Speed" value={Math.round(speed * 10) / 10} />
+            <Stat label={t("uiDistance")} value={Math.floor(distance)} />
+            <Stat label={t("uiItems")} value={items} />
+            <Stat label={t("uiCloseCalls")} value={closeCalls} />
+            <Stat label={t("uiSpeed")} value={Math.round(speed * 10) / 10} />
           </div>
 
           <div
