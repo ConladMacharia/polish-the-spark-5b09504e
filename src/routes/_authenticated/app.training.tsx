@@ -13,6 +13,7 @@ import { VideoUploadButton } from "@/components/training/VideoUploadButton";
 import { fetchMyRole } from "@/lib/roles";
 import { fetchExerciseVideos } from "@/lib/training-videos";
 import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
+import { useActiveChild } from "@/lib/activeChild";
 
 export const Route = createFileRoute("/_authenticated/app/training")({
   head: () => ({
@@ -44,22 +45,7 @@ function TrainingPage() {
   });
   const isAdmin = role === "admin";
 
-  const { data: patient } = useQuery({
-    queryKey: ["my-patient"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
-      if (!uid) return null;
-      const { data } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("claimed_by_caregiver_id", uid)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
+  const { patient } = useActiveChild();
 
   async function launch(slug: string) {
     if (!patient) return;

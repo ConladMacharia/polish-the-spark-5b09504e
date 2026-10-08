@@ -8,8 +8,10 @@ import { LanguageSettings } from "@/components/LanguageSettings";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { RafikiIsland } from "@/components/child/RafikiIsland";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
+import { ChildSwitcher } from "@/components/child/ChildSwitcher";
 import { SpecialistCare } from "@/components/child/SpecialistCare";
 import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
+import { useActiveChild } from "@/lib/activeChild";
 
 
 export const Route = createFileRoute("/_authenticated/app/caregiver")({
@@ -55,45 +57,7 @@ function CaregiverHome() {
     },
   });
 
-  const { data: patient } = useQuery({
-    queryKey: ["my-patient"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
-      if (!uid) return null;
-
-      const { data: existing } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("claimed_by_caregiver_id", uid)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (existing) return existing;
-
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("full_name, preferred_language")
-        .eq("id", uid)
-        .maybeSingle();
-      const childName = prof?.full_name ? `${prof.full_name.split(" ")[0]}'s child` : "My child";
-      const { data: created, error } = await supabase
-        .from("patients")
-        .insert({
-          claimed_by_caregiver_id: uid,
-          claimed_at: new Date().toISOString(),
-          child_name: childName,
-          affected_side: "bilateral",
-          preferred_language: (prof?.preferred_language as "en" | "sw" | "ki") ?? "en",
-          goals: [],
-          claim_code: cryptoRandomCode(),
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return created;
-    },
-  });
+  const { patient } = useActiveChild();
 
   async function handleSignOut() {
     await qc.cancelQueries();
@@ -168,6 +132,8 @@ function CaregiverHome() {
               </button>
             </div>
           </div>
+
+          <ChildSwitcher />
 
           {/* Today's mission — hero card */}
           <GlassCard tint="emerald" className="mt-5" onClick={beginGuidedSession} as="button">
@@ -286,13 +252,4 @@ function CaregiverHome() {
       />
     </div>
   );
-}
-
-function cryptoRandomCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  const arr = new Uint8Array(8);
-  crypto.getRandomValues(arr);
-  for (let i = 0; i < 8; i++) out += chars[arr[i] % chars.length];
-  return out;
 }

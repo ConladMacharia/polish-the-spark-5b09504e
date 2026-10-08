@@ -9,6 +9,7 @@ import { LanguageSettings } from "@/components/LanguageSettings";
 import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
 import { AmbientBlobs, BottomNav, GlassCard } from "@/components/ui/glass";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { useActiveChild } from "@/lib/activeChild";
 
 export const Route = createFileRoute("/_authenticated/app/progress")({
   head: () => ({ meta: [{ title: "Progress — Neuro-Bridge" }] }),
@@ -92,22 +93,7 @@ function ProgressPage() {
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const { data: patient } = useQuery({
-    queryKey: ["my-patient"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
-      if (!uid) return null;
-      const { data } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("claimed_by_caregiver_id", uid)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
+  const { patient } = useActiveChild();
 
   const patientId = patient?.id;
 

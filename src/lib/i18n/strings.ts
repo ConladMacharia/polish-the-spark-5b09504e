@@ -113,6 +113,8 @@ export const EN_STRINGS = {
   exWristFingerStretch: "Wrist and finger stretch",
   exOpenHandPositioning: "Open hand positioning",
   exSitUps: "Sit-ups",
+  uiAddChild: "Add child",
+  uiChildName: "Child's name",
   uiAiTracked: "AI tracked exercise",
   uiBeforeWeStart: "Before we start",
   uiCancel: "Cancel",

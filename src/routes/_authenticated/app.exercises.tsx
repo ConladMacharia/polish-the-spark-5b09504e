@@ -26,6 +26,7 @@ import { getLanguage } from "@/lib/i18n/languages";
 
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { LowLightBooster, openCameraStream } from "@/lib/camera";
+import { useActiveChild } from "@/lib/activeChild";
 
 
 export const Route = createFileRoute("/_authenticated/app/exercises")({
@@ -730,22 +731,7 @@ function LiveSessionPage() {
     return `${side === "left" ? t("sideLeft") : t("sideRight")} ${limb}`;
   }
 
-  const { data: patient } = useQuery({
-    queryKey: ["my-patient"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
-      if (!uid) return null;
-      const { data } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("claimed_by_caregiver_id", uid)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
+  const { patient } = useActiveChild();
   const childNameForCopy = patient?.child_name?.split(" ")[0] ?? "your child";
 
   type NavId = "home" | "library" | "videos" | "profile";

@@ -1,7 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Activity, HeartHandshake, Languages, ShieldCheck, Sparkles } from "lucide-react";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Activity, HeartHandshake, Languages, ShieldCheck, Sparkles, Baby } from "lucide-react";
+
+import { supabase } from "@/integrations/supabase/client";
+import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
+
 
 export const Route = createFileRoute("/")({
+  // The link opens straight on the sign-in page; signed-in users are
+  // forwarded to /app from there.
+  beforeLoad: ({ location }) => {
+    // Reset-password emails can land on the site root: keep them on the
+    // "choose a new password" step.
+    if (location.hash.includes("type=recovery")) {
+      throw redirect({ to: "/reset-password", hash: location.hash.replace(/^#/, ""), replace: true });
+    }
+    throw redirect({ to: "/auth", replace: true });
+  },
   head: () => ({
     meta: [
       { title: "Neuro-Bridge — Home therapy for children with cerebral palsy" },
@@ -22,6 +38,25 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const { data: patient } = useQuery({
+    queryKey: ["landing-patient"],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) return null;
+      const { data } = await supabase
+        .from("patients")
+        .select("*")
+        .eq("claimed_by_caregiver_id", uid)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
@@ -31,13 +66,19 @@ function Landing() {
             N
           </span>
           <span className="font-display text-xl">
-            Neuro-Bridge{" "}
-            <span className="flag" role="img" aria-label="Kenyan flag">
-              🇰🇪
-            </span>
+            Neuro-Bridge <span className="flag" role="img" aria-label="Kenyan flag">🇰🇪</span>
           </span>
         </Link>
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setProfileOpen(true)}
+            aria-label="Open child profile"
+            title="Child profile"
+            className="grid h-10 w-10 place-items-center rounded-full border border-input bg-card text-foreground shadow-sm transition-colors hover:bg-accent"
+          >
+            <Baby className="h-5 w-5" />
+          </button>
           <Link
             to="/app"
             className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
@@ -46,6 +87,13 @@ function Landing() {
           </Link>
         </div>
       </header>
+
+      <ChildProfileSheet
+        open={profileOpen}
+        onOpenChange={setProfileOpen}
+        patient={patient as never}
+      />
+
 
       {/* Hero */}
       <section className="relative overflow-hidden">

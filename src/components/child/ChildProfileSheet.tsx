@@ -105,7 +105,7 @@ export function ChildProfileSheet({
     },
     onSuccess: async () => {
       toast.success("Child profile saved");
-      await qc.invalidateQueries({ queryKey: ["my-patient"] });
+      await qc.invalidateQueries({ queryKey: ["my-children"] });
       onOpenChange(false);
     },
     onError: (e: Error) => toast.error(e.message),

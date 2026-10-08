@@ -33,6 +33,10 @@ const nameSchema = z.string().trim().min(1, { message: "Please enter your name" 
 
 type Role = "therapist" | "caregiver";
 
+// Set to false to hide "Create account" (e.g. while sharing the link before a
+// presentation). Also turn off sign-ups in Supabase for a real lock.
+const ALLOW_SIGNUP = false;
+
 function AuthPage() {
   const navigate = useNavigate();
   const router = useRouter();
@@ -48,6 +52,13 @@ function AuthPage() {
 
   // Redirect if already signed in
   useEffect(() => {
+    // A password-reset email link lands here signed in. Send it to the
+    // "choose a new password" page instead of the dashboard.
+    const h = typeof window !== "undefined" ? window.location.hash : "";
+    if (h.includes("type=recovery")) {
+      navigate({ to: "/reset-password", hash: h.slice(1), replace: true });
+      return;
+    }
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/app" });
     });
@@ -263,9 +274,9 @@ function AuthPage() {
         ) : (
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
             <Tabs value={tab} onValueChange={(v) => setTab(v as "signin" | "signup")}>
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className={`grid w-full ${ALLOW_SIGNUP ? "grid-cols-2" : "grid-cols-1"}`}>
                 <TabsTrigger value="signin">Sign in</TabsTrigger>
-                <TabsTrigger value="signup">Create account</TabsTrigger>
+                {ALLOW_SIGNUP && <TabsTrigger value="signup">Create account</TabsTrigger>}
               </TabsList>
 
               <TabsContent value="signin" className="mt-6">

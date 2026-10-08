@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { resolveTargetSlug } from "@/lib/exercise-targets";
-import { fetchActiveChild } from "@/lib/activeChild";
+import { getActiveChildId } from "@/lib/activeChild";
 
 export type AngleSample = { t: number; angle: number };
 
@@ -34,13 +34,29 @@ export function exerciseEnumFor(slug?: string) {
   return "arm_raise" as const;
 }
 
-/** Returns the patient id for the child the caregiver is currently working with. */
+/** Returns the patient id for the signed-in caregiver's first claimed child. */
 export async function getMyPatientId(): Promise<string | null> {
   const { data: userData } = await supabase.auth.getUser();
   const uid = userData.user?.id;
   if (!uid) return null;
-  const child = await fetchActiveChild(uid);
-  return child?.id ?? null;
+  const stored = getActiveChildId();
+  if (stored) {
+    const { data: chosen } = await supabase
+      .from("patients")
+      .select("id")
+      .eq("id", stored)
+      .eq("claimed_by_caregiver_id", uid)
+      .maybeSingle();
+    if (chosen) return chosen.id;
+  }
+  const { data } = await supabase
+    .from("patients")
+    .select("id")
+    .eq("claimed_by_caregiver_id", uid)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return data?.id ?? null;
 }
 
 interface SaveArgs {
