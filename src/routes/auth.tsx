@@ -52,13 +52,6 @@ function AuthPage() {
 
   // Redirect if already signed in
   useEffect(() => {
-    // A password-reset email link lands here signed in. Send it to the
-    // "choose a new password" page instead of the dashboard.
-    const h = typeof window !== "undefined" ? window.location.hash : "";
-    if (h.includes("type=recovery")) {
-      navigate({ to: "/reset-password", hash: h.slice(1), replace: true });
-      return;
-    }
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/app" });
     });

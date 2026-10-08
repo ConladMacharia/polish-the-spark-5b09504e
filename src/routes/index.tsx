@@ -10,12 +10,7 @@ import { ChildProfileSheet } from "@/components/child/ChildProfileSheet";
 export const Route = createFileRoute("/")({
   // The link opens straight on the sign-in page; signed-in users are
   // forwarded to /app from there.
-  beforeLoad: ({ location }) => {
-    // Reset-password emails can land on the site root: keep them on the
-    // "choose a new password" step.
-    if (location.hash.includes("type=recovery")) {
-      throw redirect({ to: "/reset-password", hash: location.hash.replace(/^#/, ""), replace: true });
-    }
+  beforeLoad: () => {
     throw redirect({ to: "/auth", replace: true });
   },
   head: () => ({
